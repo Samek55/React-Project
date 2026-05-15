@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Nepal Motor Exchange",
+    "slug": "nepal-motor-exchange-form",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.samek55.nepalmotorexchange",
+      "adaptiveIcon": {
+        "backgroundColor": "#f7fafc"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}

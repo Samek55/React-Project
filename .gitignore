@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+dist/
+.idea/
+android/.gradle/
+android/app/build/
+android/build/
+*.log
+*-error.log
+form-mobile-check.png
+local.properties
