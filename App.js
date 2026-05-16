@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Image,
+  Linking,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -15,6 +16,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
 
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
+const phoneNumber = "+9779800000000";
 
 const colors = ["White", "Silver", "Black", "Grey", "Red", "Blue", "Other"];
 const cities = [
@@ -184,6 +186,10 @@ function UploadField({ label, value, onPress }) {
 }
 
 function Header() {
+  const callNepalMotor = () => {
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
+
   return (
     <View style={styles.header}>
       <View style={styles.navCard}>
@@ -195,7 +201,10 @@ function Header() {
         </View>
         <Pressable
           style={({ hovered }) => [styles.phoneButton, hovered && styles.phoneButtonHover]}
+          accessibilityRole="button"
+          accessibilityLabel="Call NEPAL Motor"
           hitSlop={12}
+          onPress={callNepalMotor}
         >
           {({ hovered }) => (
             <>
@@ -592,7 +601,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 8,
     backgroundColor: "#ffffff",
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -607,8 +616,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingRight: 12
+    gap: 8,
+    paddingRight: 4
   },
   logo: {
     width: 58,
@@ -660,7 +669,7 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 564,
     alignSelf: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: 10,
     paddingTop: 30,
     paddingBottom: 80
   },
