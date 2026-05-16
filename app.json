@@ -16,7 +16,7 @@
       "package": "com.broadpress.nepalmotor",
       "adaptiveIcon": {
         "foregroundImage": "./assets/nepal-motor-adaptive-foreground.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#003893"
       }
     },
     "web": {
