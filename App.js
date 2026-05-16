@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
-  Alert,
-  Modal,
+  Image,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -15,31 +14,46 @@ import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
 
+const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
+
 const colors = ["White", "Silver", "Black", "Grey", "Red", "Blue", "Other"];
-const cities = ["Kathmandu", "Pokhara", "Biratnagar", "Itahari", "Other"];
+const cities = [
+  "Itahari",
+  "Kathmandu",
+  "Pokhara",
+  "Lalitpur",
+  "Bharatpur",
+  "Biratnagar",
+  "Birgunj",
+  "Butwal",
+  "Dharan",
+  "Hetauda",
+  "Nepalgunj",
+  "Other"
+];
 const vehicleTypes = ["Hatchback", "Sedan", "SUV", "Compact SUV", "Van", "Pickup", "I don't know"];
 const evBrands = ["BYD", "Tata", "MG", "Hyundai", "Kia", "Neta", "Deepal", "Other"];
-const financeOptions = ["Yes", "No", "Please Suggest"];
+const financeOptions = ["Yes", "No"];
 const transmissions = ["Automatic", "Manual", "Semi Automatic"];
 const accidents = ["Yes", "No", "Few Times", "Many Times", "I don't know", "Other"];
 const fuelTypes = ["Petrol", "Diesel", "Electric", "Hybrid", "CNG", "LPG", "Other"];
 const features = [
-  "AC",
-  "Power Steering",
-  "Power Window",
+  "Basic",
+  "A/C",
+  "4WD",
   "ABS",
-  "Airbag",
-  "Reverse Camera",
-  "Alloy Wheel",
-  "Central Lock",
-  "Touch Screen",
-  "Bluetooth",
+  "Airbags",
+  "Power steering",
+  "Power windows",
+  "Central locking",
+  "Music system",
+  "Alloy wheels",
+  "Fog lamps",
   "Sunroof",
-  "Parking Sensor",
-  "Leather Seat",
-  "Keyless Entry",
-  "Cruise Control",
-  "Heated Seat"
+  "Leather seats",
+  "Reverse camera",
+  "Cruise control",
+  "Keyless entry"
 ];
 
 const emptyForm = {
@@ -47,10 +61,10 @@ const emptyForm = {
   email: "",
   phone: "",
   city: "Kathmandu",
-  year: "2007",
+  year: "",
   vehicleType: "Hatchback",
-  model: "Santro",
-  brand: "Hyundai",
+  model: "",
+  brand: "",
   color: "",
   kmDriven: "",
   document: "",
@@ -73,15 +87,17 @@ function Label({ children, required }) {
   );
 }
 
-function TextField({ label, value, onChangeText, required, multiline, keyboardType, helper }) {
+function TextField({ label, value, onChangeText, required, multiline, keyboardType, helper, placeholder }) {
   return (
     <View style={styles.field}>
       <Label required={required}>{label}</Label>
       <TextInput
         value={value}
         onChangeText={onChangeText}
+        placeholder={placeholder}
         keyboardType={keyboardType}
         multiline={multiline}
+        placeholderTextColor="#9ca3af"
         style={[styles.input, multiline && styles.notes]}
       />
       {helper ? <Text style={styles.helper}>{helper}</Text> : null}
@@ -95,43 +111,97 @@ function SelectField({ label, value, required, options, onChange }) {
   return (
     <View style={styles.field}>
       <Label required={required}>{label}</Label>
-      <Pressable style={styles.select} onPress={() => setOpen(true)}>
-        <Text style={[styles.selectText, !value && styles.muted]}>{value}</Text>
-        <Ionicons name="chevron-down" size={18} color="#8b95a1" />
+      <Pressable style={styles.select} onPress={() => setOpen((current) => !current)}>
+        {value ? (
+          <Text style={styles.selectChip}>{value}</Text>
+        ) : (
+          <Text style={styles.selectPlaceholder}>Select...</Text>
+        )}
+        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={18} color="#6b7280" />
       </Pressable>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <View style={styles.menu}>
-            <Text style={styles.menuTitle}>{label}</Text>
-            {options.map((option) => (
+      {open ? (
+        <View style={styles.dropdown}>
+          <ScrollView nestedScrollEnabled style={styles.dropdownScroll}>
+            {options.map((option) => {
+              const selected = value === option;
+              return (
               <Pressable
                 key={option}
-                style={styles.menuItem}
+                style={[styles.dropdownItem, selected && styles.dropdownItemSelected]}
                 onPress={() => {
                   onChange(option);
                   setOpen(false);
                 }}
               >
-                <Text style={styles.menuText}>{option}</Text>
-                {value === option ? <Ionicons name="checkmark" size={20} color="#111827" /> : null}
+                <Text style={[styles.dropdownText, selected && styles.dropdownTextSelected]}>{option}</Text>
               </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 function UploadField({ label, value, onPress }) {
+  const isImage = value?.type?.startsWith("image/");
+  const displayName = value?.name || "";
+
   return (
     <View style={styles.field}>
       <Label>{label}</Label>
       <Pressable style={styles.upload} onPress={onPress}>
         <Ionicons name="cloud-upload-outline" size={18} color="#1f2937" />
-        <Text style={styles.uploadText}>{value || "Drop files here or browse"}</Text>
+        <Text style={styles.uploadText}>
+          Drop files here or <Text style={styles.browseText}>browse</Text>
+        </Text>
       </Pressable>
+      {value ? (
+        <View style={styles.filePreview}>
+          {isImage ? (
+            <Image source={{ uri: value.uri }} style={styles.fileThumb} />
+          ) : (
+            <View style={styles.fileDoc}>
+              <Text style={styles.fileDocText}>PDF</Text>
+            </View>
+          )}
+          <Text style={styles.fileName} numberOfLines={1}>
+            {displayName}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function Header() {
+  return (
+    <View style={styles.header}>
+      <View style={styles.navCard}>
+        <View style={styles.brand}>
+          <Image source={nepalFlagLogo} style={styles.logo} />
+          <Text style={styles.brandText} numberOfLines={1}>
+            NEPAL Motor
+          </Text>
+        </View>
+        <Pressable
+          style={({ hovered }) => [styles.phoneButton, hovered && styles.phoneButtonHover]}
+          hitSlop={12}
+        >
+          {({ hovered }) => (
+            <>
+              <Ionicons name="call-outline" size={30} color="#111827" />
+              {hovered ? (
+                <View style={styles.phoneTooltip}>
+                  <Text style={styles.phoneTooltipText}>Call +977 9800000000</Text>
+                </View>
+              ) : null}
+            </>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -139,11 +209,13 @@ function UploadField({ label, value, onPress }) {
 export default function App() {
   const [form, setForm] = useState(emptyForm);
   const [featurePickerOpen, setFeaturePickerOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
 
   const update = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
-    setSubmitted(false);
+    setMessage("");
+    setMessageType("");
   };
 
   const toggleFeature = (feature) => {
@@ -160,7 +232,8 @@ export default function App() {
 
   const clearForm = () => {
     setForm(emptyForm);
-    setSubmitted(false);
+    setMessage("");
+    setMessageType("");
   };
 
   const pickFile = async (key, type) => {
@@ -174,14 +247,45 @@ export default function App() {
       return;
     }
 
-    update(key, result.assets[0]?.name || "Selected file");
+    const asset = result.assets[0];
+    update(key, {
+      name: asset?.name || "Selected file",
+      uri: asset?.uri,
+      type: asset?.mimeType || ""
+    });
   };
 
   const submit = () => {
-    setSubmitted(true);
     setFeaturePickerOpen(false);
+    const requiredFields = [
+      "fullName",
+      "phone",
+      "city",
+      "year",
+      "vehicleType",
+      "model",
+      "brand",
+      "color",
+      "kmDriven",
+      "transmission",
+      "fuelType",
+      "evBrand",
+      "finance"
+    ];
+    const missingRequiredField = requiredFields.some((key) => {
+      const value = form[key];
+      return Array.isArray(value) ? !value.length : !String(value || "").trim();
+    });
+
+    if (missingRequiredField) {
+      setMessageType("error");
+      setMessage("Please fill in all required fields.");
+      return;
+    }
+
+    setMessageType("success");
+    setMessage("Thank you! Your exchange request has been submitted.");
     setForm(emptyForm);
-    Alert.alert("Submitted", "Your form has been submitted.");
   };
 
   return (
@@ -189,6 +293,7 @@ export default function App() {
       <ExpoStatusBar style="dark" />
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Header />
         <Text style={styles.title}>Exchange to EV</Text>
 
         <TextField
@@ -221,6 +326,7 @@ export default function App() {
           label="Year of Manufacture"
           required
           value={form.year}
+          placeholder="2007"
           keyboardType="numeric"
           onChangeText={(value) => update("year", value)}
         />
@@ -235,12 +341,14 @@ export default function App() {
           label="Vehicle Model"
           required
           value={form.model}
+          placeholder="Santro"
           onChangeText={(value) => update("model", value)}
         />
         <TextField
           label="Vehicle Brand"
           required
           value={form.brand}
+          placeholder="Hyundai"
           onChangeText={(value) => update("brand", value)}
         />
         <SelectField
@@ -266,20 +374,6 @@ export default function App() {
           label="Upload Vehicle Photo"
           value={form.photo}
           onPress={() => pickFile("photo", "image/*")}
-        />
-        <SelectField
-          label="Interested EV Brand"
-          required
-          value={form.evBrand}
-          options={evBrands}
-          onChange={(value) => update("evBrand", value)}
-        />
-        <SelectField
-          label="Are you looking for Finance ?"
-          required
-          value={form.finance}
-          options={financeOptions}
-          onChange={(value) => update("finance", value)}
         />
         <SelectField
           label="Transmission / Gear"
@@ -309,26 +403,24 @@ export default function App() {
               <Ionicons name="add" size={23} color="#222222" />
             </Pressable>
             <View style={styles.featureList}>
-              {form.features.map((feature) => (
-                <Pressable
-                  key={feature}
-                  onPress={() => toggleFeature(feature)}
-                  style={[styles.feature, styles.featureSelected]}
-                >
-                  <Text style={styles.featureText}>{feature}</Text>
-                </Pressable>
-              ))}
+              {form.features.length ? (
+                form.features.map((feature) => (
+                  <Pressable
+                    key={feature}
+                    onPress={() => toggleFeature(feature)}
+                    style={[styles.feature, styles.featureSelected]}
+                  >
+                    <Text style={styles.featureText}>{feature}</Text>
+                  </Pressable>
+                ))
+              ) : (
+                <Text style={styles.featurePlaceholder}>Tap + to add (Basic, A/C, 4WD, ...)</Text>
+              )}
             </View>
           </View>
           {featurePickerOpen ? (
             <View style={styles.featureDropdown}>
-              <View style={styles.featureDropdownHeader}>
-                <Text style={styles.featureDropdownTitle}>Select Features</Text>
-                <Pressable onPress={() => setFeaturePickerOpen(false)} hitSlop={10}>
-                  <Ionicons name="close" size={19} color="#475569" />
-                </Pressable>
-              </View>
-              <View style={styles.featureOptions}>
+              <ScrollView nestedScrollEnabled style={styles.featureOptions}>
                 {features.map((feature) => {
                   const selected = form.features.includes(feature);
                   return (
@@ -340,14 +432,28 @@ export default function App() {
                       <Text style={[styles.featureOptionText, selected && styles.featureOptionTextSelected]}>
                         {feature}
                       </Text>
-                      {selected ? <Ionicons name="checkmark" size={16} color="#0f172a" /> : null}
                     </Pressable>
                   );
                 })}
-              </View>
+              </ScrollView>
             </View>
           ) : null}
         </View>
+
+        <SelectField
+          label="Interested EV Brand"
+          required
+          value={form.evBrand}
+          options={evBrands}
+          onChange={(value) => update("evBrand", value)}
+        />
+        <SelectField
+          label="Are you looking for Finance?"
+          required
+          value={form.finance}
+          options={financeOptions}
+          onChange={(value) => update("finance", value)}
+        />
 
         <TextField
           label="Notes"
@@ -356,22 +462,27 @@ export default function App() {
           onChangeText={(value) => update("notes", value)}
         />
 
+        {message ? (
+          <View style={[styles.messageBox, messageType === "success" ? styles.successBox : styles.errorBox]}>
+            <Text style={[styles.messageText, messageType === "success" ? styles.successText : styles.errorText]}>
+              {message}
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.actions}>
           <Pressable style={styles.clearButton} onPress={clearForm}>
-            <Ionicons name="refresh" size={18} color="#006ffd" />
-            <Text style={styles.clearText}>Clear form</Text>
+            {({ hovered }) => (
+              <>
+                <Ionicons name="refresh" size={18} color="#006ffd" />
+                <Text style={[styles.clearText, hovered && styles.clearTextHover]}>Clear form</Text>
+              </>
+            )}
           </Pressable>
-          <Pressable style={styles.submitButton} onPress={submit}>
+          <Pressable style={({ hovered }) => [styles.submitButton, hovered && styles.submitButtonHover]} onPress={submit}>
             <Text style={styles.submitText}>Submit</Text>
           </Pressable>
         </View>
-
-        {submitted ? (
-          <View style={styles.successBox}>
-            <Ionicons name="checkmark-circle" size={20} color="#166534" />
-            <Text style={styles.successText}>Your form has been submitted.</Text>
-          </View>
-        ) : null}
 
         <Text style={styles.footer}>
           Do not submit passwords through this form. <Text style={styles.report}>Report malicious form</Text>
@@ -386,27 +497,105 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ffffff"
   },
+  header: {
+    backgroundColor: "#ffffff",
+    marginBottom: 38
+  },
+  navCard: {
+    width: "100%",
+    maxWidth: 564,
+    minHeight: 80,
+    alignSelf: "center",
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000000",
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 4
+  },
+  brand: {
+    minWidth: 0,
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingRight: 12
+  },
+  logo: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 1,
+    borderColor: "#e5e7eb"
+  },
+  brandText: {
+    flexShrink: 1,
+    color: "#020617",
+    fontSize: 34,
+    fontWeight: "800"
+  },
+  phoneButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    position: "relative"
+  },
+  phoneButtonHover: {
+    backgroundColor: "#f2f2f2"
+  },
+  phoneTooltip: {
+    position: "absolute",
+    top: 50,
+    right: 0,
+    minWidth: 174,
+    borderRadius: 6,
+    backgroundColor: "#111827",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    shadowColor: "#000000",
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+    zIndex: 50
+  },
+  phoneTooltipText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700"
+  },
   container: {
     width: "100%",
-    maxWidth: 1384,
+    maxWidth: 564,
     alignSelf: "center",
     paddingHorizontal: 18,
-    paddingTop: 18,
+    paddingTop: 30,
     paddingBottom: 80
   },
   title: {
     color: "#020617",
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: "700",
-    marginBottom: 18
+    marginBottom: 42,
+    paddingBottom: 26,
+    borderBottomWidth: 1,
+    borderBottomColor: "#dedede"
   },
   field: {
-    marginBottom: 18
+    marginBottom: 34
   },
   label: {
     fontSize: 15,
     color: "#020617",
-    fontWeight: "700",
+    fontWeight: "400",
     marginBottom: 9
   },
   required: {
@@ -414,7 +603,7 @@ const styles = StyleSheet.create({
     fontWeight: "400"
   },
   input: {
-    height: 43,
+    height: 56,
     borderWidth: 1,
     borderColor: "#dedede",
     borderRadius: 8,
@@ -439,7 +628,7 @@ const styles = StyleSheet.create({
     marginTop: 6
   },
   select: {
-    height: 43,
+    height: 52,
     borderWidth: 1,
     borderColor: "#dedede",
     borderRadius: 8,
@@ -454,32 +643,109 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 1
   },
-  selectText: {
-    color: "#020617",
-    fontSize: 15
+  selectChip: {
+    color: "#075985",
+    fontSize: 15,
+    fontWeight: "700",
+    borderRadius: 5,
+    backgroundColor: "#e5f3ff",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    overflow: "hidden"
   },
-  muted: {
-    color: "#ffffff"
+  selectPlaceholder: {
+    color: "#9ca3af",
+    fontSize: 18
   },
-  upload: {
-    height: 82,
+  dropdown: {
     borderWidth: 1,
     borderColor: "#dedede",
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+    backgroundColor: "#ffffff",
+    maxHeight: 260,
+    shadowColor: "#000000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  dropdownScroll: {
+    maxHeight: 260
+  },
+  dropdownItem: {
+    minHeight: 46,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    backgroundColor: "#ffffff"
+  },
+  dropdownItemSelected: {
+    backgroundColor: "#f8fafc"
+  },
+  dropdownText: {
+    color: "#020617",
+    fontSize: 18
+  },
+  dropdownTextSelected: {
+    fontWeight: "700"
+  },
+  upload: {
+    height: 125,
+    borderWidth: 1,
+    borderColor: "#dedede",
+    borderStyle: "dashed",
     borderRadius: 8,
     backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
+    flexDirection: "column",
     gap: 8,
-    shadowColor: "#000000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1
+    shadowOpacity: 0,
+    elevation: 0
   },
   uploadText: {
     color: "#475569",
     fontSize: 15
+  },
+  browseText: {
+    color: "#006ffd",
+    textDecorationLine: "underline"
+  },
+  filePreview: {
+    width: 134,
+    height: 134,
+    borderWidth: 1,
+    borderColor: "#dedede",
+    borderRadius: 6,
+    backgroundColor: "#ffffff",
+    marginTop: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden"
+  },
+  fileThumb: {
+    width: "100%",
+    height: 92,
+    resizeMode: "cover"
+  },
+  fileDoc: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  fileDocText: {
+    color: "#475569",
+    fontSize: 14,
+    fontWeight: "700"
+  },
+  fileName: {
+    width: "100%",
+    color: "#334155",
+    fontSize: 13,
+    textAlign: "center",
+    paddingHorizontal: 6,
+    paddingVertical: 8
   },
   featureBox: {
     minHeight: 43,
@@ -509,7 +775,12 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
+    alignItems: "center",
     gap: 7
+  },
+  featurePlaceholder: {
+    color: "#9ca3af",
+    fontSize: 17
   },
   feature: {
     paddingHorizontal: 10,
@@ -525,55 +796,36 @@ const styles = StyleSheet.create({
     fontSize: 13
   },
   featureDropdown: {
-    marginTop: 8,
+    marginTop: 4,
     borderWidth: 1,
     borderColor: "#dedede",
-    borderRadius: 8,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
     backgroundColor: "#ffffff",
-    padding: 10,
     shadowColor: "#000000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 2
   },
-  featureDropdownHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10
-  },
-  featureDropdownTitle: {
-    color: "#111827",
-    fontSize: 14,
-    fontWeight: "700"
-  },
   featureOptions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8
+    maxHeight: 258
   },
   featureOption: {
-    minHeight: 34,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#f8fafc"
+    minHeight: 46,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    backgroundColor: "#ffffff"
   },
   featureOptionSelected: {
-    borderColor: "#93c5fd",
-    backgroundColor: "#dbeafe"
+    backgroundColor: "#f8fafc"
   },
   featureOptionText: {
-    color: "#334155",
-    fontSize: 13
+    color: "#020617",
+    fontSize: 18
   },
   featureOptionTextSelected: {
-    color: "#0f172a",
     fontWeight: "700"
   },
   actions: {
@@ -587,39 +839,55 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingVertical: 10,
-    paddingRight: 16
+    paddingRight: 16,
+    cursor: "pointer"
   },
   clearText: {
     color: "#006ffd",
     fontSize: 15
   },
+  clearTextHover: {
+    textDecorationLine: "underline"
+  },
   submitButton: {
     backgroundColor: "#111318",
     borderRadius: 6,
     paddingHorizontal: 18,
-    paddingVertical: 12
+    paddingVertical: 12,
+    cursor: "pointer"
+  },
+  submitButtonHover: {
+    backgroundColor: "#2b2d31"
   },
   submitText: {
     color: "#ffffff",
     fontSize: 15,
     fontWeight: "700"
   },
-  successBox: {
-    marginTop: 18,
+  messageBox: {
+    marginTop: 16,
+    marginBottom: 4,
     borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 15,
+    paddingVertical: 13
+  },
+  successBox: {
     borderColor: "#bbf7d0",
-    borderRadius: 8,
-    backgroundColor: "#f0fdf4",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8
+    backgroundColor: "#f0fdf4"
+  },
+  errorBox: {
+    borderColor: "#fecaca",
+    backgroundColor: "#fff1f2"
+  },
+  messageText: {
+    fontSize: 16
   },
   successText: {
-    color: "#166534",
-    fontSize: 15,
-    fontWeight: "700"
+    color: "#008236"
+  },
+  errorText: {
+    color: "#dc2626"
   },
   footer: {
     color: "#475569",
@@ -628,39 +896,5 @@ const styles = StyleSheet.create({
   },
   report: {
     textDecorationLine: "underline"
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.2)",
-    justifyContent: "center",
-    padding: 24
-  },
-  menu: {
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
-    paddingVertical: 8,
-    shadowColor: "#000000",
-    shadowOpacity: 0.16,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4
-  },
-  menuTitle: {
-    color: "#020617",
-    fontSize: 16,
-    fontWeight: "700",
-    paddingHorizontal: 16,
-    paddingVertical: 12
-  },
-  menuItem: {
-    minHeight: 44,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  menuText: {
-    color: "#111827",
-    fontSize: 15
   }
 });

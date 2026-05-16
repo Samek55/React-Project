@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Nepal Motor Exchange",
+    "name": "NEPAL Motor",
     "slug": "nepal-motor-exchange-form",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,7 +18,8 @@
       }
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/nepal-flag-logo.jpeg"
     },
     "plugins": [
       "expo-font"
