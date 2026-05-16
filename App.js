@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -87,7 +87,7 @@ function Label({ children, required }) {
   );
 }
 
-function TextField({ label, value, onChangeText, required, multiline, keyboardType, helper, placeholder }) {
+function TextField({ label, value, onChangeText, required, multiline, keyboardType, helper, placeholder, onFocus }) {
   return (
     <View style={styles.field}>
       <Label required={required}>{label}</Label>
@@ -97,6 +97,7 @@ function TextField({ label, value, onChangeText, required, multiline, keyboardTy
         placeholder={placeholder}
         keyboardType={keyboardType}
         multiline={multiline}
+        onFocus={onFocus}
         placeholderTextColor="#9ca3af"
         style={[styles.input, multiline && styles.notes]}
       />
@@ -105,13 +106,19 @@ function TextField({ label, value, onChangeText, required, multiline, keyboardTy
   );
 }
 
-function SelectField({ label, value, required, options, onChange }) {
+function SelectField({ label, value, required, options, onChange, onOpen }) {
   const [open, setOpen] = useState(false);
 
   return (
     <View style={styles.field}>
       <Label required={required}>{label}</Label>
-      <Pressable style={styles.select} onPress={() => setOpen((current) => !current)}>
+      <Pressable
+        style={styles.select}
+        onPress={() => {
+          onOpen?.();
+          setOpen((current) => !current);
+        }}
+      >
         {value ? (
           <Text style={styles.selectChip}>{value}</Text>
         ) : (
@@ -211,11 +218,30 @@ export default function App() {
   const [featurePickerOpen, setFeaturePickerOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const featurePickerRef = useRef(null);
+
+  useEffect(() => {
+    if (!featurePickerOpen || typeof document === "undefined") {
+      return undefined;
+    }
+
+    const handleClickOutside = (event) => {
+      const node = featurePickerRef.current;
+      if (node?.contains && !node.contains(event.target)) {
+        setFeaturePickerOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [featurePickerOpen]);
 
   const update = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
     setMessage("");
     setMessageType("");
+    setSubmitting(false);
   };
 
   const toggleFeature = (feature) => {
@@ -230,10 +256,17 @@ export default function App() {
     });
   };
 
+  const closeFeaturePicker = () => {
+    if (featurePickerOpen) {
+      setFeaturePickerOpen(false);
+    }
+  };
+
   const clearForm = () => {
     setForm(emptyForm);
     setMessage("");
     setMessageType("");
+    setSubmitting(false);
   };
 
   const pickFile = async (key, type) => {
@@ -256,7 +289,13 @@ export default function App() {
   };
 
   const submit = () => {
+    if (submitting) {
+      return;
+    }
+
     setFeaturePickerOpen(false);
+    setMessage("");
+    setMessageType("");
     const requiredFields = [
       "fullName",
       "phone",
@@ -283,29 +322,41 @@ export default function App() {
       return;
     }
 
-    setMessageType("success");
-    setMessage("Thank you! Your exchange request has been submitted.");
-    setForm(emptyForm);
+    setSubmitting(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      setMessageType("success");
+      setMessage("Thank you! Your exchange request has been submitted.");
+      setForm(emptyForm);
+    }, 1500);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ExpoStatusBar style="dark" />
       <StatusBar barStyle="dark-content" />
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={closeFeaturePicker}
+      >
         <Header />
-        <Text style={styles.title}>Exchange to EV</Text>
+        <Pressable onPress={closeFeaturePicker}>
+          <Text style={styles.title}>Exchange to EV</Text>
+        </Pressable>
 
         <TextField
           label="Full Name"
           required
           value={form.fullName}
+          onFocus={closeFeaturePicker}
           onChangeText={(value) => update("fullName", value)}
         />
         <TextField
           label="Email"
           value={form.email}
           keyboardType="email-address"
+          onFocus={closeFeaturePicker}
           onChangeText={(value) => update("email", value)}
         />
         <TextField
@@ -313,6 +364,7 @@ export default function App() {
           required
           value={form.phone}
           keyboardType="phone-pad"
+          onFocus={closeFeaturePicker}
           onChangeText={(value) => update("phone", value)}
         />
         <SelectField
@@ -320,6 +372,7 @@ export default function App() {
           required
           value={form.city}
           options={cities}
+          onOpen={closeFeaturePicker}
           onChange={(value) => update("city", value)}
         />
         <TextField
@@ -328,6 +381,7 @@ export default function App() {
           value={form.year}
           placeholder="2007"
           keyboardType="numeric"
+          onFocus={closeFeaturePicker}
           onChangeText={(value) => update("year", value)}
         />
         <SelectField
@@ -335,6 +389,7 @@ export default function App() {
           required
           value={form.vehicleType}
           options={vehicleTypes}
+          onOpen={closeFeaturePicker}
           onChange={(value) => update("vehicleType", value)}
         />
         <TextField
@@ -342,6 +397,7 @@ export default function App() {
           required
           value={form.model}
           placeholder="Santro"
+          onFocus={closeFeaturePicker}
           onChangeText={(value) => update("model", value)}
         />
         <TextField
@@ -349,6 +405,7 @@ export default function App() {
           required
           value={form.brand}
           placeholder="Hyundai"
+          onFocus={closeFeaturePicker}
           onChangeText={(value) => update("brand", value)}
         />
         <SelectField
@@ -356,6 +413,7 @@ export default function App() {
           required
           value={form.color}
           options={colors}
+          onOpen={closeFeaturePicker}
           onChange={(value) => update("color", value)}
         />
         <TextField
@@ -363,29 +421,38 @@ export default function App() {
           required
           value={form.kmDriven}
           keyboardType="numeric"
+          onFocus={closeFeaturePicker}
           onChangeText={(value) => update("kmDriven", value)}
         />
         <UploadField
           label="Upload Vehicle Document"
           value={form.document}
-          onPress={() => pickFile("document", "*/*")}
+          onPress={() => {
+            closeFeaturePicker();
+            pickFile("document", "*/*");
+          }}
         />
         <UploadField
           label="Upload Vehicle Photo"
           value={form.photo}
-          onPress={() => pickFile("photo", "image/*")}
+          onPress={() => {
+            closeFeaturePicker();
+            pickFile("photo", "image/*");
+          }}
         />
         <SelectField
           label="Transmission / Gear"
           required
           value={form.transmission}
           options={transmissions}
+          onOpen={closeFeaturePicker}
           onChange={(value) => update("transmission", value)}
         />
         <SelectField
           label="Accidents"
           value={form.accident}
           options={accidents}
+          onOpen={closeFeaturePicker}
           onChange={(value) => update("accident", value)}
         />
         <SelectField
@@ -393,10 +460,11 @@ export default function App() {
           required
           value={form.fuelType}
           options={fuelTypes}
+          onOpen={closeFeaturePicker}
           onChange={(value) => update("fuelType", value)}
         />
 
-        <View style={styles.field}>
+        <View ref={featurePickerRef} style={styles.field}>
           <Label>Features</Label>
           <View style={styles.featureBox}>
             <Pressable style={styles.addButton} onPress={() => setFeaturePickerOpen(true)}>
@@ -410,7 +478,7 @@ export default function App() {
                     onPress={() => toggleFeature(feature)}
                     style={[styles.feature, styles.featureSelected]}
                   >
-                    <Text style={styles.featureText}>{feature}</Text>
+                    <Text style={styles.featureText}>{feature} ×</Text>
                   </Pressable>
                 ))
               ) : (
@@ -426,11 +494,11 @@ export default function App() {
                   return (
                     <Pressable
                       key={feature}
-                      onPress={() => toggleFeature(feature)}
+                      onPress={selected ? undefined : () => toggleFeature(feature)}
                       style={[styles.featureOption, selected && styles.featureOptionSelected]}
                     >
                       <Text style={[styles.featureOptionText, selected && styles.featureOptionTextSelected]}>
-                        {feature}
+                        {selected ? `${feature} · added` : feature}
                       </Text>
                     </Pressable>
                   );
@@ -445,6 +513,7 @@ export default function App() {
           required
           value={form.evBrand}
           options={evBrands}
+          onOpen={closeFeaturePicker}
           onChange={(value) => update("evBrand", value)}
         />
         <SelectField
@@ -452,6 +521,7 @@ export default function App() {
           required
           value={form.finance}
           options={financeOptions}
+          onOpen={closeFeaturePicker}
           onChange={(value) => update("finance", value)}
         />
 
@@ -459,6 +529,7 @@ export default function App() {
           label="Notes"
           value={form.notes}
           multiline
+          onFocus={closeFeaturePicker}
           onChangeText={(value) => update("notes", value)}
         />
 
@@ -471,16 +542,29 @@ export default function App() {
         ) : null}
 
         <View style={styles.actions}>
-          <Pressable style={styles.clearButton} onPress={clearForm}>
+          <Pressable
+            style={[styles.clearButton, submitting && styles.clearButtonDisabled]}
+            onPress={submitting ? undefined : clearForm}
+          >
             {({ hovered }) => (
               <>
-                <Ionicons name="refresh" size={18} color="#006ffd" />
-                <Text style={[styles.clearText, hovered && styles.clearTextHover]}>Clear form</Text>
+                <Ionicons name="refresh" size={18} color={submitting ? "#93c5fd" : "#006ffd"} />
+                <Text style={[styles.clearText, submitting && styles.clearTextDisabled, hovered && !submitting && styles.clearTextHover]}>
+                  Clear form
+                </Text>
               </>
             )}
           </Pressable>
-          <Pressable style={({ hovered }) => [styles.submitButton, hovered && styles.submitButtonHover]} onPress={submit}>
-            <Text style={styles.submitText}>Submit</Text>
+          <Pressable
+            style={({ hovered }) => [
+              styles.submitButton,
+              hovered && !submitting && styles.submitButtonHover,
+              submitting && styles.submitButtonDisabled
+            ]}
+            onPress={submit}
+            disabled={submitting}
+          >
+            <Text style={styles.submitText}>{submitting ? "Submitting..." : "Submit"}</Text>
           </Pressable>
         </View>
 
@@ -819,14 +903,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff"
   },
   featureOptionSelected: {
-    backgroundColor: "#f8fafc"
+    backgroundColor: "#ffffff"
   },
   featureOptionText: {
     color: "#020617",
     fontSize: 18
   },
   featureOptionTextSelected: {
-    fontWeight: "700"
+    color: "#9ca3af",
+    fontWeight: "400"
   },
   actions: {
     marginTop: 42,
@@ -842,9 +927,15 @@ const styles = StyleSheet.create({
     paddingRight: 16,
     cursor: "pointer"
   },
+  clearButtonDisabled: {
+    cursor: "default"
+  },
   clearText: {
     color: "#006ffd",
     fontSize: 15
+  },
+  clearTextDisabled: {
+    color: "#93c5fd"
   },
   clearTextHover: {
     textDecorationLine: "underline"
@@ -858,6 +949,10 @@ const styles = StyleSheet.create({
   },
   submitButtonHover: {
     backgroundColor: "#2b2d31"
+  },
+  submitButtonDisabled: {
+    backgroundColor: "#6b6b6b",
+    cursor: "default"
   },
   submitText: {
     color: "#ffffff",
