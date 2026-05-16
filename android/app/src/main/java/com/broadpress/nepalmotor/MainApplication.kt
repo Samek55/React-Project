@@ -1,4 +1,4 @@
-package com.samek55.nepalmotorexchange
+package com.broadpress.nepalmotor
 
 import android.app.Application
 import android.content.res.Configuration

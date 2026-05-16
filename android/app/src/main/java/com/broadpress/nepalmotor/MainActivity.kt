@@ -1,4 +1,4 @@
-package com.samek55.nepalmotorexchange
+package com.broadpress.nepalmotor
 
 import android.os.Build
 import android.os.Bundle
