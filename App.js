@@ -9,7 +9,8 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
+  Keyboard
 } from "react-native";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import * as DocumentPicker from "expo-document-picker";
@@ -69,8 +70,8 @@ const emptyForm = {
   brand: "",
   color: "",
   kmDriven: "",
-  document: "",
-  photo: "",
+  document: [],
+  photo: [],
   evBrand: "",
   finance: "",
   transmission: "",
@@ -89,7 +90,19 @@ function Label({ children, required }) {
   );
 }
 
-function TextField({ label, value, onChangeText, required, multiline, keyboardType, helper, placeholder, onFocus }) {
+function TextField({
+  label,
+  value,
+  onChangeText,
+  required,
+  multiline,
+  keyboardType,
+  helper,
+  placeholder,
+  onFocus,
+  maxLength,
+  error
+}) {
   return (
     <View style={styles.field}>
       <Label required={required}>{label}</Label>
@@ -100,9 +113,11 @@ function TextField({ label, value, onChangeText, required, multiline, keyboardTy
         keyboardType={keyboardType}
         multiline={multiline}
         onFocus={onFocus}
+        maxLength={maxLength}
         placeholderTextColor="#9ca3af"
         style={[styles.input, multiline && styles.notes]}
       />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {helper ? <Text style={styles.helper}>{helper}</Text> : null}
     </View>
   );
@@ -117,6 +132,7 @@ function SelectField({ label, value, required, options, onChange, onOpen }) {
       <Pressable
         style={styles.select}
         onPress={() => {
+          Keyboard.dismiss();
           onOpen?.();
           setOpen((current) => !current);
         }}
@@ -154,33 +170,58 @@ function SelectField({ label, value, required, options, onChange, onOpen }) {
   );
 }
 
-function UploadField({ label, value, onPress }) {
-  const isImage = value?.type?.startsWith("image/");
-  const displayName = value?.name || "";
-
+function UploadField({ label, value = [], onPress }) {
   return (
     <View style={styles.field}>
       <Label>{label}</Label>
+
       <Pressable style={styles.upload} onPress={onPress}>
         <Ionicons name="cloud-upload-outline" size={18} color="#1f2937" />
         <Text style={styles.uploadText}>
-          Drop files here or <Text style={styles.browseText}>browse</Text>
+          Upload up to 5 files <Text style={styles.browseText}>browse</Text>
         </Text>
       </Pressable>
-      {value ? (
-        <View style={styles.filePreview}>
-          {isImage ? (
-            <Image source={{ uri: value.uri }} style={styles.fileThumb} />
-          ) : (
-            <View style={styles.fileDoc}>
-              <Text style={styles.fileDocText}>PDF</Text>
-            </View>
-          )}
-          <Text style={styles.fileName} numberOfLines={1}>
-            {displayName}
-          </Text>
+
+      {value.length > 0 && (
+        <View style={{ marginTop: 10 }}>
+          {value.map((file, index) => {
+            const isImage = file?.type?.startsWith("image/");
+
+            return (
+              <View
+                key={index}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 8,
+                  padding: 10,
+                  borderWidth: 1,
+                  borderColor: "#dedede",
+                  borderRadius: 6
+                }}
+              >
+                {isImage ? (
+                  <Image
+                    source={{ uri: file.uri }}
+                    style={{ width: 40, height: 40, borderRadius: 6 }}
+                  />
+                ) : (
+                  <View style={styles.fileDoc}>
+                    <Text style={styles.fileDocText}>DOC</Text>
+                  </View>
+                )}
+
+                <Text
+                  numberOfLines={1}
+                  style={{ marginLeft: 10, flex: 1 }}
+                >
+                  {file.name}
+                </Text>
+              </View>
+            );
+          })}
         </View>
-      ) : null}
+      )}
     </View>
   );
 }
@@ -228,7 +269,9 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [yearError, setYearError] = useState("");
   const featurePickerRef = useRef(null);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (!featurePickerOpen || typeof document === "undefined") {
@@ -276,25 +319,30 @@ export default function App() {
     setMessage("");
     setMessageType("");
     setSubmitting(false);
+    setErrors({});
   };
 
   const pickFile = async (key, type) => {
     const result = await DocumentPicker.getDocumentAsync({
       type,
       copyToCacheDirectory: true,
-      multiple: false
+      multiple: true
     });
 
     if (result.canceled) {
       return;
     }
 
-    const asset = result.assets[0];
-    update(key, {
+    const selectedFiles = result.assets.slice(0, 5).map((asset) => ({
       name: asset?.name || "Selected file",
       uri: asset?.uri,
       type: asset?.mimeType || ""
-    });
+    }));
+
+    setForm((current) => ({
+      ...current,
+      [key]: [...current[key], ...selectedFiles].slice(0, 5)
+    }));
   };
 
   const submit = () => {
@@ -305,39 +353,49 @@ export default function App() {
     setFeaturePickerOpen(false);
     setMessage("");
     setMessageType("");
-    const requiredFields = [
-      "fullName",
-      "phone",
-      "city",
-      "year",
-      "vehicleType",
-      "model",
-      "brand",
-      "color",
-      "kmDriven",
-      "transmission",
-      "fuelType",
-      "evBrand",
-      "finance"
-    ];
-    const missingRequiredField = requiredFields.some((key) => {
-      const value = form[key];
-      return Array.isArray(value) ? !value.length : !String(value || "").trim();
-    });
+    const newErrors = {};
 
-    if (missingRequiredField) {
-      setMessageType("error");
-      setMessage("Please fill in all required fields.");
+    if (!form.fullName.trim()) newErrors.fullName = "Full Name is required";
+
+    if (!form.phone || form.phone.length !== 10)
+      newErrors.phone = "Enter valid 10-digit phone number";
+
+    if (!form.year) newErrors.year = "Year is required";
+
+    if (!form.model.trim())
+      newErrors.model = "Vehicle Model is required";
+
+    if (!form.brand.trim())
+      newErrors.brand = "Vehicle Brand is required";
+
+    if (!form.kmDriven.trim())
+      newErrors.kmDriven = "KM Driven is required";
+
+    if (!form.document.length)
+      newErrors.document = "Upload vehicle document";
+
+    if (!form.photo.length)
+      newErrors.photo = "Upload vehicle photo";
+
+    const year = Number(form.year);
+
+    if (form.year && (year < 1981 || year > 2026)) {
+      newErrors.year = "Year must be between 1981 and 2026";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
     setSubmitting(true);
     setTimeout(() => {
-      setSubmitting(false);
-      setMessageType("success");
-      setMessage("Thank you! Your exchange request has been submitted.");
-      setForm(emptyForm);
-    }, 1500);
+    setSubmitting(false);
+    setMessageType("success");
+    setMessage("Thank you! Your exchange request has been submitted.");
+    setForm(emptyForm);
+    setErrors({});
+  }, 1500);
   };
 
   return (
@@ -358,6 +416,7 @@ export default function App() {
           label="Full Name"
           required
           value={form.fullName}
+          error={errors.fullName}
           onFocus={closeFeaturePicker}
           onChangeText={(value) => update("fullName", value)}
         />
@@ -372,9 +431,14 @@ export default function App() {
           label="Phone"
           required
           value={form.phone}
+          error={errors.phone}
           keyboardType="phone-pad"
+          maxLength={10}
           onFocus={closeFeaturePicker}
-          onChangeText={(value) => update("phone", value)}
+          onChangeText={(value) => {
+            const onlyNumbers = value.replace(/[^0-9]/g, "");
+            update("phone", onlyNumbers);
+          }}
         />
         <SelectField
           label="City"
@@ -390,8 +454,23 @@ export default function App() {
           value={form.year}
           placeholder="2007"
           keyboardType="numeric"
+          maxLength={4}
+          error={errors.year}
           onFocus={closeFeaturePicker}
-          onChangeText={(value) => update("year", value)}
+          onChangeText={(value) => {
+            const onlyNumbers = value.replace(/[^0-9]/g, "").slice(0, 4);
+            update("year", onlyNumbers);
+
+            const year = Number(onlyNumbers);
+
+            setErrors((current) => ({
+              ...current,
+              year:
+                onlyNumbers.length === 4 && (year < 1981 || year > 2026)
+                  ? "Year must be between 1981 and 2026"
+                  : ""
+            }));
+          }}
         />
         <SelectField
           label="Vehicle Type"
@@ -405,6 +484,7 @@ export default function App() {
           label="Vehicle Model"
           required
           value={form.model}
+          error={errors.model}
           placeholder="Santro"
           onFocus={closeFeaturePicker}
           onChangeText={(value) => update("model", value)}
@@ -413,6 +493,7 @@ export default function App() {
           label="Vehicle Brand"
           required
           value={form.brand}
+          error={errors.brand}
           placeholder="Hyundai"
           onFocus={closeFeaturePicker}
           onChangeText={(value) => update("brand", value)}
@@ -429,6 +510,7 @@ export default function App() {
           label="KM Driven"
           required
           value={form.kmDriven}
+          error={errors.kmDriven}
           keyboardType="numeric"
           onFocus={closeFeaturePicker}
           onChangeText={(value) => update("kmDriven", value)}
@@ -476,7 +558,13 @@ export default function App() {
         <View ref={featurePickerRef} style={styles.field}>
           <Label>Features</Label>
           <View style={styles.featureBox}>
-            <Pressable style={styles.addButton} onPress={() => setFeaturePickerOpen(true)}>
+            <Pressable
+              style={styles.addButton}
+              onPress={() => {
+                Keyboard.dismiss();
+                setFeaturePickerOpen(true);
+              }}
+            >
               <Ionicons name="add" size={23} color="#222222" />
             </Pressable>
             <View style={styles.featureList}>
@@ -629,7 +717,7 @@ const styles = StyleSheet.create({
   brandText: {
     flexShrink: 1,
     color: "#020617",
-    fontSize: 34,
+    fontSize: 30,
     fontWeight: "800"
   },
   phoneButton: {
@@ -669,13 +757,13 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 564,
     alignSelf: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: 18,
     paddingTop: 30,
     paddingBottom: 80
   },
   title: {
     color: "#020617",
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "700",
     marginBottom: 42,
     paddingBottom: 26,
@@ -1000,5 +1088,10 @@ const styles = StyleSheet.create({
   },
   report: {
     textDecorationLine: "underline"
-  }
+  },
+  errorText: {
+    color: "#dc2626",
+    fontSize: 13,
+    marginTop: 6
+  },
 });
