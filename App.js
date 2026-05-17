@@ -19,8 +19,9 @@ import Svg, { Path } from "react-native-svg";
 
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
 const phoneNumber = "+9779800000000";
+const vehicleSubmissionEndpoint = "https://nepalmotor.com/api/vehicle-submission";
 
-const colors = ["White", "Silver", "Black", "Grey", "Red", "Blue", "Other"];
+const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
   "Itahari",
   "Kathmandu",
@@ -28,19 +29,14 @@ const cities = [
   "Lalitpur",
   "Bharatpur",
   "Biratnagar",
-  "Birgunj",
-  "Butwal",
-  "Dharan",
-  "Hetauda",
-  "Nepalgunj",
   "Other"
 ];
-const vehicleTypes = ["Hatchback", "Sedan", "SUV", "Compact SUV", "Van", "Pickup", "I don't know"];
-const evBrands = ["BYD", "Tata", "MG", "Hyundai", "Kia", "Neta", "Deepal", "Other"];
+const vehicleTypes = ["Hatchback", "Sedan", "SUV", "Crossover", "Pickup", "Van", "Two-wheeler", "Other"];
+const evBrands = ["BYD", "Tesla", "Nissan", "Hyundai", "MG", "Tata", "Mahindra", "Other / undecided"];
 const financeOptions = ["Yes", "No"];
-const transmissions = ["Automatic", "Manual", "Semi Automatic"];
-const accidents = ["Yes", "No", "Few Times", "Many Times", "I don't know", "Other"];
-const fuelTypes = ["Petrol", "Diesel", "Electric", "Hybrid", "CNG", "LPG", "Other"];
+const transmissions = ["Manual", "Automatic", "CVT", "Other"];
+const accidents = ["None", "Minor", "Major", "Prefer not to say"];
+const fuelTypes = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "Other"];
 const features = [
   "Basic",
   "A/C",
@@ -205,6 +201,81 @@ const emptyForm = {
   fuelType: "Petrol",
   features: [],
   notes: ""
+};
+
+const fileNames = (files) => files.map((file) => file.name).filter(Boolean).join(", ");
+
+const buildVehicleSubmission = (form, isSellForm) => {
+  const documentNames = fileNames(form.document);
+  const photoNames = fileNames(form.photo);
+  const notes = [
+    form.notes.trim(),
+    documentNames ? `Vehicle documents: ${documentNames}` : "",
+    photoNames ? `Vehicle photos: ${photoNames}` : "",
+    `Request Type: ${isSellForm ? "Sell Used Car" : "Exchange to EV"}`
+  ].filter(Boolean).join("\n");
+
+  const formData = new FormData();
+
+  formData.append("fullName", form.fullName.trim());
+  formData.append("email", form.email.trim());
+  formData.append("phone", form.phone.trim());
+  formData.append("city", form.city);
+  formData.append("year", form.year.trim());
+  formData.append("vehicleType", form.vehicleType);
+  formData.append("vehicleBrand", form.brand.trim());
+  formData.append("vehicleModel", form.model.trim());
+  formData.append("vehicleColor", form.color);
+  formData.append("kmDriven", form.kmDriven.trim());
+  formData.append("evBrand", isSellForm ? "Other / undecided" : form.evBrand);
+  formData.append("finance", isSellForm ? "No" : form.finance);
+  formData.append("transmission", form.transmission);
+  formData.append("accidents", isSellForm ? "Prefer not to say" : form.accident);
+  formData.append("fuelType", form.fuelType);
+  formData.append("features", JSON.stringify(form.features));
+  formData.append("notes", notes);
+
+  return formData;
+};
+
+const postVehicleSubmission = async (submission) => {
+  const response = await fetch(vehicleSubmissionEndpoint, {
+    method: "POST",
+    body: submission
+  });
+  const responseText = await response.text();
+  let responseBody = {};
+
+  try {
+    responseBody = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    responseBody = {};
+  }
+
+  if (response.ok) {
+    return responseBody;
+  }
+
+  const serverMessage =
+    responseBody?.error?.message ||
+    responseBody?.message ||
+    responseText ||
+    "No response body";
+
+  throw new Error(`Submission failed (${response.status}): ${serverMessage}`);
+};
+
+const submissionErrorMessage = (error) => {
+  if (error?.message === "Failed to fetch") {
+    return [
+      "Unable to reach submission server.",
+      `Endpoint: ${vehicleSubmissionEndpoint}`,
+      "Status: no response",
+      "Response: request failed before server response"
+    ].join("\n");
+  }
+
+  return error?.message || "Submission failed. Please try again.";
 };
 
 function Label({ children, required }) {
@@ -716,7 +787,7 @@ export default function App() {
     }));
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (submitting) {
       return;
     }
@@ -767,20 +838,28 @@ export default function App() {
     setSubmitting(true);
     const submittedFormKey = formKey;
     const submittedIsSellForm = isSellForm;
-    setTimeout(() => {
-    setSubmitting(false);
-    setMessageType("success");
-    setMessage(
-      submittedIsSellForm
-        ? "Thank you! Your sell used car request has been submitted."
-        : "Thank you! Your exchange request has been submitted."
-    );
-    setForms((current) => ({
-      ...current,
-      [submittedFormKey]: emptyForm
-    }));
-    setErrors({});
-  }, 1500);
+    const submission = buildVehicleSubmission(form, submittedIsSellForm);
+
+    try {
+      await postVehicleSubmission(submission);
+
+      setMessageType("success");
+      setMessage(
+        submittedIsSellForm
+          ? "Thank you! Your sell used car request has been submitted."
+          : "Thank you! Your exchange request has been submitted."
+      );
+      setForms((current) => ({
+        ...current,
+        [submittedFormKey]: emptyForm
+      }));
+      setErrors({});
+    } catch (error) {
+      setMessageType("error");
+      setMessage(submissionErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

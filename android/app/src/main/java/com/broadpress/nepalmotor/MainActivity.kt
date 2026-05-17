@@ -1,4 +1,4 @@
-package com.broadpress.nepalmotor
+package com.pracas.nepalmotor
 
 import android.os.Build
 import android.os.Bundle

@@ -9,3 +9,6 @@ android/build/
 *-error.log
 form-mobile-check.png
 local.properties
+android/keystore.properties
+android/app/*.jks
+android/app/*.keystore

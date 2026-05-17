@@ -13,7 +13,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.broadpress.nepalmotor",
+      "package": "com.pracas.nepalmotor",
       "adaptiveIcon": {
         "foregroundImage": "./assets/nepal-motor-adaptive-foreground-safe.png",
         "backgroundColor": "#FFFFFF"
