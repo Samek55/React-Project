@@ -4,7 +4,7 @@
     "slug": "nepal-motor-exchange-form",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/nepal-motor-icon.png",
+    "icon": "./assets/nepal-motor-icon-safe.png",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
       "**/*"
@@ -15,13 +15,13 @@
     "android": {
       "package": "com.broadpress.nepalmotor",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/nepal-motor-adaptive-foreground.png",
+        "foregroundImage": "./assets/nepal-motor-adaptive-foreground-safe.png",
         "backgroundColor": "#FFFFFF"
       }
     },
     "web": {
       "bundler": "metro",
-      "favicon": "./assets/nepal-motor-icon.png"
+      "favicon": "./assets/nepal-motor-icon-safe.png"
     },
     "plugins": [
       "expo-font"
