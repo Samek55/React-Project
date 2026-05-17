@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "NEPAL Motor",
+    "slug": "nepal-motor-exchange-form",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/nepal-motor-icon.png",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.broadpress.nepalmotor",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/nepal-motor-adaptive-foreground.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/nepal-motor-icon.png"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
