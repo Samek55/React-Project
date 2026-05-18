@@ -219,18 +219,26 @@ const appendUpload = (formData, fieldName, file) => {
 };
 
 const appendFeatureFields = (formData, featuresValue) => {
+  const featuresText = featuresValue.join(", ");
+
   if (!featuresValue.length) {
     formData.append("features", "");
+    formData.append("Features", "");
+    formData.append("vehicleFeatures", "");
+    formData.append("additionalFeatures", "");
+    formData.append("featuresCsv", "");
     return;
   }
 
-  // backend usually expects repeated multipart fields
-  featuresValue.forEach((feature) => {
-    formData.append("features", feature);
-  });
+  formData.append("features", featuresText);
+  formData.append("Features", featuresText);
+  formData.append("vehicleFeatures", featuresText);
+  formData.append("additionalFeatures", featuresText);
+  formData.append("featuresCsv", featuresText);
 
-  // optional string version too
-  formData.append("featuresCsv", featuresValue.join(","));
+  featuresValue.forEach((feature) => {
+    formData.append("features[]", feature);
+  });
 };
 
 const buildVehicleSubmission = (form, isSellForm, options = {}) => {
