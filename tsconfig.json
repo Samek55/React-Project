@@ -1,0 +1,25 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "ignoreDeprecations": "6.0",
+    "jsx": "react-native",
+    "noEmit": true,
+    "rootDir": ".",
+    "skipLibCheck": true,
+    "strict": false
+  },
+  "include": [
+    "App.js",
+    "app.json",
+    "babel.config.js"
+  ],
+  "exclude": [
+    "android",
+    "dist",
+    "live-nepalmotor-com",
+    "node_modules",
+    "release"
+  ]
+}
