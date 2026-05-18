@@ -20,7 +20,8 @@ import Svg, { Path } from "react-native-svg";
 
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
 const phoneNumber = "+9779800000000";
-const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
+const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-listings";
+const vehicleSubmissionEndpointFallback = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointNonWww = "https://nepalmotor.com/api/vehicle-submission";
 
 const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
@@ -220,9 +221,10 @@ const appendUpload = (formData, fieldName, file) => {
 
 const appendFeatureFields = (formData, featuresValue) => {
   const featuresText = featuresValue.join(", ");
+  const featuresJson = JSON.stringify(featuresValue);
 
   if (!featuresValue.length) {
-    formData.append("features", "");
+    formData.append("features", "[]");
     formData.append("Features", "");
     formData.append("vehicleFeatures", "");
     formData.append("additionalFeatures", "");
@@ -230,7 +232,7 @@ const appendFeatureFields = (formData, featuresValue) => {
     return;
   }
 
-  formData.append("features", featuresText);
+  formData.append("features", featuresJson);
   formData.append("Features", featuresText);
   formData.append("vehicleFeatures", featuresText);
   formData.append("additionalFeatures", featuresText);
@@ -286,6 +288,7 @@ const buildVehicleSubmission = (form, isSellForm, options = {}) => {
 const postVehicleSubmission = async (form, isSellForm) => {
   const endpoints = [
     vehicleSubmissionEndpoint,
+    vehicleSubmissionEndpointFallback,
     vehicleSubmissionEndpointNonWww
   ];
 
