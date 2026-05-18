@@ -20,8 +20,8 @@ import Svg, { Path } from "react-native-svg";
 
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
 const phoneNumber = "+9779800000000";
-const vehicleSubmissionEndpoint = "https://nepalmotor.com/api/vehicle-submission";
-const vehicleSubmissionEndpointWww = "https://www.nepalmotor.com/api/vehicle-submission";
+const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
+const vehicleSubmissionEndpointNonWww = "https://nepalmotor.com/api/vehicle-submission";
 
 const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
@@ -286,7 +286,7 @@ const buildVehicleSubmission = (form, isSellForm, options = {}) => {
 const postVehicleSubmission = async (form, isSellForm) => {
   const endpoints = [
     vehicleSubmissionEndpoint,
-    vehicleSubmissionEndpointWww
+    vehicleSubmissionEndpointNonWww
   ];
 
   let lastError;
