@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Image,
   Linking,
+  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -20,6 +21,7 @@ import Svg, { Path } from "react-native-svg";
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
 const phoneNumber = "+9779800000000";
 const vehicleSubmissionEndpoint = "https://nepalmotor.com/api/vehicle-submission";
+const vehicleSubmissionEndpointWww = "https://www.nepalmotor.com/api/vehicle-submission";
 
 const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
@@ -32,10 +34,10 @@ const cities = [
   "Other"
 ];
 const vehicleTypes = ["Hatchback", "Sedan", "SUV", "Crossover", "Pickup", "Van", "Two-wheeler", "Other"];
-const evBrands = ["BYD", "Tesla", "Nissan", "Hyundai", "MG", "Tata", "Mahindra", "Other / undecided"];
+const evBrands = ["BYD", "Tesla", "Nissan", "Hyundai", "MG", "Tata", "Mahindra", "Other"];
 const financeOptions = ["Yes", "No"];
 const transmissions = ["Manual", "Automatic", "CVT", "Other"];
-const accidents = ["None", "Minor", "Major", "Prefer not to say"];
+const accidents = ["No", "Minor", "Major", "Prefer not to say"];
 const fuelTypes = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "Other"];
 const features = [
   "Basic",
@@ -203,19 +205,44 @@ const emptyForm = {
   notes: ""
 };
 
-const fileNames = (files) => files.map((file) => file.name).filter(Boolean).join(", ");
+const appendUpload = (formData, fieldName, file) => {
+  if (Platform.OS === "web" && file.file) {
+    formData.append(fieldName, file.file, file.name);
+    return;
+  }
 
-const buildVehicleSubmission = (form, isSellForm) => {
-  const documentNames = fileNames(form.document);
-  const photoNames = fileNames(form.photo);
-  const notes = [
-    form.notes.trim(),
-    documentNames ? `Vehicle documents: ${documentNames}` : "",
-    photoNames ? `Vehicle photos: ${photoNames}` : "",
-    `Request Type: ${isSellForm ? "Sell Used Car" : "Exchange to EV"}`
-  ].filter(Boolean).join("\n");
+  formData.append(fieldName, {
+  uri: Platform.OS === "android" ? file.uri : file.uri.replace("file://", ""),
+  name: file.name,
+  type: file.type || "image/jpeg"
+  });
+};
 
+const appendFeatureFields = (formData, featuresValue) => {
+  if (!featuresValue.length) {
+    formData.append("features", "");
+    return;
+  }
+
+  // backend usually expects repeated multipart fields
+  featuresValue.forEach((feature) => {
+    formData.append("features", feature);
+  });
+
+  // optional string version too
+  formData.append("featuresCsv", featuresValue.join(","));
+};
+
+const buildVehicleSubmission = (form, isSellForm, options = {}) => {
   const formData = new FormData();
+  const evBrandValue =
+    options.evBrand !== undefined
+      ? options.evBrand
+      : isSellForm
+        ? "Other"
+        : form.evBrand;
+  const financeValue = isSellForm ? "No" : form.finance;
+  const accidentValue = isSellForm ? "No" : form.accident || "No";
 
   formData.append("fullName", form.fullName.trim());
   formData.append("email", form.email.trim());
@@ -227,55 +254,74 @@ const buildVehicleSubmission = (form, isSellForm) => {
   formData.append("vehicleModel", form.model.trim());
   formData.append("vehicleColor", form.color);
   formData.append("kmDriven", form.kmDriven.trim());
-  formData.append("evBrand", isSellForm ? "Other / undecided" : form.evBrand);
-  formData.append("finance", isSellForm ? "No" : form.finance);
   formData.append("transmission", form.transmission);
-  formData.append("accidents", isSellForm ? "Prefer not to say" : form.accident);
   formData.append("fuelType", form.fuelType);
-  formData.append("features", JSON.stringify(form.features));
-  formData.append("notes", notes);
+  formData.append("evBrand", evBrandValue);
+  formData.append("ev_brand", evBrandValue);
+  formData.append("EV Brand", evBrandValue);
+  formData.append("Interested EV Brand", evBrandValue);
+  formData.append("interestedEvBrand", evBrandValue);
+  formData.append("interested_ev_brand", evBrandValue);
+  formData.append("preferredEvBrand", evBrandValue);
+  formData.append("finance", financeValue);
+  formData.append("accidents", accidentValue);
+  formData.append("requestType", isSellForm ? "Sell Used Car" : "Exchange to EV");
+  formData.append("notes", form.notes.trim());
+
+  appendFeatureFields(formData, form.features);
+  form.document.forEach((file) => appendUpload(formData, "documents", file));
+  form.photo.forEach((file) => appendUpload(formData, "photos", file));
 
   return formData;
 };
 
-const postVehicleSubmission = async (submission) => {
-  const response = await fetch(vehicleSubmissionEndpoint, {
-    method: "POST",
-    body: submission
-  });
-  const responseText = await response.text();
-  let responseBody = {};
+const postVehicleSubmission = async (form, isSellForm) => {
+  const endpoints = [
+    vehicleSubmissionEndpoint,
+    vehicleSubmissionEndpointWww
+  ];
 
-  try {
-    responseBody = responseText ? JSON.parse(responseText) : {};
-  } catch {
-    responseBody = {};
+  let lastError;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: buildVehicleSubmission(form, isSellForm)
+      });
+
+      const responseText = await response.text();
+
+      let responseBody = {};
+      try {
+        responseBody = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        responseBody = { raw: responseText };
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Submission failed (${response.status}): ${
+            responseBody?.message ||
+            responseBody?.error?.message ||
+            responseBody?.error ||
+            responseText ||
+            "No response body"
+          }`
+        );
+      }
+
+      return responseBody;
+    } catch (error) {
+      lastError = error;
+    }
   }
 
-  if (response.ok) {
-    return responseBody;
-  }
-
-  const serverMessage =
-    responseBody?.error?.message ||
-    responseBody?.message ||
-    responseText ||
-    "No response body";
-
-  throw new Error(`Submission failed (${response.status}): ${serverMessage}`);
+  throw lastError || new Error("Network request failed");
 };
 
 const submissionErrorMessage = (error) => {
-  if (error?.message === "Failed to fetch") {
-    return [
-      "Unable to reach submission server.",
-      `Endpoint: ${vehicleSubmissionEndpoint}`,
-      "Status: no response",
-      "Response: request failed before server response"
-    ].join("\n");
-  }
-
-  return error?.message || "Submission failed. Please try again.";
+  return error?.message || String(error) || "Submission failed. Please try again.";
 };
 
 function Label({ children, required }) {
@@ -321,7 +367,7 @@ function TextField({
   );
 }
 
-function SelectField({ label, value, required, options, onChange, onOpen }) {
+function SelectField({ label, value, required, options, onChange, onOpen, error }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -364,6 +410,7 @@ function SelectField({ label, value, required, options, onChange, onOpen }) {
           </ScrollView>
         </View>
       ) : null}
+      {error ? <Text allowFontScaling={false} style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -540,29 +587,39 @@ function FooterNavigation({ activeTab, onChange }) {
 }
 
 function FAQsPage() {
-  let faqNumber = 1;
+  const flatFaqs = faqSections.flatMap((section) => section.items);
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   return (
-    <View>
-      <Text style={styles.title}>FAQs</Text>
-      {faqSections.map((section) => (
-        <View key={section.title} style={styles.faqSection}>
-          <Text style={styles.faqSectionTitle}>{section.title}</Text>
-          {section.items.map((item) => {
-            const number = faqNumber;
-            faqNumber += 1;
+    <View style={styles.faqPage}>
+      <Text allowFontScaling={false} style={styles.faqPageTitle}>
+        Frequently Asked Questions
+      </Text>
+      {flatFaqs.map((item, index) => {
+        const expanded = openFaqIndex === index;
 
-            return (
-              <View key={item.question} style={styles.faqItem}>
-                <Text style={styles.faqQuestion}>
-                  {number}. {item.question}
-                </Text>
-                <Text style={styles.faqAnswer}>{item.answer}</Text>
-              </View>
-            );
-          })}
-        </View>
-      ))}
+        return (
+          <Pressable
+            key={item.question}
+            accessibilityRole="button"
+            accessibilityState={{ expanded }}
+            onPress={() => setOpenFaqIndex(expanded ? null : index)}
+            style={({ pressed, hovered }) => [
+              styles.faqItem,
+              (pressed || hovered) && styles.faqItemActive
+            ]}
+          >
+            <Text allowFontScaling={false} style={styles.faqQuestion}>
+              {index + 1}. {item.question}
+            </Text>
+            {expanded ? (
+              <Text allowFontScaling={false} style={styles.faqAnswer}>
+                {item.answer}
+              </Text>
+            ) : null}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -775,7 +832,8 @@ export default function App() {
     const selectedFiles = result.assets.slice(0, 5).map((asset) => ({
       name: asset?.name || "Selected file",
       uri: asset?.uri,
-      type: asset?.mimeType || ""
+      type: asset?.mimeType || "application/octet-stream",
+      file: asset?.file
     }));
 
     setForms((current) => ({
@@ -812,14 +870,29 @@ export default function App() {
     if (!form.brand.trim())
       newErrors.brand = "Vehicle Brand is required";
 
+    if (!form.color)
+      newErrors.color = "Vehicle Color is required";
+
     if (!form.kmDriven.trim())
       newErrors.kmDriven = "KM Driven is required";
 
     if (!form.document.length)
       newErrors.document = "Upload vehicle document";
 
-    if (!isSellForm && !form.photo.length)
+    if (!form.photo.length)
       newErrors.photo = "Upload vehicle photo";
+
+    if (!form.transmission)
+      newErrors.transmission = "Transmission / Gear is required";
+
+    if (!form.fuelType)
+      newErrors.fuelType = "Fuel Type is required";
+
+    if (!isSellForm && !form.evBrand)
+      newErrors.evBrand = "Interested EV Brand is required";
+
+    if (!isSellForm && !form.finance)
+      newErrors.finance = "Finance selection is required";
 
     const year = Number(form.year);
 
@@ -838,10 +911,9 @@ export default function App() {
     setSubmitting(true);
     const submittedFormKey = formKey;
     const submittedIsSellForm = isSellForm;
-    const submission = buildVehicleSubmission(form, submittedIsSellForm);
-
     try {
-      await postVehicleSubmission(submission);
+      const apiResponse = await postVehicleSubmission(form, submittedIsSellForm);
+      console.log("API RESPONSE:", apiResponse);
 
       setMessageType("success");
       setMessage(
@@ -985,6 +1057,7 @@ export default function App() {
           label="Vehicle Color"
           required
           value={form.color}
+          error={errors.color}
           options={colors}
           onOpen={closeFeaturePicker}
           onChange={(value) => update("color", value)}
@@ -1007,21 +1080,20 @@ export default function App() {
             pickFile("document", "*/*");
           }}
         />
-        {!isSellForm ? (
-          <UploadField
-            label="Upload Vehicle Photo"
-            value={form.photo}
-            error={errors.photo}
-            onPress={() => {
-              closeFeaturePicker();
-              pickFile("photo", "image/*");
-            }}
-          />
-        ) : null}
+        <UploadField
+          label="Upload Vehicle Photo"
+          value={form.photo}
+          error={errors.photo}
+          onPress={() => {
+            closeFeaturePicker();
+            pickFile("photo", "image/*");
+          }}
+        />
         <SelectField
           label="Transmission / Gear"
           required
           value={form.transmission}
+          error={errors.transmission}
           options={transmissions}
           onOpen={closeFeaturePicker}
           onChange={(value) => update("transmission", value)}
@@ -1039,6 +1111,7 @@ export default function App() {
           label="Fuel Type"
           required
           value={form.fuelType}
+          error={errors.fuelType}
           options={fuelTypes}
           onOpen={closeFeaturePicker}
           onChange={(value) => update("fuelType", value)}
@@ -1107,6 +1180,7 @@ export default function App() {
               label="Interested EV Brand"
               required
               value={form.evBrand}
+              error={errors.evBrand}
               options={evBrands}
               onOpen={closeFeaturePicker}
               onChange={(value) => update("evBrand", value)}
@@ -1115,6 +1189,7 @@ export default function App() {
               label="Are you looking for Finance?"
               required
               value={form.finance}
+              error={errors.finance}
               options={financeOptions}
               onOpen={closeFeaturePicker}
               onChange={(value) => update("finance", value)}
@@ -1606,40 +1681,46 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 55
   },
-  faqSection: {
-    marginBottom: 28
+  faqPage: {
+    paddingTop: 20
   },
-  faqSectionTitle: {
-    color: "#075985",
-    fontSize: 18,
+  faqPageTitle: {
+    color: "#064e3b",
+    fontSize: 28,
     fontWeight: "800",
-    marginBottom: 12
+    lineHeight: 35,
+    marginBottom: 42
   },
   faqItem: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 8,
+    borderColor: "#9fd8ca",
+    borderRadius: 22,
     backgroundColor: "#ffffff",
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    marginBottom: 10,
-    shadowColor: "#000000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1
+    paddingHorizontal: 25,
+    paddingVertical: 22,
+    marginBottom: 30,
+    shadowColor: "#047857",
+    shadowOpacity: 0.12,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+    cursor: "pointer"
+  },
+  faqItemActive: {
+    borderColor: "#7cc8b7",
+    shadowOpacity: 0.17
   },
   faqQuestion: {
-    color: "#020617",
-    fontSize: 15,
+    color: "#064e3b",
+    fontSize: 21,
     fontWeight: "800",
-    lineHeight: 21,
-    marginBottom: 7
+    lineHeight: 27
   },
   faqAnswer: {
-    color: "#475569",
-    fontSize: 14,
-    lineHeight: 21
+    color: "#050505",
+    fontSize: 19,
+    lineHeight: 31,
+    marginTop: 14
   },
   branchList: {
     gap: 12
