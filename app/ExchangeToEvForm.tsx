@@ -87,17 +87,17 @@ const FEATURE_PRESETS = [
   "4WD",
   "ABS",
   "Airbags",
-  "Power steering",
-  "Power windows",
-  "Central locking",
-  "Music system",
-  "Alloy wheels",
-  "Fog lamps",
+  "Power Steering",
+  "Power Windows",
+  "Central Locking",
+  "Music System",
+  "Alloy Wheels",
+  "Fog Lamps",
   "Sunroof",
-  "Leather seats",
-  "Reverse camera",
-  "Cruise control",
-  "Keyless entry",
+  "Leather Seats",
+  "Backup Camera",
+  "Cruise Control",
+  "Keyless Entry",
 ];
 
 function CloudIcon({ className }: { className?: string }) {
@@ -389,7 +389,12 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     body.append("transmission", transmission);
     body.append("accidents", accidentsValue);
     body.append("fuelType", fuelType);
-    body.append("features", JSON.stringify(features));
+    const featuresText = features.join(", ");
+    body.append("features", featuresText);
+    body.append("Features", featuresText);
+    body.append("vehicleFeatures", featuresText);
+    body.append("featuresJson", JSON.stringify(features));
+    for (const feature of features) body.append("features[]", feature);
     body.append("notes", notes.trim());
     if (isSellForm) {
       body.append("requestType", "Sell Used Car");
