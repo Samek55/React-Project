@@ -5,6 +5,8 @@
     "checkJs": false,
     "ignoreDeprecations": "5.0",
     "jsx": "react-native",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "rootDir": ".",
     "skipLibCheck": true,
