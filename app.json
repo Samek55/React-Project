@@ -28,6 +28,7 @@
       [
         "expo-image-picker",
         {
+          "cameraPermission": false,
           "photosPermission": "Allow NEPAL Motor to access your photos so you can upload vehicle images."
         }
       ]
