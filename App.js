@@ -20,9 +20,8 @@ import Svg, { Path } from "react-native-svg";
 
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
 const phoneNumber = "+9779800000000";
-const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-listings";
-const vehicleSubmissionEndpointFallback = "https://www.nepalmotor.com/api/vehicle-submission";
-const vehicleSubmissionEndpointNonWww = "https://nepalmotor.com/api/vehicle-submission";
+const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
+const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
 
 const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
@@ -208,38 +207,20 @@ const emptyForm = {
 
 const appendUpload = (formData, fieldName, file) => {
   if (Platform.OS === "web" && file.file) {
-    formData.append(fieldName, file.file, file.name);
+    formData.append(fieldName, file.file, file.name || "photo.jpg");
     return;
   }
 
   formData.append(fieldName, {
-  uri: Platform.OS === "android" ? file.uri : file.uri.replace("file://", ""),
-  name: file.name,
-  type: file.type || "image/jpeg"
+    uri: file.uri,
+    name: file.name || "photo.jpg",
+    type: file.type || "image/jpeg"
   });
 };
 
 const appendFeatureFields = (formData, featuresValue) => {
-  const featuresText = featuresValue.join(", ");
-  const featuresJson = JSON.stringify(featuresValue);
-
-  if (!featuresValue.length) {
-    formData.append("features", "[]");
-    formData.append("Features", "");
-    formData.append("vehicleFeatures", "");
-    formData.append("additionalFeatures", "");
-    formData.append("featuresCsv", "");
-    return;
-  }
-
-  formData.append("features", featuresJson);
-  formData.append("Features", featuresText);
-  formData.append("vehicleFeatures", featuresText);
-  formData.append("additionalFeatures", featuresText);
-  formData.append("featuresCsv", featuresText);
-
   featuresValue.forEach((feature) => {
-    formData.append("features[]", feature);
+    formData.append("features", feature);
   });
 };
 
@@ -288,8 +269,7 @@ const buildVehicleSubmission = (form, isSellForm, options = {}) => {
 const postVehicleSubmission = async (form, isSellForm) => {
   const endpoints = [
     vehicleSubmissionEndpoint,
-    vehicleSubmissionEndpointFallback,
-    vehicleSubmissionEndpointNonWww
+    vehicleSubmissionEndpointFallback
   ];
 
   let lastError;
@@ -309,6 +289,10 @@ const postVehicleSubmission = async (form, isSellForm) => {
       } catch {
         responseBody = { raw: responseText };
       }
+
+      console.log("API ENDPOINT:", endpoint);
+      console.log("API RESPONSE:", responseBody);
+      console.log("attachments:", responseBody.received?.attachments);
 
       if (!response.ok) {
         throw new Error(
@@ -426,10 +410,24 @@ function SelectField({ label, value, required, options, onChange, onOpen, error 
   );
 }
 
-function UploadField({ label, value = [], onPress, error }) {
+function UploadField({ label, value = [], onPress, onRemove, onClear, error }) {
   return (
     <View style={styles.field}>
-      <Label>{label}</Label>
+      <View style={styles.uploadLabelRow}>
+        <Label>{label}</Label>
+        {value.length > 0 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Clear ${label}`}
+            hitSlop={8}
+            onPress={onClear}
+            style={styles.clearUploadButton}
+          >
+            <Ionicons name="trash-outline" size={15} color="#dc2626" />
+            <Text allowFontScaling={false} style={styles.clearUploadText}>Clear all</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       <Pressable style={styles.upload} onPress={onPress}>
         <Ionicons name="cloud-upload-outline" size={18} color="#1f2937" />
@@ -440,27 +438,28 @@ function UploadField({ label, value = [], onPress, error }) {
       {error ? <Text allowFontScaling={false} style={styles.errorText}>{error}</Text> : null}
 
       {value.length > 0 && (
-        <View style={{ marginTop: 10 }}>
+        <View style={styles.filePreviewList}>
           {value.map((file, index) => {
             const isImage = file?.type?.startsWith("image/");
 
             return (
               <View
-                key={index}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 8,
-                  padding: 10,
-                  borderWidth: 1,
-                  borderColor: "#dedede",
-                  borderRadius: 6
-                }}
+                key={`${file?.uri || file?.name || "file"}-${index}`}
+                style={styles.filePreview}
               >
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${file.name || "selected file"}`}
+                  hitSlop={8}
+                  onPress={() => onRemove?.(index)}
+                  style={styles.fileRemove}
+                >
+                  <Ionicons name="close" size={14} color="#475569" />
+                </Pressable>
                 {isImage ? (
                   <Image
                     source={{ uri: file.uri }}
-                    style={{ width: 40, height: 40, borderRadius: 6 }}
+                    style={styles.fileThumb}
                   />
                 ) : (
                   <View style={styles.fileDoc}>
@@ -471,7 +470,7 @@ function UploadField({ label, value = [], onPress, error }) {
                 <Text
                   allowFontScaling={false}
                   numberOfLines={1}
-                  style={{ marginLeft: 10, flex: 1 }}
+                  style={styles.fileName}
                 >
                   {file.name}
                 </Text>
@@ -830,6 +829,7 @@ export default function App() {
   };
 
   const pickFile = async (key, type) => {
+    const targetFormKey = formKey;
     const result = await DocumentPicker.getDocumentAsync({
       type,
       copyToCacheDirectory: true,
@@ -840,18 +840,42 @@ export default function App() {
       return;
     }
 
-    const selectedFiles = result.assets.slice(0, 5).map((asset) => ({
-      name: asset?.name || "Selected file",
-      uri: asset?.uri,
-      type: asset?.mimeType || "application/octet-stream",
-      file: asset?.file
-    }));
+    setForms((current) => {
+      const existingFiles = current[targetFormKey][key];
+      const remainingSlots = Math.max(0, 5 - existingFiles.length);
+      const selectedFiles = result.assets.slice(0, remainingSlots).map((asset) => ({
+        name: asset?.name || "Selected file",
+        uri: asset?.uri,
+        type: asset?.mimeType || "application/octet-stream",
+        file: asset?.file
+      }));
 
+      return {
+        ...current,
+        [targetFormKey]: {
+          ...current[targetFormKey],
+          [key]: [...existingFiles, ...selectedFiles].slice(0, 5)
+        }
+      };
+    });
+  };
+
+  const removeFile = (key, index) => {
     setForms((current) => ({
       ...current,
       [formKey]: {
         ...current[formKey],
-        [key]: [...current[formKey][key], ...selectedFiles].slice(0, 5)
+        [key]: current[formKey][key].filter((_, fileIndex) => fileIndex !== index)
+      }
+    }));
+  };
+
+  const clearFiles = (key) => {
+    setForms((current) => ({
+      ...current,
+      [formKey]: {
+        ...current[formKey],
+        [key]: []
       }
     }));
   };
@@ -925,6 +949,10 @@ export default function App() {
     try {
       const apiResponse = await postVehicleSubmission(form, submittedIsSellForm);
       console.log("API RESPONSE:", apiResponse);
+      console.log("attachments:", apiResponse.received?.attachments);
+      if (apiResponse.warning || apiResponse.warnings) {
+        console.warn("API warning:", apiResponse.warning || apiResponse.warnings);
+      }
 
       setMessageType("success");
       setMessage(
@@ -1086,6 +1114,8 @@ export default function App() {
           label="Upload Vehicle Document"
           value={form.document}
           error={errors.document}
+          onRemove={(index) => removeFile("document", index)}
+          onClear={() => clearFiles("document")}
           onPress={() => {
             closeFeaturePicker();
             pickFile("document", "*/*");
@@ -1095,6 +1125,8 @@ export default function App() {
           label="Upload Vehicle Photo"
           value={form.photo}
           error={errors.photo}
+          onRemove={(index) => removeFile("photo", index)}
+          onClear={() => clearFiles("photo")}
           onPress={() => {
             closeFeaturePicker();
             pickFile("photo", "image/*");
@@ -1152,7 +1184,7 @@ export default function App() {
                     onPress={() => toggleFeature(feature)}
                     style={[styles.feature, styles.featureSelected]}
                   >
-                    <Text style={styles.featureText}>{feature} ×</Text>
+                    <Text style={styles.featureText}>{feature} x</Text>
                   </Pressable>
                 ))
               ) : (
@@ -1473,6 +1505,26 @@ const styles = StyleSheet.create({
   dropdownTextSelected: {
     fontWeight: "700"
   },
+  uploadLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10
+  },
+  clearUploadButton: {
+    minHeight: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: "#fef2f2"
+  },
+  clearUploadText: {
+    color: "#dc2626",
+    fontSize: 12,
+    fontWeight: "700"
+  },
   upload: {
     height: 108,
     borderWidth: 1,
@@ -1495,6 +1547,12 @@ const styles = StyleSheet.create({
     color: "#006ffd",
     textDecorationLine: "underline"
   },
+  filePreviewList: {
+    marginTop: 10,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10
+  },
   filePreview: {
     width: 134,
     height: 134,
@@ -1506,6 +1564,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden"
+  },
+  fileRemove: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    zIndex: 2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    alignItems: "center",
+    justifyContent: "center"
   },
   fileThumb: {
     width: "100%",
