@@ -24,7 +24,13 @@
       "favicon": "./assets/nepal-motor-icon-safe.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow NEPAL Motor to access your photos so you can upload vehicle images."
+        }
+      ]
     ]
   }
 }

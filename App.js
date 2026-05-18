@@ -14,12 +14,13 @@ import {
   Keyboard
 } from "react-native";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
-import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
 const phoneNumber = "+9779800000000";
+const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings";
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
 
@@ -45,17 +46,17 @@ const features = [
   "4WD",
   "ABS",
   "Airbags",
-  "Power steering",
-  "Power windows",
-  "Central locking",
-  "Music system",
-  "Alloy wheels",
-  "Fog lamps",
+  "Power Steering",
+  "Power Windows",
+  "Central Locking",
+  "Music System",
+  "Alloy Wheels",
+  "Fog Lamps",
   "Sunroof",
-  "Leather seats",
-  "Reverse camera",
-  "Cruise control",
-  "Keyless entry"
+  "Leather Seats",
+  "Backup Camera",
+  "Cruise Control",
+  "Keyless Entry"
 ];
 
 const alphabetOnly = (value) => value.replace(/[^A-Za-z ]/g, "");
@@ -219,8 +220,26 @@ const appendUpload = (formData, fieldName, file) => {
 };
 
 const appendFeatureFields = (formData, featuresValue) => {
+  const featuresText = featuresValue.join(", ");
+
+  if (!featuresValue.length) {
+    formData.append("features", "");
+    formData.append("Features", "");
+    formData.append("vehicleFeatures", "");
+    formData.append("additionalFeatures", "");
+    formData.append("featuresCsv", "");
+    formData.append("featuresJson", "[]");
+    return;
+  }
+
+  formData.append("features", featuresText);
+  formData.append("Features", featuresText);
+  formData.append("vehicleFeatures", featuresText);
+  formData.append("additionalFeatures", featuresText);
+  formData.append("featuresCsv", featuresText);
+  formData.append("featuresJson", JSON.stringify(featuresValue));
   featuresValue.forEach((feature) => {
-    formData.append("features", feature);
+    formData.append("features[]", feature);
   });
 };
 
@@ -268,6 +287,7 @@ const buildVehicleSubmission = (form, isSellForm, options = {}) => {
 
 const postVehicleSubmission = async (form, isSellForm) => {
   const endpoints = [
+    vehicleListingsEndpoint,
     vehicleSubmissionEndpoint,
     vehicleSubmissionEndpointFallback
   ];
@@ -828,12 +848,20 @@ export default function App() {
     });
   };
 
-  const pickFile = async (key, type) => {
+  const pickFile = async (key) => {
     const targetFormKey = formKey;
-    const result = await DocumentPicker.getDocumentAsync({
-      type,
-      copyToCacheDirectory: true,
-      multiple: true
+    const existingFiles = forms[targetFormKey][key];
+    const remainingSlots = Math.max(0, 5 - existingFiles.length);
+
+    if (remainingSlots === 0) {
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: remainingSlots,
+      quality: 0.9
     });
 
     if (result.canceled) {
@@ -844,9 +872,9 @@ export default function App() {
       const existingFiles = current[targetFormKey][key];
       const remainingSlots = Math.max(0, 5 - existingFiles.length);
       const selectedFiles = result.assets.slice(0, remainingSlots).map((asset) => ({
-        name: asset?.name || "Selected file",
+        name: asset?.fileName || asset?.name || asset?.uri?.split("/").pop() || "Selected image",
         uri: asset?.uri,
-        type: asset?.mimeType || "application/octet-stream",
+        type: asset?.mimeType || "image/jpeg",
         file: asset?.file
       }));
 
@@ -1118,7 +1146,7 @@ export default function App() {
           onClear={() => clearFiles("document")}
           onPress={() => {
             closeFeaturePicker();
-            pickFile("document", "*/*");
+            pickFile("document");
           }}
         />
         <UploadField
@@ -1129,7 +1157,7 @@ export default function App() {
           onClear={() => clearFiles("photo")}
           onPress={() => {
             closeFeaturePicker();
-            pickFile("photo", "image/*");
+            pickFile("photo");
           }}
         />
         <SelectField
