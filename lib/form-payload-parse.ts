@@ -12,6 +12,8 @@ export function getFirstFormString(
 
 const FEATURE_FORM_KEYS = [
   "features",
+  "features[]",
+  "featuresJson",
   "Features",
   "vehicleFeatures",
   "Vehicle Features",

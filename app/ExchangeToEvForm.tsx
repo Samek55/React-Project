@@ -71,17 +71,17 @@ const FEATURE_PRESETS = [
   "4WD",
   "ABS",
   "Airbags",
-  "Power steering",
-  "Power windows",
-  "Central locking",
-  "Music system",
-  "Alloy wheels",
-  "Fog lamps",
+  "Power Steering",
+  "Power Windows",
+  "Central Locking",
+  "Music System",
+  "Alloy Wheels",
+  "Fog Lamps",
   "Sunroof",
-  "Leather seats",
-  "Reverse camera",
-  "Cruise control",
-  "Keyless entry",
+  "Leather Seats",
+  "Backup Camera",
+  "Cruise Control",
+  "Keyless Entry",
 ];
 
 function ChevronDown({ className }: { className?: string }) {
@@ -473,7 +473,12 @@ export function ExchangeToEvForm() {
     body.append("transmission", transmission);
     body.append("accidents", accidents);
     body.append("fuelType", fuelType);
-    body.append("features", JSON.stringify(features));
+    const featuresText = features.join(", ");
+    body.append("features", featuresText);
+    body.append("Features", featuresText);
+    body.append("vehicleFeatures", featuresText);
+    body.append("featuresJson", JSON.stringify(features));
+    for (const feature of features) body.append("features[]", feature);
     body.append("notes", notes.trim());
     for (const file of docFiles) body.append("documents", file);
     for (const file of photoFiles) body.append("photos", file);

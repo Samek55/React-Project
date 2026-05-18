@@ -47,9 +47,17 @@ const FEATURE_ALIASES: Record<string, string> = {
   abs: "ABS",
   airbag: "Airbags",
   airbags: "Airbags",
-  "leather seats": "Leather Seats",
-  "reverse camera": "Backup Camera",
+  "alloy wheels": "Alloy Wheels",
+  "backup camera": "Backup Camera",
+  "central locking": "Central Locking",
   "cruise control": "Cruise Control",
+  "fog lamps": "Fog Lamps",
+  "keyless entry": "Keyless Entry",
+  "leather seats": "Leather Seats",
+  "music system": "Music System",
+  "power steering": "Power Steering",
+  "power windows": "Power Windows",
+  "reverse camera": "Backup Camera",
   sunroof: "Sunroof",
 };
 
@@ -185,7 +193,7 @@ export async function resolveTableTarget(): Promise<TableTarget> {
     if (names.length > 0) selectChoices[field.name] = names;
   }
 
-  let documentsField =
+  const documentsField =
     findAttachmentField("Upload Vehicle Document", "Vehicle Document") ??
     findAttachmentByKeyword("document");
   let photosField =
@@ -397,76 +405,6 @@ export function resolveFeaturesColumn(
   return { columnName: "Features", choices: [] };
 }
 
-function fuzzyMultiSelectMatch(
-  feature: string,
-  choices: string[],
-): string | undefined {
-  const fn = normalizeSelectKey(feature);
-  if (!fn) return undefined;
-  for (const c of choices) {
-    if (normalizeSelectKey(c) === fn) return c;
-  }
-  for (const c of choices) {
-    const cn = normalizeSelectKey(c);
-    if (cn.includes(fn) || fn.includes(cn)) return c;
-  }
-  return undefined;
-}
-
-/** Split label into comparable tokens (handles "PW (Power windows)" etc.). */
-function featureMatchTokens(normalizedLabel: string): string[] {
-  return normalizedLabel
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter((t) => t.length >= 2);
-}
-
-/** Whether a feature token is covered by some choice token (incl. plural / prefix). */
-function featureTokenCoveredByChoiceTokens(
-  ft: string,
-  choiceTokens: string[],
-): boolean {
-  for (const ct of choiceTokens) {
-    if (ft === ct) return true;
-    if (ft.length >= 3 && ct.includes(ft)) return true;
-    if (ct.length >= 3 && ft.includes(ct)) return true;
-    const [shorter, longer] =
-      ft.length <= ct.length ? [ft, ct] : [ct, ft];
-    if (shorter.length >= 3 && longer.startsWith(shorter)) return true;
-  }
-  return false;
-}
-
-/** Every feature token must appear in the choice wording (handles abbreviated Airtable labels). */
-function bestFeatureChoiceByTokens(
-  feature: string,
-  choices: string[],
-): string | undefined {
-  const fn = normalizeSelectKey(feature);
-  const fts = featureMatchTokens(fn);
-  if (fts.length === 0) return undefined;
-
-  let best: string | undefined;
-  let bestScore = 0;
-
-  for (const c of choices) {
-    const cts = featureMatchTokens(normalizeSelectKey(c));
-    if (cts.length === 0) continue;
-    let covered = 0;
-    for (const ft of fts) {
-      if (featureTokenCoveredByChoiceTokens(ft, cts)) covered += 1;
-    }
-    const score = covered / fts.length;
-    if (score > bestScore) {
-      bestScore = score;
-      best = c;
-    }
-  }
-
-  return bestScore >= 1 ? best : undefined;
-}
-
 function resolveFeatureToChoice(
   feature: string,
   choices: string[],
@@ -477,14 +415,7 @@ function resolveFeatureToChoice(
   );
   const hit = byNorm.get(normalizeSelectKey(feature));
   if (hit) return hit;
-  const fuzzy = fuzzyMultiSelectMatch(feature, choices);
-  if (fuzzy) return fuzzy;
-  const picked = pickSingleSelectOption(choices, [
-    feature,
-    normalizeFeature(feature),
-  ]);
-  if (picked) return picked;
-  return bestFeatureChoiceByTokens(feature, choices);
+  return undefined;
 }
 
 /** Map form feature selections to the base's Features multi-select options. */
