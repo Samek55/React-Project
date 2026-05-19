@@ -5,6 +5,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/nepal-motor-icon-safe.png",
+    "splash": {
+      "image": "./assets/nepal-motor-icon-safe.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
       "**/*"

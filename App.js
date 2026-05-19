@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Image,
   Linking,
   Platform,
@@ -10,15 +11,20 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
   Keyboard
 } from "react-native";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import Svg, { Path } from "react-native-svg";
+import Svg, { Circle, Ellipse, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
+const exchangeImage = require("./assets/car-exchange.png");
+const sellImage = require("./assets/sell-used-car.png");
+const buyImage = require("./assets/buy-used-car.png");
 const phoneNumber = "+9779800000000";
 const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings";
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
@@ -61,12 +67,41 @@ const features = [
 
 const alphabetOnly = (value) => value.replace(/[^A-Za-z ]/g, "");
 const alphabetPattern = /^[A-Za-z ]+$/;
-const footerNavItems = [
-  { key: "exchange", label: "Exchange", svgIcon: "exchange" },
-  { key: "faqs", label: "FAQs", svgIcon: "graphql" },
-  { key: "sell", label: "Sell", svgIcon: "carSide" },
-  { key: "about", label: "About", svgIcon: "steering" },
-  { key: "branches", label: "Branches", svgIcon: "locationPin" }
+const navigationItems = [
+  { key: "exchange", label: "Exchange", drawerLabel: "Exchange to EV", icon: "swap-horizontal-outline", svgIcon: "exchange" },
+  { key: "sell", label: "Sell", drawerLabel: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide" },
+  { key: "buy", label: "Buy", drawerLabel: "Buy Used Car", icon: "key-outline", footer: false },
+  { key: "faqs", label: "FAQs", drawerLabel: "FAQs", icon: "help-circle-outline", svgIcon: "graphql" },
+  { key: "branches", label: "Branches", drawerLabel: "Branches", icon: "location-outline", svgIcon: "locationPin" },
+  { key: "about", label: "About", drawerLabel: "About NEPAL Motor", icon: "information-circle-outline", svgIcon: "steering" }
+];
+const footerNavItems = navigationItems.filter((item) => item.footer !== false);
+const onboardingStorageKey = "nepalMotorOnboardingComplete";
+const onboardingSlides = [
+  {
+    type: "exchange",
+    image: exchangeImage,
+    title: "Exchange to EV",
+    body: "Get rid of your petrol or diesel car and move into a brand new EV with guided valuation and exchange support.",
+    metric: "Brand new EV path",
+    detail: "Car exchange"
+  },
+  {
+    type: "sell",
+    image: sellImage,
+    title: "Sell Used Car",
+    body: "Get genuine valuation of your car with verified vehicle details, document review, and branch-backed support.",
+    metric: "Genuine valuation",
+    detail: "Used car selling"
+  },
+  {
+    type: "buy",
+    image: buyImage,
+    title: "Buy Used Car",
+    body: "Find hassle free car options with inspected vehicles, clear guidance, and smooth ownership assistance.",
+    metric: "Hassle free options",
+    detail: "Used car buying"
+  }
 ];
 const faqSections = [
   {
@@ -275,7 +310,7 @@ const buildVehicleSubmission = (form, isSellForm, options = {}) => {
   formData.append("preferredEvBrand", evBrandValue);
   formData.append("finance", financeValue);
   formData.append("accidents", accidentValue);
-  formData.append("requestType", isSellForm ? "Sell Used Car" : "Exchange to EV");
+  formData.append("requestType", isSellForm ? "Sell Used Car" : "Exchange to eV");
   formData.append("notes", form.notes.trim());
 
   appendFeatureFields(formData, form.features);
@@ -719,7 +754,384 @@ function HelplineIcon({ color = "#111827", size = 30 }) {
   );
 }
 
-function Header() {
+function SplashScreen() {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 1300,
+      useNativeDriver: false
+    }).start();
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.splashScreen}>
+      <ExpoStatusBar style="dark" />
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <View style={styles.splashContent}>
+        <Image source={nepalFlagLogo} style={styles.splashLogo} />
+      </View>
+      <View style={styles.splashLoadingTrack}>
+        <Animated.View
+          style={[
+            styles.splashLoadingBar,
+            {
+              width: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: ["0%", "100%"]
+              })
+            }
+          ]}
+        />
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function BuyUsedCarPage() {
+  const buyHighlights = [
+    {
+      icon: "shield-checkmark-outline",
+      title: "Verified Options",
+      body: "Browse used cars supported by inspection, condition review, and clear vehicle details."
+    },
+    {
+      icon: "document-text-outline",
+      title: "Clear Paperwork",
+      body: "Get help with ownership transfer, document checks, and purchase guidance."
+    },
+    {
+      icon: "call-outline",
+      title: "Branch Support",
+      body: "Talk with NEPAL Motor branches for viewing, valuation, and final purchase support."
+    }
+  ];
+
+  return (
+    <View>
+      <Text style={styles.title}>Buy Used Car</Text>
+      <View style={styles.buyHero}>
+        <View style={styles.buyHeroIcon}>
+          <Ionicons name="key-outline" size={34} color="#ffffff" />
+        </View>
+        <Text allowFontScaling={false} style={styles.buyHeroTitle}>
+          Hassle free car option
+        </Text>
+        <Text allowFontScaling={false} style={styles.buyHeroText}>
+          Choose inspected used cars with branch-backed guidance, transparent support, and smoother ownership transfer.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Call NEPAL Motor for used car buying"
+          onPress={() => Linking.openURL(`tel:${phoneNumber}`)}
+          style={({ hovered }) => [styles.buyHeroButton, hovered && styles.buyHeroButtonHover]}
+        >
+          <Ionicons name="call-outline" size={18} color="#ffffff" />
+          <Text allowFontScaling={false} style={styles.buyHeroButtonText}>Call for options</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.buyHighlightList}>
+        {buyHighlights.map((item) => (
+          <View key={item.title} style={styles.buyHighlightCard}>
+            <View style={styles.buyHighlightIcon}>
+              <Ionicons name={item.icon} size={22} color="#075985" />
+            </View>
+            <View style={styles.buyHighlightContent}>
+              <Text allowFontScaling={false} style={styles.buyHighlightTitle}>{item.title}</Text>
+              <Text allowFontScaling={false} style={styles.buyHighlightBody}>{item.body}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function ServiceIllustration({ type }) {
+  if (type === "sell") {
+    return (
+      <Svg width="100%" height="100%" viewBox="0 0 320 220">
+        <Rect x="38" y="44" width="88" height="82" rx="10" fill="#dbeafe" />
+        <Rect x="144" y="58" width="102" height="68" rx="10" fill="#e0e7ff" />
+        <Circle cx="80" cy="38" r="22" fill="#ffe4e6" stroke="#fb7185" strokeWidth="4" />
+        <Circle cx="132" cy="26" r="28" fill="#ffe4e6" stroke="#fb7185" strokeWidth="4" />
+        <TextSvg x="73" y="47" text="$" size={26} color="#ef4444" />
+        <TextSvg x="123" y="38" text="$" size={30} color="#ef4444" />
+        <Circle cx="236" cy="58" r="34" fill="#fecaca" stroke="#312e81" strokeWidth="5" />
+        <Line x1="236" y1="58" x2="236" y2="34" stroke="#312e81" strokeWidth="4" strokeLinecap="round" />
+        <Line x1="236" y1="58" x2="260" y2="62" stroke="#312e81" strokeWidth="4" strokeLinecap="round" />
+        <Path d="M58 156h186c20 0 35-13 39-31l-50-11H96c-18 0-32 8-38 26z" fill="#6366f1" />
+        <Path d="M96 116h72l22 34H70z" fill="#93c5fd" />
+        <Circle cx="98" cy="158" r="19" fill="#1e293b" />
+        <Circle cx="236" cy="158" r="19" fill="#1e293b" />
+        <Path d="M82 102c13-16 31-16 44 0" fill="none" stroke="#f97316" strokeWidth="11" strokeLinecap="round" />
+        <Path d="M96 106l28 24M154 130l31-24" stroke="#f97316" strokeWidth="12" strokeLinecap="round" />
+      </Svg>
+    );
+  }
+
+  if (type === "buy") {
+    return (
+      <Svg width="100%" height="100%" viewBox="0 0 320 220">
+        <Rect x="24" y="36" width="272" height="128" rx="34" fill="#d9f0ee" />
+        <Path d="M58 138c7-44 35-72 82-72h68c35 0 59 25 67 72z" fill="#ef4444" />
+        <Rect x="84" y="88" width="74" height="34" rx="5" fill="#cbd5e1" />
+        <Rect x="168" y="88" width="62" height="34" rx="5" fill="#cbd5e1" />
+        <Rect x="82" y="128" width="160" height="22" rx="8" fill="#1f2937" />
+        <Circle cx="90" cy="156" r="20" fill="#111827" />
+        <Circle cx="238" cy="156" r="20" fill="#111827" />
+        <Circle cx="90" cy="156" r="8" fill="#cbd5e1" />
+        <Circle cx="238" cy="156" r="8" fill="#cbd5e1" />
+        <Path d="M132 58c23 15 40 15 58 0" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" />
+        <Path d="M118 82l-32 34M202 82l34 34" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
+        <Path d="M106 66l22 24M214 66l-22 24" stroke="#334155" strokeWidth="8" strokeLinecap="round" />
+        <Circle cx="238" cy="42" r="21" fill="#ffffff" />
+        <TextSvg x="230" y="51" text="$" size={25} color="#15803d" />
+        <Path d="M267 38c11 0 17 12 9 20l-12 12" fill="none" stroke="#334155" strokeWidth="4" strokeLinecap="round" />
+        <Path d="M60 178h232" stroke="#111827" strokeWidth="7" strokeLinecap="round" />
+      </Svg>
+    );
+  }
+
+  return (
+    <Svg width="100%" height="100%" viewBox="0 0 320 220">
+      <Ellipse cx="160" cy="108" rx="126" ry="88" fill="#f1e3d8" />
+      <Rect x="70" y="50" width="136" height="82" rx="8" fill="#ead6ca" />
+      <Circle cx="134" cy="47" r="30" fill="#e07658" stroke="#ffffff" strokeWidth="5" />
+      <Path d="M144 72l26 30M154 82l-12 12" stroke="#374151" strokeWidth="5" strokeLinecap="round" />
+      <Path d="M122 40l12-12 13 13-12 12z" fill="#f7d5bd" />
+      <Path d="M56 148c7-39 32-63 75-63h59c39 0 67 25 74 63z" fill="#df7657" />
+      <Rect x="84" y="103" width="78" height="31" rx="4" fill="#26303a" />
+      <Rect x="168" y="103" width="50" height="31" rx="4" fill="#26303a" />
+      <Circle cx="98" cy="157" r="20" fill="#334155" />
+      <Circle cx="238" cy="157" r="20" fill="#334155" />
+      <Circle cx="98" cy="157" r="10" fill="#dfc8ad" />
+      <Circle cx="238" cy="157" r="10" fill="#dfc8ad" />
+      <Path d="M76 70c20-21 42-10 44 16" fill="none" stroke="#111827" strokeWidth="9" strokeLinecap="round" />
+      <Path d="M80 92l35 29M206 74c23 10 39 27 48 51" stroke="#111827" strokeWidth="11" strokeLinecap="round" />
+      <Path d="M112 122c27 7 55 7 83 0" stroke="#a85536" strokeWidth="9" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function TextSvg({ x, y, text, size, color }) {
+  return (
+    <SvgText x={x} y={y} fill={color} fontSize={size} fontWeight="900">
+      {text}
+    </SvgText>
+  );
+}
+
+function OnboardingScreen({ onDone }) {
+  const { width } = useWindowDimensions();
+  const [slideIndex, setSlideIndex] = useState(0);
+  const slide = onboardingSlides[slideIndex];
+  const finalSlide = slideIndex === onboardingSlides.length - 1;
+  const viewportWidth =
+    Platform.OS === "web" && typeof window !== "undefined" ? window.innerWidth : width;
+  const inset = Platform.OS === "web" ? 132 : 40;
+  const contentWidth = Math.max(280, Math.min(viewportWidth, 564) - inset);
+
+  const goNext = () => {
+    if (finalSlide) {
+      onDone();
+      return;
+    }
+    setSlideIndex((i) => i + 1);
+  };
+
+  return (
+    <SafeAreaView style={styles.onboardingScreen}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+
+      <View style={[styles.onboardingHeader, { width: contentWidth }]}>
+        <View style={styles.onboardingBrand}>
+          <Image source={nepalFlagLogo} style={styles.onboardingLogo} />
+          <Text allowFontScaling={false} style={styles.onboardingBrandText}>
+            NEPAL Motor
+          </Text>
+        </View>
+        <Pressable onPress={onDone}>
+          <Text allowFontScaling={false} style={styles.onboardingSkipText}>
+            Skip
+          </Text>
+        </Pressable>
+      </View>
+
+      <View style={[styles.onboardingTextBlock, { width: contentWidth }]}>
+        <Text allowFontScaling={false} style={styles.onboardingTitle}>
+          {slide.title}
+        </Text>
+        <Text allowFontScaling={false} style={styles.onboardingBody}>
+          {slide.body}
+        </Text>
+      </View>
+
+      <View style={[styles.onboardingVisual, { width: contentWidth }]}>
+        <Image
+          source={slide.image}
+          resizeMode="contain"
+          style={styles.onboardingImage}
+        />
+      </View>
+
+      <View style={styles.onboardingDots}>
+        {onboardingSlides.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.onboardingDot,
+              index === slideIndex && styles.onboardingDotActive
+            ]}
+          />
+        ))}
+      </View>
+
+      <Pressable
+        style={styles.onboardingButton}
+        onPress={goNext}
+      >
+        <Text allowFontScaling={false} style={styles.onboardingButtonText}>
+          {finalSlide ? "Get Started" : "Next"}
+        </Text>
+      </Pressable>
+    </SafeAreaView>
+  );
+}
+
+function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
+  if (!visible) {
+    return null;
+  }
+
+  const callSupport = () => {
+    Linking.openURL(`tel:${phoneNumber}`);
+    onClose();
+  };
+
+  const primaryItems = [
+    { label: "Home", icon: "home-outline", navKey: "exchange" },
+    { label: "Exchange to EV", icon: "swap-horizontal-outline", navKey: "exchange" },
+    { label: "Sell Used Car", icon: "cash-outline", navKey: "sell" },
+    { label: "About Us", icon: "information-circle-outline", navKey: "about" },
+    { label: "Contact", icon: "call-outline", action: callSupport },
+  ];
+
+  const secondaryItems = [
+    { label: "Become a Dealer", icon: "business-outline", action: callSupport },
+    { label: "Free Test Drive", icon: "car-sport-outline", action: callSupport },
+    { label: "FAQs", icon: "help-circle-outline", navKey: "faqs" },
+    { label: "Glossary", icon: "book-outline", action: onClose },
+  ];
+
+  const handlePress = (item) => {
+    if (item.action) {
+      item.action();
+    } else {
+      onSelect(item.navKey);
+      onClose();
+    }
+  };
+
+  return (
+    <View style={styles.drawerOverlay}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Close drawer"
+        onPress={onClose}
+        style={styles.drawerScrim}
+      />
+      <View style={styles.drawerPanel}>
+        <View style={styles.drawerHeader}>
+          <Image source={nepalFlagLogo} style={styles.drawerLogo} />
+          <Text allowFontScaling={false} numberOfLines={1} style={styles.drawerTitle}>
+            NEPAL Motor
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close drawer"
+            hitSlop={8}
+            onPress={onClose}
+            style={({ hovered }) => [styles.drawerClose, hovered && styles.drawerCloseHover]}
+          >
+            <Ionicons name="close" size={22} color="#334155" />
+          </Pressable>
+        </View>
+
+        <View style={styles.drawerDivider} />
+
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.drawerBody}>
+          <View style={styles.drawerSection}>
+            {primaryItems.map((item, i) => {
+              const active = item.navKey && activeTab === item.navKey && item.label !== "Home";
+              return (
+                <Pressable
+                  key={i}
+                  accessibilityRole="button"
+                  onPress={() => handlePress(item)}
+                  style={({ hovered }) => [
+                    styles.drawerItem,
+                    active && styles.drawerItemActive,
+                    hovered && styles.drawerItemHover
+                  ]}
+                >
+                  <Ionicons name={item.icon} size={22} color={active ? "#075985" : "#475569"} />
+                  <Text
+                    allowFontScaling={false}
+                    style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={styles.drawerDivider} />
+
+          <View style={styles.drawerSection}>
+            {secondaryItems.map((item, i) => {
+              const active = item.navKey && activeTab === item.navKey;
+              return (
+                <Pressable
+                  key={i}
+                  accessibilityRole="button"
+                  onPress={() => handlePress(item)}
+                  style={({ hovered }) => [
+                    styles.drawerItem,
+                    active && styles.drawerItemActive,
+                    hovered && styles.drawerItemHover
+                  ]}
+                >
+                  <Ionicons name={item.icon} size={22} color={active ? "#075985" : "#475569"} />
+                  <Text
+                    allowFontScaling={false}
+                    style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={styles.drawerAdminWrap}>
+            <Pressable
+              accessibilityRole="button"
+              style={({ hovered }) => [styles.drawerAdminButton, hovered && styles.drawerAdminButtonHover]}
+            >
+              <Text allowFontScaling={false} style={styles.drawerAdminText}>Admin Login</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </View>
+    </View>
+  );
+}
+
+function Header({ onOpenDrawer }) {
   const callNepalMotor = () => {
     Linking.openURL(`tel:${phoneNumber}`);
   };
@@ -727,6 +1139,15 @@ function Header() {
   return (
     <View style={styles.header}>
       <View style={styles.navCard}>
+        <Pressable
+          style={({ hovered }) => [styles.menuButton, hovered && styles.menuButtonHover]}
+          accessibilityRole="button"
+          accessibilityLabel="Open navigation drawer"
+          hitSlop={12}
+          onPress={onOpenDrawer}
+        >
+          <Ionicons name="menu" size={28} color="#0f172a" />
+        </Pressable>
         <View style={styles.brand}>
           <Image source={nepalFlagLogo} style={styles.logo} />
           <Text allowFontScaling={false} style={styles.brandText} numberOfLines={1}>
@@ -757,6 +1178,8 @@ function Header() {
 }
 
 export default function App() {
+  const [appPhase, setAppPhase] = useState("splash");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [forms, setForms] = useState({
     exchange: emptyForm,
     sell: emptyForm
@@ -774,6 +1197,26 @@ export default function App() {
   const formKey = isSellForm ? "sell" : "exchange";
   const form = forms[formKey];
   const availableFeatures = features.filter((feature) => !form.features.includes(feature));
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const loadOnboardingState = async () => {
+        let onboardingComplete = false;
+
+        if (Platform.OS === "web" && typeof window !== "undefined") {
+          onboardingComplete = window.localStorage?.getItem(onboardingStorageKey) === "true";
+        } else {
+          onboardingComplete = (await AsyncStorage.getItem(onboardingStorageKey)) === "true";
+        }
+
+        setAppPhase(onboardingComplete ? "main" : "onboarding");
+      };
+
+      loadOnboardingState().catch(() => setAppPhase("onboarding"));
+    }, 1400);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!featurePickerOpen || typeof document === "undefined") {
@@ -838,6 +1281,7 @@ export default function App() {
 
   const changeFooterTab = (tab) => {
     closeFeaturePicker();
+    setDrawerOpen(false);
     setErrors({});
     setMessage("");
     setMessageType("");
@@ -846,6 +1290,18 @@ export default function App() {
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     });
+  };
+
+  const completeOnboarding = async () => {
+    try {
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        window.localStorage?.setItem(onboardingStorageKey, "true");
+      } else {
+        await AsyncStorage.setItem(onboardingStorageKey, "true");
+      }
+    } finally {
+      setAppPhase("main");
+    }
   };
 
   const pickFile = async (key) => {
@@ -1001,6 +1457,14 @@ export default function App() {
     }
   };
 
+  if (appPhase === "splash") {
+    return <SplashScreen />;
+  }
+
+  if (appPhase === "onboarding") {
+    return <OnboardingScreen onDone={completeOnboarding} />;
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ExpoStatusBar style="dark" />
@@ -1011,9 +1475,11 @@ export default function App() {
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={closeFeaturePicker}
       >
-        <Header />
+        <Header onOpenDrawer={() => setDrawerOpen(true)} />
         {activeFooterTab === "faqs" ? (
           <FAQsPage />
+        ) : activeFooterTab === "buy" ? (
+          <BuyUsedCarPage />
         ) : activeFooterTab === "branches" ? (
           <BranchesPage />
         ) : activeFooterTab === "about" ? (
@@ -1021,7 +1487,7 @@ export default function App() {
         ) : (
           <>
         <Pressable onPress={closeFeaturePicker}>
-          <Text allowFontScaling={false} style={styles.title}>{isSellForm ? "Sell Any Car" : "Exchange to EV"}</Text>
+          <Text allowFontScaling={false} style={styles.title}>{isSellForm ? "Sell Used Car" : "Exchange to eV"}</Text>
         </Pressable>
 
         <TextField
@@ -1321,11 +1787,421 @@ export default function App() {
         activeTab={activeFooterTab}
         onChange={changeFooterTab}
       />
+      <DrawerNavigation
+        activeTab={activeFooterTab}
+        visible={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSelect={changeFooterTab}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  splashScreen: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 46
+  },
+  splashContent: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  splashLogo: {
+    width: 160,
+    height: 160,
+    borderRadius: 80
+  },
+  splashTitle: {
+    marginTop: 26,
+    color: "#ffffff",
+    fontSize: 32,
+    fontWeight: "900",
+    textAlign: "center"
+  },
+  splashSubtitle: {
+    width: "100%",
+    maxWidth: 280,
+    marginTop: 12,
+    color: "#e0f2fe",
+    fontSize: 16,
+    fontWeight: "800",
+    lineHeight: 23,
+    textAlign: "center"
+  },
+  splashServiceList: {
+    width: "100%",
+    maxWidth: 320,
+    marginTop: 28,
+    gap: 9
+  },
+  splashServiceItem: {
+    minHeight: 54,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    shadowColor: "#000000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1
+  },
+  splashServiceIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#e0f2fe",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  splashServiceCopy: {
+    flex: 1,
+    minWidth: 0
+  },
+  splashServiceTitle: {
+    color: "#020617",
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  splashServiceText: {
+    marginTop: 2,
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "700"
+  },
+  splashLoadingTrack: {
+    width: 154,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#e2e8f0",
+    overflow: "hidden"
+  },
+  splashLoadingBar: {
+    width: "70%",
+    height: "100%",
+    borderRadius: 2,
+    backgroundColor: "#075985"
+  },
+  onboardingScreen: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    paddingTop: 34,
+    paddingBottom: 30
+  },
+  onboardingHeader: {
+    alignSelf: "center",
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  onboardingBrand: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10
+  },
+  onboardingLogo: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: "#e5e7eb"
+  },
+  onboardingBrandText: {
+    color: "#075985",
+    fontSize: 18,
+    fontWeight: "900"
+  },
+  onboardingSkipText: {
+    color: "#7c3aed",
+    fontSize: 14,
+    fontWeight: "800",
+    paddingHorizontal: 12,
+    paddingVertical: 6
+  },
+  onboardingTextBlock: {
+    alignSelf: "center",
+    marginTop: 28,
+    paddingHorizontal: 4
+  },
+  onboardingTitle: {
+    color: "#075985",
+    fontSize: 30,
+    lineHeight: 38,
+    fontWeight: "900"
+  },
+  onboardingBody: {
+    marginTop: 12,
+    color: "#075985",
+    fontSize: 16,
+    lineHeight: 24
+  },
+  onboardingVisual: {
+    flex: 1,
+    alignSelf: "center",
+    marginTop: 24,
+    marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  onboardingImage: {
+    width: "100%",
+    height: "100%"
+  },
+  onboardingDots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 7,
+    paddingVertical: 18
+  },
+  onboardingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#cbd5e1"
+  },
+  onboardingDotActive: {
+    width: 26,
+    backgroundColor: "#075985"
+  },
+  onboardingButton: {
+    width: 200,
+    minHeight: 54,
+    alignSelf: "center",
+    marginTop: 8,
+    borderRadius: 27,
+    backgroundColor: "#075985",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#075985",
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5
+  },
+  onboardingButtonText: {
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "800"
+  },
+  drawerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 16,
+    paddingVertical: 28
+  },
+  drawerScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(15, 23, 42, 0.48)"
+  },
+  drawerPanel: {
+    width: "80%",
+    maxWidth: 320,
+    maxHeight: "92%",
+    backgroundColor: "#f1f5f9",
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000000",
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 20
+  },
+  drawerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 22,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    gap: 12
+  },
+  drawerLogo: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: "#e2e8f0"
+  },
+  drawerTitle: {
+    flex: 1,
+    color: "#075985",
+    fontSize: 18,
+    fontWeight: "900"
+  },
+  drawerClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  drawerCloseHover: {
+    backgroundColor: "#e2e8f0"
+  },
+  drawerDivider: {
+    height: 1,
+    backgroundColor: "#e2e8f0",
+    marginHorizontal: 16,
+    marginVertical: 4
+  },
+  drawerBody: {
+    flex: 1
+  },
+  drawerSection: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 2
+  },
+  drawerItem: {
+    minHeight: 52,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14
+  },
+  drawerItemHover: {
+    backgroundColor: "#e2e8f0"
+  },
+  drawerItemActive: {
+    backgroundColor: "#dbeafe"
+  },
+  drawerItemText: {
+    flex: 1,
+    color: "#334155",
+    fontSize: 15,
+    fontWeight: "700"
+  },
+  drawerItemTextActive: {
+    color: "#075985",
+    fontWeight: "800"
+  },
+  drawerAdminWrap: {
+    paddingHorizontal: 18,
+    paddingBottom: 32,
+    paddingTop: 10
+  },
+  drawerAdminButton: {
+    minHeight: 50,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#334155",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  drawerAdminButtonHover: {
+    backgroundColor: "#e2e8f0"
+  },
+  drawerAdminText: {
+    color: "#334155",
+    fontSize: 15,
+    fontWeight: "800"
+  },
+  buyHero: {
+    borderRadius: 8,
+    backgroundColor: "#075985",
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+    marginBottom: 18,
+    shadowColor: "#000000",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 4
+  },
+  buyHeroIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16
+  },
+  buyHeroTitle: {
+    color: "#ffffff",
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "900"
+  },
+  buyHeroText: {
+    marginTop: 9,
+    color: "#e0f2fe",
+    fontSize: 15,
+    lineHeight: 23
+  },
+  buyHeroButton: {
+    alignSelf: "flex-start",
+    minHeight: 42,
+    marginTop: 18,
+    borderRadius: 6,
+    backgroundColor: "#111318",
+    paddingHorizontal: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  buyHeroButtonHover: {
+    backgroundColor: "#2b2d31"
+  },
+  buyHeroButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "800"
+  },
+  buyHighlightList: {
+    gap: 12
+  },
+  buyHighlightCard: {
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    padding: 14,
+    flexDirection: "row",
+    gap: 12,
+    shadowColor: "#000000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1
+  },
+  buyHighlightIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    backgroundColor: "#e5f3ff",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  buyHighlightContent: {
+    flex: 1,
+    minWidth: 0
+  },
+  buyHighlightTitle: {
+    color: "#020617",
+    fontSize: 16,
+    fontWeight: "900",
+    marginBottom: 4
+  },
+  buyHighlightBody: {
+    color: "#475569",
+    fontSize: 14,
+    lineHeight: 21
+  },
   safeArea: {
     flex: 1,
     backgroundColor: "#ffffff"
@@ -1345,11 +2221,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 7,
     shadowColor: "#000000",
     shadowOpacity: 0.1,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 5 },
     elevation: 4
+  },
+  menuButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  menuButtonHover: {
+    backgroundColor: "#f1f5f9"
   },
   brand: {
     minWidth: 0,
