@@ -25,7 +25,7 @@ const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
 const exchangeImage = require("./assets/car-exchange.png");
 const sellImage = require("./assets/sell-used-car.png");
 const buyImage = require("./assets/buy-used-car.png");
-const phoneNumber = "+9779800000000";
+const phoneNumber = "+9779852024365";
 const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings";
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
@@ -40,12 +40,13 @@ const cities = [
   "Biratnagar",
   "Other"
 ];
-const vehicleTypes = ["Hatchback", "Sedan", "SUV", "Crossover", "Pickup", "Van", "Two-wheeler", "Other"];
+const vehicleTypes = ["Hatchback", "Sedan", "SUV", "Crossover", "Pickup", "Van", "Other"];
 const evBrands = ["BYD", "Tesla", "Nissan", "Hyundai", "MG", "Tata", "Mahindra", "Other"];
 const financeOptions = ["Yes", "No"];
 const transmissions = ["Manual", "Automatic", "CVT", "Other"];
 const accidents = ["No", "Minor", "Major", "Prefer not to say"];
 const fuelTypes = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "Other"];
+const fuelTypesWithEV = ["Petrol", "Diesel", "EV", "Hybrid", "CNG", "LPG", "Other"];
 const features = [
   "Basic",
   "A/C",
@@ -69,11 +70,11 @@ const alphabetOnly = (value) => value.replace(/[^A-Za-z ]/g, "");
 const alphabetPattern = /^[A-Za-z ]+$/;
 const navigationItems = [
   { key: "exchange", label: "Exchange", drawerLabel: "Exchange to EV", icon: "swap-horizontal-outline", svgIcon: "exchange" },
-  { key: "sell", label: "Sell", drawerLabel: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide" },
-  { key: "buy", label: "Buy", drawerLabel: "Buy Used Car", icon: "key-outline", footer: false },
   { key: "faqs", label: "FAQs", drawerLabel: "FAQs", icon: "help-circle-outline", svgIcon: "graphql" },
+  { key: "sell", label: "Sell", drawerLabel: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide" },
+  { key: "about", label: "About", drawerLabel: "About NEPAL Motor", icon: "information-circle-outline", svgIcon: "steering" },
   { key: "branches", label: "Branches", drawerLabel: "Branches", icon: "location-outline", svgIcon: "locationPin" },
-  { key: "about", label: "About", drawerLabel: "About NEPAL Motor", icon: "information-circle-outline", svgIcon: "steering" }
+  { key: "buy", label: "Buy", drawerLabel: "Buy Used Car", icon: "key-outline", footer: false },
 ];
 const footerNavItems = navigationItems.filter((item) => item.footer !== false);
 const onboardingStorageKey = "nepalMotorOnboardingComplete";
@@ -84,7 +85,8 @@ const onboardingSlides = [
     title: "Exchange to EV",
     body: "Get rid of your petrol or diesel car and move into a brand new EV with guided valuation and exchange support.",
     metric: "Brand new EV path",
-    detail: "Car exchange"
+    detail: "Car exchange",
+    aspectRatio: 1
   },
   {
     type: "sell",
@@ -92,7 +94,8 @@ const onboardingSlides = [
     title: "Sell Used Car",
     body: "Get genuine valuation of your car with verified vehicle details, document review, and branch-backed support.",
     metric: "Genuine valuation",
-    detail: "Used car selling"
+    detail: "Used car selling",
+    aspectRatio: 1
   },
   {
     type: "buy",
@@ -100,7 +103,9 @@ const onboardingSlides = [
     title: "Buy Used Car",
     body: "Find hassle free car options with inspected vehicles, clear guidance, and smooth ownership assistance.",
     metric: "Hassle free options",
-    detail: "Used car buying"
+    detail: "Used car buying",
+    aspectRatio: 1.48,
+    resizeMode: "contain"
   }
 ];
 const faqSections = [
@@ -239,7 +244,8 @@ const emptyForm = {
   fuelType: "Petrol",
   features: [],
   notes: "",
-  budget: ""
+  budget: "",
+  sellingPrice: ""
 };
 
 const appendUpload = (formData, fieldName, file) => {
@@ -316,6 +322,7 @@ const buildVehicleSubmission = (form, isSellForm, options = {}) => {
   formData.append("requestType", requestType);
   formData.append("notes", form.notes.trim());
   if (isBuyForm && form.budget.trim()) formData.append("budget", form.budget.trim());
+  if (isSellForm && form.sellingPrice.trim()) formData.append("sellingPrice", form.sellingPrice.trim());
 
   appendFeatureFields(formData, form.features);
   if (!isBuyForm) {
@@ -544,17 +551,33 @@ function UploadField({ label, value = [], onPress, onRemove, onClear, error }) {
   );
 }
 
+function renderNavSvgIcon(svgIcon, color, size = 22) {
+  if (svgIcon === "exchange") {
+    return (
+      <Svg width={size} height={size} viewBox="-3.5 0 32 32">
+        <Path
+          fill={color}
+          d="M21.75 20.469h2.531c0.75 0 0.875 0.438 0.344 0.938l-3.688 3.719c-0.313 0.344-0.906 0.344-1.25 0l-3.719-3.719c-0.5-0.5-0.375-0.938 0.375-0.938h2.531v-9.188c-0.125-1.281-1.188-2.25-2.5-2.25-1.344 0-2.438 1.031-2.5 2.344v9.25c-0.094 1.938-1.25 3.656-2.875 4.531-0.75 0.375-1.563 0.563-2.469 0.563s-1.688-0.188-2.438-0.563c-1.656-0.875-2.844-2.594-2.906-4.563v-9.063h-2.5c-0.75 0-0.906-0.406-0.375-0.906l3.688-3.719c0.344-0.344 0.938-0.344 1.25 0l3.719 3.719c0.531 0.5 0.375 0.906-0.375 0.906h-2.5v9.094c0.063 1.313 1.094 2.375 2.438 2.375s2.469-1.125 2.469-2.469v-9.156c0.094-1.969 1.219-3.625 2.875-4.5 0.75-0.375 1.594-0.594 2.5-0.594s1.719 0.219 2.5 0.594c1.594 0.844 2.719 2.469 2.875 4.375v9.219z"
+        />
+      </Svg>
+    );
+  }
+  if (svgIcon === "carSide") {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path fillRule="evenodd" clipRule="evenodd" d="M8.71454 16.826C8.7177 17.7092 8.20137 18.5073 7.40665 18.8476C6.61193 19.1878 5.6956 19.0031 5.08554 18.3797C4.47547 17.7563 4.29202 16.8172 4.62085 16.0008C4.94968 15.1845 5.72591 14.652 6.58709 14.652C7.15029 14.6509 7.69084 14.8794 8.08981 15.2871C8.48879 15.6948 8.71351 16.2483 8.71454 16.826Z" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        <Path fillRule="evenodd" clipRule="evenodd" d="M19.1636 16.826C19.1667 17.7092 18.6504 18.5073 17.8557 18.8476C17.061 19.1878 16.1446 19.0031 15.5346 18.3797C14.9245 17.7563 14.7411 16.8172 15.0699 16.0008C15.3987 15.1845 16.1749 14.652 17.0361 14.652C17.5993 14.6509 18.1399 14.8794 18.5388 15.2871C18.9378 15.6948 19.1625 16.2483 19.1636 16.826Z" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        <Path fill={color} d="M2.61096 9.99042C2.46815 10.3792 2.66758 10.8102 3.05639 10.953C3.44521 11.0958 3.87618 10.8964 4.01899 10.5076L2.61096 9.99042ZM4.0628 8.213L3.36486 7.93844C3.36278 7.94374 3.36075 7.94907 3.35879 7.95442L4.0628 8.213ZM9.79678 5.75C10.211 5.75 10.5468 5.41421 10.5468 5C10.5468 4.58579 10.211 4.25 9.79678 4.25V5.75ZM3.31498 10.999C3.72919 10.999 4.06498 10.6632 4.06498 10.249C4.06498 9.83479 3.72919 9.499 3.31498 9.499V10.999ZM2.0387 10.249L2.033 10.999H2.0387V10.249ZM1.28976 10.5605L1.82287 11.0881L1.82287 11.0881L1.28976 10.5605ZM0.974976 11.324L0.224976 11.3186V11.324H0.974976ZM0.224976 13C0.224976 13.4142 0.560762 13.75 0.974976 13.75C1.38919 13.75 1.72498 13.4142 1.72498 13H0.224976ZM3.31498 9.499C2.90076 9.499 2.56498 9.83479 2.56498 10.249C2.56498 10.6632 2.90076 10.999 3.31498 10.999V9.499ZM9.79678 10.999C10.211 10.999 10.5468 10.6632 10.5468 10.249C10.5468 9.83479 10.211 9.499 9.79678 9.499V10.999ZM17.5236 10.5076C17.6664 10.8964 18.0974 11.0958 18.4862 10.953C18.875 10.8102 19.0744 10.3792 18.9316 9.99042L17.5236 10.5076ZM17.4798 8.213L18.1838 7.95442C18.1818 7.94907 18.1798 7.94374 18.1777 7.93844L17.4798 8.213ZM9.79678 4.25C9.38256 4.25 9.04678 4.58579 9.04678 5C9.04678 5.41421 9.38256 5.75 9.79678 5.75V4.25ZM18.2276 10.999C18.6418 10.999 18.9776 10.6632 18.9776 10.249C18.9776 9.83479 18.6418 9.499 18.2276 9.499V10.999ZM9.79678 9.499C9.38256 9.499 9.04678 9.83479 9.04678 10.249C9.04678 10.6632 9.38256 10.999 9.79678 10.999V9.499ZM18.2276 9.499C17.8134 9.499 17.4776 9.83479 17.4776 10.249C17.4776 10.6632 17.8134 10.999 18.2276 10.999V9.499ZM21.3622 10.249L21.3622 10.999L21.3672 10.999L21.3622 10.249ZM22.425 11.324L23.175 11.324L23.175 11.3186L22.425 11.324ZM21.675 13C21.675 13.4142 22.0108 13.75 22.425 13.75C22.8392 13.75 23.175 13.4142 23.175 13H21.675ZM14.9087 17.576C15.3229 17.576 15.6587 17.2402 15.6587 16.826C15.6587 16.4118 15.3229 16.076 14.9087 16.076V17.576ZM8.71453 16.076C8.30031 16.076 7.96453 16.4118 7.96453 16.826C7.96453 17.2402 8.30031 17.576 8.71453 17.576V16.076ZM19.1636 16.076C18.7494 16.076 18.4136 16.4118 18.4136 16.826C18.4136 17.2402 18.7494 17.576 19.1636 17.576V16.076ZM21.3613 16.826L21.367 16.076H21.3613V16.826ZM22.1102 16.5145L21.5771 15.9869L21.5771 15.9869L22.1102 16.5145ZM22.425 15.751L23.175 15.7564V15.751H22.425ZM23.175 13C23.175 12.5858 22.8392 12.25 22.425 12.25C22.0108 12.25 21.675 12.5858 21.675 13H23.175ZM4.45963 17.576C4.87384 17.576 5.20963 17.2402 5.20963 16.826C5.20963 16.4118 4.87384 16.076 4.45963 16.076V17.576ZM2.0387 16.826L2.0387 16.076L2.033 16.076L2.0387 16.826ZM0.974976 15.751L0.224956 15.751L0.224995 15.7564L0.974976 15.751ZM1.72498 13C1.72498 12.5858 1.38919 12.25 0.974976 12.25C0.560762 12.25 0.224976 12.5858 0.224976 13H1.72498ZM10.5468 5C10.5468 4.58579 10.211 4.25 9.79678 4.25C9.38256 4.25 9.04678 4.58579 9.04678 5H10.5468ZM9.04678 10.249C9.04678 10.6632 9.38256 10.999 9.79678 10.999C10.211 10.999 10.5468 10.6632 10.5468 10.249H9.04678ZM0.974976 12.25C0.560762 12.25 0.224976 12.5858 0.224976 13C0.224976 13.4142 0.560762 13.75 0.974976 13.75V12.25ZM2.91815 13.75C3.33236 13.75 3.66815 13.4142 3.66815 13C3.66815 12.5858 3.33236 12.25 2.91815 12.25V13.75ZM22.425 13.75C22.8392 13.75 23.175 13.4142 23.175 13C23.175 12.5858 22.8392 12.25 22.425 12.25V13.75ZM20.3999 12.25C19.9857 12.25 19.6499 12.5858 19.6499 13C19.6499 13.4142 19.9857 13.75 20.3999 13.75V12.25ZM4.01899 10.5076L4.76681 8.47158L3.35879 7.95442L2.61096 9.99042L4.01899 10.5076ZM4.76074 8.48756C5.12559 7.5601 5.49128 6.87863 5.94824 6.42712C6.37329 6.00714 6.91377 5.75 7.74245 5.75V4.25C6.53923 4.25 5.6138 4.64886 4.89396 5.36013C4.20602 6.03987 3.74784 6.9649 3.36486 7.93844L4.76074 8.48756ZM7.74245 5.75H9.79678V4.25H7.74245V5.75ZM3.31498 9.499H2.0387V10.999H3.31498V9.499ZM2.0444 9.49902C1.55922 9.49533 1.09635 9.6897 0.756637 10.033L1.82287 11.0881C1.88214 11.0282 1.95808 10.9984 2.033 10.999L2.0444 9.49902ZM0.756637 10.033C0.41756 10.3757 0.22844 10.8385 0.224995 11.3186L1.72496 11.3294C1.72563 11.235 1.76297 11.1486 1.82287 11.0881L0.756637 10.033ZM0.224976 11.324V13H1.72498V11.324H0.224976ZM3.31498 10.999H9.79678V9.499H3.31498V10.999ZM18.9316 9.99042L18.1838 7.95442L16.7758 8.47158L17.5236 10.5076L18.9316 9.99042ZM18.1777 7.93844C17.7947 6.9649 17.3366 6.03987 16.6486 5.36013C15.9288 4.64886 15.0033 4.25 13.8001 4.25V5.75C14.6288 5.75 15.1693 6.00714 15.5943 6.42712C16.0513 6.87863 16.417 7.5601 16.7818 8.48756L18.1777 7.93844ZM13.8001 4.25H9.79678V5.75H13.8001V4.25ZM18.2276 9.499H9.79678V10.999H18.2276V9.499ZM18.2276 10.999H21.3622V9.499H18.2276V10.999ZM21.3672 10.999C21.5182 10.998 21.6735 11.1277 21.675 11.3294L23.175 11.3186C23.1678 10.3248 22.3719 9.49226 21.3572 9.49902L21.3672 10.999ZM21.675 11.324V13H23.175V11.324H21.675ZM14.9087 16.076H8.71453V17.576H14.9087V16.076ZM19.1636 17.576H21.3613V16.076H19.1636V17.576ZM21.3555 17.576C21.8407 17.5797 22.3036 17.3853 22.6433 17.042L21.5771 15.9869C21.5178 16.0468 21.4419 16.0766 21.367 16.076L21.3555 17.576ZM22.6433 17.042C22.9824 16.6993 23.1715 16.2365 23.175 15.7564L21.675 15.7456C21.6743 15.84 21.637 15.9264 21.5771 15.9869L22.6433 17.042ZM23.175 15.751V13H21.675V15.751H23.175ZM4.45963 16.076H2.0387V17.576H4.45963V16.076ZM2.033 16.076C1.95808 16.0766 1.88214 16.0468 1.82287 15.9869L0.756638 17.042C1.09635 17.3853 1.55922 17.5797 2.0444 17.576L2.033 16.076ZM1.82287 15.9869C1.76297 15.9264 1.72563 15.84 1.72496 15.7456L0.224995 15.7564C0.22844 16.2365 0.41756 16.6993 0.756638 17.042L1.82287 15.9869ZM1.72498 15.751V13H0.224976V15.751H1.72498ZM9.04678 5V10.249H10.5468V5H9.04678ZM0.974976 13.75H2.91815V12.25H0.974976V13.75ZM22.425 12.25H20.3999V13.75H22.425V12.25Z" />
+      </Svg>
+    );
+  }
+  return null;
+}
+
 function FooterNavigation({ activeTab, onChange }) {
   const renderFooterIcon = (item, color) => {
-    if (item.svgIcon === "exchange") {
-      return (
-        <Svg width={22} height={22} viewBox="-3.5 0 32 32">
-          <Path
-            fill={color}
-            d="M21.75 20.469h2.531c0.75 0 0.875 0.438 0.344 0.938l-3.688 3.719c-0.313 0.344-0.906 0.344-1.25 0l-3.719-3.719c-0.5-0.5-0.375-0.938 0.375-0.938h2.531v-9.188c-0.125-1.281-1.188-2.25-2.5-2.25-1.344 0-2.438 1.031-2.5 2.344v9.25c-0.094 1.938-1.25 3.656-2.875 4.531-0.75 0.375-1.563 0.563-2.469 0.563s-1.688-0.188-2.438-0.563c-1.656-0.875-2.844-2.594-2.906-4.563v-9.063h-2.5c-0.75 0-0.906-0.406-0.375-0.906l3.688-3.719c0.344-0.344 0.938-0.344 1.25 0l3.719 3.719c0.531 0.5 0.375 0.906-0.375 0.906h-2.5v9.094c0.063 1.313 1.094 2.375 2.438 2.375s2.469-1.125 2.469-2.469v-9.156c0.094-1.969 1.219-3.625 2.875-4.5 0.75-0.375 1.594-0.594 2.5-0.594s1.719 0.219 2.5 0.594c1.594 0.844 2.719 2.469 2.875 4.375v9.219z"
-          />
-        </Svg>
-      );
+    if (item.svgIcon === "exchange" || item.svgIcon === "carSide") {
+      return renderNavSvgIcon(item.svgIcon, color, 22);
     }
 
     if (item.svgIcon === "graphql") {
@@ -563,35 +586,6 @@ function FooterNavigation({ activeTab, onChange }) {
           <Path
             fill={color}
             d="M14.051 2.751l4.935 2.85c.816-.859 2.173-.893 3.032-.077.148.14.274.301.377.477.589 1.028.232 2.339-.796 2.928-.174.1-.361.175-.558.223v5.699c1.146.273 1.854 1.423 1.58 2.569-.048.204-.127.4-.232.581-.592 1.023-1.901 1.374-2.927.782-.196-.113-.375-.259-.526-.429l-4.905 2.832c.372 1.124-.238 2.335-1.361 2.706-.217.071-.442.108-.67.108-1.181.001-2.139-.955-2.14-2.136 0-.205.029-.41.088-.609l-4.936-2.847c-.816.854-2.171.887-3.026.07-.854-.816-.886-2.171-.07-3.026.283-.297.646-.506 1.044-.603l.001-5.699c-1.15-.276-1.858-1.433-1.581-2.584.047-.198.123-.389.224-.566.592-1.024 1.902-1.374 2.927-.782.177.101.339.228.48.377l4.938-2.85C9.613 1.612 10.26.423 11.39.088 11.587.029 11.794 0 12 0c1.181-.001 2.139.954 2.14 2.134.001.209-.03.418-.089.617zm-.515.877c-.019.021-.037.039-.058.058l6.461 11.19c.026-.009.056-.016.082-.023V9.146c-1.145-.283-1.842-1.442-1.558-2.588.006-.024.012-.049.019-.072l-4.946-2.858zm-3.015.059l-.06-.06-4.946 2.852c.327 1.135-.327 2.318-1.461 2.645-.026.008-.051.014-.076.021v5.708l.084.023 6.461-11.19-.002.001zm2.076.507c-.39.112-.803.112-1.192 0l-6.46 11.189c.294.283.502.645.6 1.041h12.911c.097-.398.307-.761.603-1.044L12.597 4.194zm.986 16.227l4.913-2.838c-.015-.047-.027-.094-.038-.142H5.542l-.021.083 4.939 2.852c.388-.404.934-.653 1.54-.653.627 0 1.19.269 1.583.698z"
-          />
-        </Svg>
-      );
-    }
-
-    if (item.svgIcon === "carSide") {
-      return (
-        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <Path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M8.71454 16.826C8.7177 17.7092 8.20137 18.5073 7.40665 18.8476C6.61193 19.1878 5.6956 19.0031 5.08554 18.3797C4.47547 17.7563 4.29202 16.8172 4.62085 16.0008C4.94968 15.1845 5.72591 14.652 6.58709 14.652C7.15029 14.6509 7.69084 14.8794 8.08981 15.2871C8.48879 15.6948 8.71351 16.2483 8.71454 16.826Z"
-            stroke={color}
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <Path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M19.1636 16.826C19.1667 17.7092 18.6504 18.5073 17.8557 18.8476C17.061 19.1878 16.1446 19.0031 15.5346 18.3797C14.9245 17.7563 14.7411 16.8172 15.0699 16.0008C15.3987 15.1845 16.1749 14.652 17.0361 14.652C17.5993 14.6509 18.1399 14.8794 18.5388 15.2871C18.9378 15.6948 19.1625 16.2483 19.1636 16.826Z"
-            stroke={color}
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <Path
-            fill={color}
-            d="M2.61096 9.99042C2.46815 10.3792 2.66758 10.8102 3.05639 10.953C3.44521 11.0958 3.87618 10.8964 4.01899 10.5076L2.61096 9.99042ZM4.0628 8.213L3.36486 7.93844C3.36278 7.94374 3.36075 7.94907 3.35879 7.95442L4.0628 8.213ZM9.79678 5.75C10.211 5.75 10.5468 5.41421 10.5468 5C10.5468 4.58579 10.211 4.25 9.79678 4.25V5.75ZM3.31498 10.999C3.72919 10.999 4.06498 10.6632 4.06498 10.249C4.06498 9.83479 3.72919 9.499 3.31498 9.499V10.999ZM2.0387 10.249L2.033 10.999H2.0387V10.249ZM1.28976 10.5605L1.82287 11.0881L1.82287 11.0881L1.28976 10.5605ZM0.974976 11.324L0.224976 11.3186V11.324H0.974976ZM0.224976 13C0.224976 13.4142 0.560762 13.75 0.974976 13.75C1.38919 13.75 1.72498 13.4142 1.72498 13H0.224976ZM3.31498 9.499C2.90076 9.499 2.56498 9.83479 2.56498 10.249C2.56498 10.6632 2.90076 10.999 3.31498 10.999V9.499ZM9.79678 10.999C10.211 10.999 10.5468 10.6632 10.5468 10.249C10.5468 9.83479 10.211 9.499 9.79678 9.499V10.999ZM17.5236 10.5076C17.6664 10.8964 18.0974 11.0958 18.4862 10.953C18.875 10.8102 19.0744 10.3792 18.9316 9.99042L17.5236 10.5076ZM17.4798 8.213L18.1838 7.95442C18.1818 7.94907 18.1798 7.94374 18.1777 7.93844L17.4798 8.213ZM9.79678 4.25C9.38256 4.25 9.04678 4.58579 9.04678 5C9.04678 5.41421 9.38256 5.75 9.79678 5.75V4.25ZM18.2276 10.999C18.6418 10.999 18.9776 10.6632 18.9776 10.249C18.9776 9.83479 18.6418 9.499 18.2276 9.499V10.999ZM9.79678 9.499C9.38256 9.499 9.04678 9.83479 9.04678 10.249C9.04678 10.6632 9.38256 10.999 9.79678 10.999V9.499ZM18.2276 9.499C17.8134 9.499 17.4776 9.83479 17.4776 10.249C17.4776 10.6632 17.8134 10.999 18.2276 10.999V9.499ZM21.3622 10.249L21.3622 10.999L21.3672 10.999L21.3622 10.249ZM22.425 11.324L23.175 11.324L23.175 11.3186L22.425 11.324ZM21.675 13C21.675 13.4142 22.0108 13.75 22.425 13.75C22.8392 13.75 23.175 13.4142 23.175 13H21.675ZM14.9087 17.576C15.3229 17.576 15.6587 17.2402 15.6587 16.826C15.6587 16.4118 15.3229 16.076 14.9087 16.076V17.576ZM8.71453 16.076C8.30031 16.076 7.96453 16.4118 7.96453 16.826C7.96453 17.2402 8.30031 17.576 8.71453 17.576V16.076ZM19.1636 16.076C18.7494 16.076 18.4136 16.4118 18.4136 16.826C18.4136 17.2402 18.7494 17.576 19.1636 17.576V16.076ZM21.3613 16.826L21.367 16.076H21.3613V16.826ZM22.1102 16.5145L21.5771 15.9869L21.5771 15.9869L22.1102 16.5145ZM22.425 15.751L23.175 15.7564V15.751H22.425ZM23.175 13C23.175 12.5858 22.8392 12.25 22.425 12.25C22.0108 12.25 21.675 12.5858 21.675 13H23.175ZM4.45963 17.576C4.87384 17.576 5.20963 17.2402 5.20963 16.826C5.20963 16.4118 4.87384 16.076 4.45963 16.076V17.576ZM2.0387 16.826L2.0387 16.076L2.033 16.076L2.0387 16.826ZM0.974976 15.751L0.224956 15.751L0.224995 15.7564L0.974976 15.751ZM1.72498 13C1.72498 12.5858 1.38919 12.25 0.974976 12.25C0.560762 12.25 0.224976 12.5858 0.224976 13H1.72498ZM10.5468 5C10.5468 4.58579 10.211 4.25 9.79678 4.25C9.38256 4.25 9.04678 4.58579 9.04678 5H10.5468ZM9.04678 10.249C9.04678 10.6632 9.38256 10.999 9.79678 10.999C10.211 10.999 10.5468 10.6632 10.5468 10.249H9.04678ZM0.974976 12.25C0.560762 12.25 0.224976 12.5858 0.224976 13C0.224976 13.4142 0.560762 13.75 0.974976 13.75V12.25ZM2.91815 13.75C3.33236 13.75 3.66815 13.4142 3.66815 13C3.66815 12.5858 3.33236 12.25 2.91815 12.25V13.75ZM22.425 13.75C22.8392 13.75 23.175 13.4142 23.175 13C23.175 12.5858 22.8392 12.25 22.425 12.25V13.75ZM20.3999 12.25C19.9857 12.25 19.6499 12.5858 19.6499 13C19.6499 13.4142 19.9857 13.75 20.3999 13.75V12.25ZM4.01899 10.5076L4.76681 8.47158L3.35879 7.95442L2.61096 9.99042L4.01899 10.5076ZM4.76074 8.48756C5.12559 7.5601 5.49128 6.87863 5.94824 6.42712C6.37329 6.00714 6.91377 5.75 7.74245 5.75V4.25C6.53923 4.25 5.6138 4.64886 4.89396 5.36013C4.20602 6.03987 3.74784 6.9649 3.36486 7.93844L4.76074 8.48756ZM7.74245 5.75H9.79678V4.25H7.74245V5.75ZM3.31498 9.499H2.0387V10.999H3.31498V9.499ZM2.0444 9.49902C1.55922 9.49533 1.09635 9.6897 0.756637 10.033L1.82287 11.0881C1.88214 11.0282 1.95808 10.9984 2.033 10.999L2.0444 9.49902ZM0.756637 10.033C0.41756 10.3757 0.22844 10.8385 0.224995 11.3186L1.72496 11.3294C1.72563 11.235 1.76297 11.1486 1.82287 11.0881L0.756637 10.033ZM0.224976 11.324V13H1.72498V11.324H0.224976ZM3.31498 10.999H9.79678V9.499H3.31498V10.999ZM18.9316 9.99042L18.1838 7.95442L16.7758 8.47158L17.5236 10.5076L18.9316 9.99042ZM18.1777 7.93844C17.7947 6.9649 17.3366 6.03987 16.6486 5.36013C15.9288 4.64886 15.0033 4.25 13.8001 4.25V5.75C14.6288 5.75 15.1693 6.00714 15.5943 6.42712C16.0513 6.87863 16.417 7.5601 16.7818 8.48756L18.1777 7.93844ZM13.8001 4.25H9.79678V5.75H13.8001V4.25ZM18.2276 9.499H9.79678V10.999H18.2276V9.499ZM18.2276 10.999H21.3622V9.499H18.2276V10.999ZM21.3672 10.999C21.5182 10.998 21.6735 11.1277 21.675 11.3294L23.175 11.3186C23.1678 10.3248 22.3719 9.49226 21.3572 9.49902L21.3672 10.999ZM21.675 11.324V13H23.175V11.324H21.675ZM14.9087 16.076H8.71453V17.576H14.9087V16.076ZM19.1636 17.576H21.3613V16.076H19.1636V17.576ZM21.3555 17.576C21.8407 17.5797 22.3036 17.3853 22.6433 17.042L21.5771 15.9869C21.5178 16.0468 21.4419 16.0766 21.367 16.076L21.3555 17.576ZM22.6433 17.042C22.9824 16.6993 23.1715 16.2365 23.175 15.7564L21.675 15.7456C21.6743 15.84 21.637 15.9264 21.5771 15.9869L22.6433 17.042ZM23.175 15.751V13H21.675V15.751H23.175ZM4.45963 16.076H2.0387V17.576H4.45963V16.076ZM2.033 16.076C1.95808 16.0766 1.88214 16.0468 1.82287 15.9869L0.756638 17.042C1.09635 17.3853 1.55922 17.5797 2.0444 17.576L2.033 16.076ZM1.82287 15.9869C1.76297 15.9264 1.72563 15.84 1.72496 15.7456L0.224995 15.7564C0.22844 16.2365 0.41756 16.6993 0.756638 17.042L1.82287 15.9869ZM1.72498 15.751V13H0.224976V15.751H1.72498ZM9.04678 5V10.249H10.5468V5H9.04678ZM0.974976 13.75H2.91815V12.25H0.974976V13.75ZM22.425 12.25H20.3999V13.75H22.425V12.25Z"
           />
         </Svg>
       );
@@ -657,40 +651,99 @@ function FooterNavigation({ activeTab, onChange }) {
   );
 }
 
+const faqChipMap = {
+  "All": null,
+  "Exchange": "Car Exchange Page FAQs",
+  "General": "General FAQs",
+  "Sell": "Sell Used Car FAQs",
+  "Buy": "Buy Used Car FAQs"
+};
+
 function FAQsPage() {
-  const flatFaqs = faqSections.flatMap((section) => section.items);
-  const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  const [openKey, setOpenKey] = useState(null);
+  const [activeChip, setActiveChip] = useState("All");
+  const totalCount = faqSections.flatMap((s) => s.items).length;
+
+  const visibleSections = activeChip === "All"
+    ? faqSections
+    : faqSections.filter((s) => s.title === faqChipMap[activeChip]);
 
   return (
     <View style={styles.faqPage}>
       <Text allowFontScaling={false} style={styles.faqPageTitle}>
-        Frequently Asked Questions
+        Frequently Asked{"\n"}Questions
       </Text>
-      {flatFaqs.map((item, index) => {
-        const expanded = openFaqIndex === index;
+      <Text allowFontScaling={false} style={styles.faqPageSubtitle}>
+        {totalCount} questions answered across all topics
+      </Text>
 
-        return (
-          <Pressable
-            key={item.question}
-            accessibilityRole="button"
-            accessibilityState={{ expanded }}
-            onPress={() => setOpenFaqIndex(expanded ? null : index)}
-            style={({ pressed, hovered }) => [
-              styles.faqItem,
-              (pressed || hovered) && styles.faqItemActive
-            ]}
-          >
-            <Text allowFontScaling={false} style={styles.faqQuestion}>
-              {index + 1}. {item.question}
-            </Text>
-            {expanded ? (
-              <Text allowFontScaling={false} style={styles.faqAnswer}>
-                {item.answer}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.faqChipsRow}
+        style={styles.faqChipsScroll}
+      >
+        {Object.keys(faqChipMap).map((chip) => {
+          const active = activeChip === chip;
+          return (
+            <Pressable
+              key={chip}
+              onPress={() => { setActiveChip(chip); setOpenKey(null); }}
+              style={[styles.faqChip, active && styles.faqChipActive]}
+            >
+              <Text allowFontScaling={false} style={[styles.faqChipText, active && styles.faqChipTextActive]}>
+                {chip}
               </Text>
-            ) : null}
-          </Pressable>
-        );
-      })}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {visibleSections.map((section, sIdx) => (
+        <View key={section.title}>
+          <View style={styles.faqSectionHeader}>
+            <View style={styles.faqSectionAccent} />
+            <Text allowFontScaling={false} style={styles.faqSectionTitle}>
+              {section.title.replace(" Page FAQs", "").replace(" FAQs", "")}
+            </Text>
+          </View>
+          {section.items.map((item, iIdx) => {
+            const key = `${sIdx}-${iIdx}`;
+            const expanded = openKey === key;
+            return (
+              <Pressable
+                key={item.question}
+                accessibilityRole="button"
+                accessibilityState={{ expanded }}
+                onPress={() => setOpenKey(expanded ? null : key)}
+                style={({ pressed, hovered }) => [
+                  styles.faqItem,
+                  expanded && styles.faqItemActive,
+                  (pressed || hovered) && !expanded && styles.faqItemHover
+                ]}
+              >
+                <View style={styles.faqQuestionRow}>
+                  <Text allowFontScaling={false} style={[styles.faqQuestion, expanded && styles.faqQuestionExpanded]}>
+                    {item.question}
+                  </Text>
+                  <View style={[styles.faqChevron, expanded && styles.faqChevronActive]}>
+                    <Ionicons
+                      name={expanded ? "chevron-up" : "chevron-down"}
+                      size={18}
+                      color={expanded ? "#ffffff" : "#075985"}
+                    />
+                  </View>
+                </View>
+                {expanded ? (
+                  <Text allowFontScaling={false} style={styles.faqAnswer}>
+                    {item.answer}
+                  </Text>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
     </View>
   );
 }
@@ -727,20 +780,109 @@ function BranchesPage() {
 }
 
 function AboutPage() {
+  const stats = [
+    { value: "3+", label: "Branches" },
+    { value: "500+", label: "Cars Sold" },
+    { value: "100%", label: "Verified" },
+    { value: "24/7", label: "Support" },
+  ];
+
+  const services = [
+    {
+      icon: "swap-horizontal-outline",
+      title: "Exchange to EV",
+      desc: "Trade your petrol or diesel vehicle for a modern electric car with guided valuation and full exchange support."
+    },
+    {
+      icon: "cash-outline",
+      title: "Sell Used Car",
+      desc: "Get a genuine market-based valuation, professional inspection, and hassle-free ownership transfer."
+    },
+    {
+      icon: "key-outline",
+      title: "Buy Used Car",
+      desc: "Browse inspected pre-owned vehicles with verified documents and branch-backed purchase guidance."
+    }
+  ];
+
+  const values = [
+    { icon: "shield-checkmark-outline", label: "Transparency" },
+    { icon: "star-outline", label: "Quality" },
+    { icon: "people-outline", label: "Trust" },
+    { icon: "trending-up-outline", label: "Value" },
+  ];
+
   return (
-    <View>
-      <Text style={styles.title}>About NEPAL Motor</Text>
-      <View style={styles.aboutBox}>
-        <Text style={styles.aboutText}>
-          NEPAL Motor helps customers exchange, buy, and sell used cars through a trusted, transparent, and customer-focused process designed to simplify every stage of vehicle ownership and resale. The company provides fair and market-based vehicle valuation, detailed professional inspection services, verified documentation checks, and complete ownership transfer assistance to ensure safe, reliable, and hassle-free transactions for both buyers and sellers.
-        </Text>
-        <Text style={styles.aboutText}>
-          NEPAL Motor supports a wide range of automotive services for petrol, diesel, and electric vehicles, helping customers smoothly transition between traditional fuel vehicles and modern EV options. Customers can exchange their existing vehicles toward electric vehicles, directly sell used cars at competitive market value, or receive expert branch-based consultation for vehicle inspection, resale guidance, and valuation support.
-        </Text>
-        <Text style={styles.aboutText}>
-          With a focus on transparency, reliability, and customer satisfaction, NEPAL Motor aims to make the used vehicle market more organized, secure, and convenient by offering professional support, technical evaluation, and end-to-end assistance throughout the complete buying, selling, and exchange journey.
+    <View style={styles.aboutPage}>
+
+      {/* Hero */}
+      <View style={styles.aboutHero}>
+        <Image source={nepalFlagLogo} style={styles.aboutHeroLogo} />
+        <Text allowFontScaling={false} style={styles.aboutHeroName}>NEPAL Motor</Text>
+        <Text allowFontScaling={false} style={styles.aboutHeroTagline}>
+          Nepal's trusted platform for used car exchange, buying, and selling
         </Text>
       </View>
+
+      {/* Stats */}
+      <View style={styles.aboutStatsRow}>
+        {stats.map((s) => (
+          <View key={s.label} style={styles.aboutStatCard}>
+            <Text allowFontScaling={false} style={styles.aboutStatValue}>{s.value}</Text>
+            <Text allowFontScaling={false} style={styles.aboutStatLabel}>{s.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Mission */}
+      <View style={styles.aboutMission}>
+        <View style={styles.aboutMissionIconWrap}>
+          <Ionicons name="flag-outline" size={22} color="#075985" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text allowFontScaling={false} style={styles.aboutMissionTitle}>Our Mission</Text>
+          <Text allowFontScaling={false} style={styles.aboutMissionText}>
+            To make the used vehicle market more organized, secure, and convenient by offering professional support, technical evaluation, and end-to-end assistance throughout every stage of the vehicle journey.
+          </Text>
+        </View>
+      </View>
+
+      {/* Services */}
+      <Text allowFontScaling={false} style={styles.aboutSectionTitle}>What We Offer</Text>
+      {services.map((s) => (
+        <View key={s.title} style={styles.aboutServiceCard}>
+          <View style={styles.aboutServiceIcon}>
+            <Ionicons name={s.icon} size={22} color="#075985" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text allowFontScaling={false} style={styles.aboutServiceTitle}>{s.title}</Text>
+            <Text allowFontScaling={false} style={styles.aboutServiceDesc}>{s.desc}</Text>
+          </View>
+        </View>
+      ))}
+
+      {/* Values */}
+      <Text allowFontScaling={false} style={styles.aboutSectionTitle}>Our Values</Text>
+      <View style={styles.aboutValuesRow}>
+        {values.map((v) => (
+          <View key={v.label} style={styles.aboutValueCard}>
+            <View style={styles.aboutValueIcon}>
+              <Ionicons name={v.icon} size={20} color="#075985" />
+            </View>
+            <Text allowFontScaling={false} style={styles.aboutValueLabel}>{v.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Contact CTA */}
+      <Pressable
+        style={({ hovered }) => [styles.aboutCTA, hovered && styles.aboutCTAHover]}
+        onPress={() => Linking.openURL(`tel:${phoneNumber}`)}
+      >
+        <Ionicons name="call-outline" size={18} color="#ffffff" />
+        <Text allowFontScaling={false} style={styles.aboutCTAText}>Get in Touch</Text>
+      </Pressable>
+
     </View>
   );
 }
@@ -931,7 +1073,7 @@ function TextSvg({ x, y, text, size, color }) {
 }
 
 function OnboardingScreen({ onDone }) {
-  const { width } = useWindowDimensions();
+  const { width, height: screenHeight } = useWindowDimensions();
   const [slideIndex, setSlideIndex] = useState(0);
   const slide = onboardingSlides[slideIndex];
   const finalSlide = slideIndex === onboardingSlides.length - 1;
@@ -969,10 +1111,10 @@ function OnboardingScreen({ onDone }) {
         </Text>
       </View>
 
-      <View style={[styles.onboardingVisual, { width: contentWidth }]}>
+      <View style={styles.onboardingVisual}>
         <Image
           source={slide.image}
-          resizeMode="contain"
+          resizeMode={slide.resizeMode || "cover"}
           style={styles.onboardingImage}
         />
       </View>
@@ -1105,9 +1247,9 @@ function DealerPage() {
           </Text>
         </View>
       ) : null}
-      <View style={styles.formActions}>
+      <View style={styles.actions}>
         <Pressable
-          style={({ hovered }) => [styles.clearButton, hovered && !submitting && styles.clearButtonHover, submitting && styles.clearButtonDisabled]}
+          style={[styles.clearButton, submitting && styles.clearButtonDisabled]}
           disabled={submitting}
           onPress={() => { setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] }); setErrors({}); setMessage(""); }}
         >
@@ -1126,6 +1268,9 @@ function DealerPage() {
           <Text style={styles.submitText}>{submitting ? "Submitting..." : "Submit"}</Text>
         </Pressable>
       </View>
+      <Text style={styles.footer}>
+        Do not submit passwords through this form. <Text style={styles.report}>Report malicious form</Text>
+      </Text>
     </View>
   );
 }
@@ -1231,8 +1376,7 @@ function TestDrivePage() {
       <TextField label="Vehicle Brand" required value={form.brand} error={errors.brand} placeholder="Hyundai" onFocus={closeFeaturePicker} onChangeText={(v) => update("brand", v)} />
       <SelectField label="Vehicle Color" required value={form.color} error={errors.color} options={colors} onOpen={closeFeaturePicker} onChange={(v) => update("color", v)} />
       <SelectField label="Transmission / Gear" required value={form.transmission} error={errors.transmission} options={transmissions} onOpen={closeFeaturePicker} onChange={(v) => update("transmission", v)} />
-      <SelectField label="Accidents" value={form.accident} options={accidents} onOpen={closeFeaturePicker} onChange={(v) => update("accident", v)} />
-      <SelectField label="Fuel Type" required value={form.fuelType} error={errors.fuelType} options={fuelTypes} onOpen={closeFeaturePicker} onChange={(v) => update("fuelType", v)} />
+      <SelectField label="Fuel Type" required value={form.fuelType} error={errors.fuelType} options={fuelTypesWithEV} onOpen={closeFeaturePicker} onChange={(v) => update("fuelType", v)} />
 
       {featurePickerOpen ? (
         <Pressable style={styles.featurePickerOverlay} onPress={closeFeaturePicker} />
@@ -1284,9 +1428,9 @@ function TestDrivePage() {
           </Text>
         </View>
       ) : null}
-      <View style={styles.formActions}>
+      <View style={styles.actions}>
         <Pressable
-          style={({ hovered }) => [styles.clearButton, hovered && !submitting && styles.clearButtonHover, submitting && styles.clearButtonDisabled]}
+          style={[styles.clearButton, submitting && styles.clearButtonDisabled]}
           disabled={submitting}
           onPress={() => { setForm(emptyTestDrive); setErrors({}); setMessage(""); }}
         >
@@ -1305,6 +1449,9 @@ function TestDrivePage() {
           <Text style={styles.submitText}>{submitting ? "Submitting..." : "Submit"}</Text>
         </Pressable>
       </View>
+      <Text style={styles.footer}>
+        Do not submit passwords through this form. <Text style={styles.report}>Report malicious form</Text>
+      </Text>
     </View>
   );
 }
@@ -1686,14 +1833,14 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
 
   const primaryItems = [
     { label: "Home", icon: "home-outline", navKey: "exchange" },
-    { label: "Exchange to EV", icon: "swap-horizontal-outline", navKey: "exchange" },
-    { label: "Sell Used Car", icon: "cash-outline", navKey: "sell" },
+    { label: "Exchange to EV", icon: "swap-horizontal-outline", svgIcon: "exchange", navKey: "exchange" },
+    { label: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide", navKey: "sell" },
     { label: "Buy Used Car", icon: "key-outline", navKey: "buy" },
-    { label: "About Us", icon: "information-circle-outline", navKey: "about" },
     { label: "Contact", icon: "call-outline", action: callSupport },
   ];
 
   const secondaryItems = [
+    { label: "About Us", icon: "information-circle-outline", navKey: "about" },
     { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
     { label: "Free Test Drive", icon: "car-sport-outline", navKey: "testdrive" },
     { label: "FAQs", icon: "help-circle-outline", navKey: "faqs" },
@@ -1751,7 +1898,9 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
                     hovered && styles.drawerItemHover
                   ]}
                 >
-                  <Ionicons name={item.icon} size={22} color={active ? "#075985" : "#475569"} />
+                  {item.svgIcon
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 22)
+                    : <Ionicons name={item.icon} size={22} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -1779,7 +1928,9 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
                     hovered && styles.drawerItemHover
                   ]}
                 >
-                  <Ionicons name={item.icon} size={22} color={active ? "#075985" : "#475569"} />
+                  {item.svgIcon
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 22)
+                    : <Ionicons name={item.icon} size={22} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -1813,39 +1964,41 @@ function Header({ onOpenDrawer }) {
   return (
     <View style={styles.header}>
       <View style={styles.navCard}>
-        <Pressable
-          style={({ hovered }) => [styles.menuButton, hovered && styles.menuButtonHover]}
-          accessibilityRole="button"
-          accessibilityLabel="Open navigation drawer"
-          hitSlop={12}
-          onPress={onOpenDrawer}
-        >
-          <Ionicons name="menu" size={28} color="#0f172a" />
-        </Pressable>
         <View style={styles.brand}>
           <Image source={nepalFlagLogo} style={styles.logo} />
           <Text allowFontScaling={false} style={styles.brandText} numberOfLines={1}>
             NEPAL Motor
           </Text>
         </View>
-        <Pressable
-          style={({ hovered }) => [styles.phoneButton, hovered && styles.phoneButtonHover]}
-          accessibilityRole="button"
-          accessibilityLabel="Call NEPAL Motor"
-          hitSlop={12}
-          onPress={callNepalMotor}
-        >
-          {({ hovered }) => (
-            <>
-              <HelplineIcon size={26} />
-              {hovered ? (
-                <View style={styles.phoneTooltip}>
-                  <Text style={styles.phoneTooltipText}>Call +977 9800000000</Text>
-                </View>
-              ) : null}
-            </>
-          )}
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            style={({ hovered }) => [styles.menuButton, hovered && styles.menuButtonHover]}
+            accessibilityRole="button"
+            accessibilityLabel="Open navigation drawer"
+            hitSlop={12}
+            onPress={onOpenDrawer}
+          >
+            <Ionicons name="menu" size={28} color="#0f172a" />
+          </Pressable>
+          <Pressable
+            style={({ hovered }) => [styles.phoneButton, hovered && styles.phoneButtonHover]}
+            accessibilityRole="button"
+            accessibilityLabel="Call NEPAL Motor"
+            hitSlop={12}
+            onPress={callNepalMotor}
+          >
+            {({ hovered }) => (
+              <>
+                <HelplineIcon size={26} />
+                {hovered ? (
+                  <View style={styles.phoneTooltip}>
+                    <Text style={styles.phoneTooltipText}>Call +977 9852024365</Text>
+                  </View>
+                ) : null}
+              </>
+            )}
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -2151,13 +2304,13 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <ExpoStatusBar style="dark" />
       <StatusBar barStyle="dark-content" />
+      <Header onOpenDrawer={() => setDrawerOpen(true)} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={closeFeaturePicker}
       >
-        <Header onOpenDrawer={() => setDrawerOpen(true)} />
         {activeFooterTab === "faqs" ? (
           <FAQsPage />
         ) : activeFooterTab === "branches" ? (
@@ -2339,7 +2492,7 @@ export default function App() {
           required
           value={form.fuelType}
           error={errors.fuelType}
-          options={fuelTypes}
+          options={isSellForm || isBuyForm ? fuelTypesWithEV : fuelTypes}
           onOpen={closeFeaturePicker}
           onChange={(value) => update("fuelType", value)}
         />
@@ -2400,6 +2553,16 @@ export default function App() {
             </View>
           ) : null}
         </View>
+
+        {isSellForm ? (
+          <TextField
+            label="Expected Selling Price in NPR"
+            value={form.sellingPrice}
+            keyboardType="numeric"
+            onFocus={closeFeaturePicker}
+            onChangeText={(value) => update("sellingPrice", value.replace(/[^0-9]/g, ""))}
+          />
+        ) : null}
 
         {isExchangeForm ? (
           <SelectField
@@ -2598,11 +2761,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ffffff",
     paddingTop: 10,
-    paddingBottom: 30
+    paddingBottom: 16
   },
   onboardingHeader: {
     alignSelf: "center",
-    minHeight: 44,
+    minHeight: 36,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end"
@@ -2634,7 +2797,8 @@ const styles = StyleSheet.create({
   },
   onboardingTextBlock: {
     alignSelf: "center",
-    marginTop: 10,
+    marginTop: 2,
+    marginBottom: 0,
     paddingHorizontal: 4
   },
   onboardingTitle: {
@@ -2651,11 +2815,8 @@ const styles = StyleSheet.create({
   },
   onboardingVisual: {
     flex: 1,
-    alignSelf: "center",
-    marginTop: 24,
-    marginBottom: 8,
-    alignItems: "center",
-    justifyContent: "center"
+    marginTop: 4,
+    overflow: "hidden"
   },
   onboardingImage: {
     width: "100%",
@@ -2666,7 +2827,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 7,
-    paddingVertical: 18
+    paddingVertical: 10
   },
   onboardingDot: {
     width: 8,
@@ -2682,7 +2843,7 @@ const styles = StyleSheet.create({
     width: 200,
     minHeight: 54,
     alignSelf: "center",
-    marginTop: 8,
+    marginTop: 4,
     borderRadius: 27,
     backgroundColor: "#075985",
     alignItems: "center",
@@ -2805,7 +2966,9 @@ const styles = StyleSheet.create({
     paddingTop: 10
   },
   drawerAdminButton: {
-    minHeight: 50,
+    minHeight: 44,
+    alignSelf: "center",
+    paddingHorizontal: 32,
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: "#334155",
@@ -2917,26 +3080,38 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff"
   },
   header: {
-    backgroundColor: "#ffffff",
-    marginBottom: 30
+    position: "absolute",
+    top: 8,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    zIndex: 10
   },
   navCard: {
     width: "100%",
     maxWidth: 564,
-    minHeight: 70,
-    alignSelf: "center",
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
+    minHeight: 64,
     paddingHorizontal: 7,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 18,
+    backgroundColor: "#ffffff",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 7,
     shadowColor: "#000000",
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4
   },
   menuButton: {
     width: 42,
@@ -3008,7 +3183,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     position: "relative",
     paddingHorizontal: 18,
-    paddingTop: 24,
+    paddingTop: 90,
     paddingBottom: 128
   },
   title: {
@@ -3390,45 +3565,129 @@ const styles = StyleSheet.create({
     marginTop: 55
   },
   faqPage: {
-    paddingTop: 20
+    paddingTop: 16
   },
   faqPageTitle: {
     color: "#075985",
-    fontSize: 28,
+    fontSize: 30,
+    fontWeight: "900",
+    lineHeight: 38,
+    marginBottom: 6
+  },
+  faqPageSubtitle: {
+    color: "#64748b",
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 24
+  },
+  faqChipsScroll: {
+    marginBottom: 28
+  },
+  faqChipsRow: {
+    flexDirection: "row",
+    gap: 10,
+    paddingRight: 4
+  },
+  faqChip: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#f1f5f9",
+    borderWidth: 1,
+    borderColor: "#e2e8f0"
+  },
+  faqChipActive: {
+    backgroundColor: "#075985",
+    borderColor: "#075985"
+  },
+  faqChipText: {
+    color: "#475569",
+    fontSize: 13,
+    fontWeight: "700"
+  },
+  faqChipTextActive: {
+    color: "#ffffff"
+  },
+  faqSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+    marginTop: 8
+  },
+  faqSectionAccent: {
+    width: 4,
+    height: 20,
+    borderRadius: 2,
+    backgroundColor: "#075985"
+  },
+  faqSectionTitle: {
+    color: "#0c4a6e",
+    fontSize: 15,
     fontWeight: "800",
-    lineHeight: 35,
-    marginBottom: 42
+    letterSpacing: 0.3,
+    textTransform: "uppercase"
   },
   faqItem: {
     borderWidth: 1,
-    borderColor: "#bae6fd",
-    borderRadius: 22,
+    borderColor: "#e2e8f0",
+    borderRadius: 14,
     backgroundColor: "#ffffff",
-    paddingHorizontal: 25,
-    paddingVertical: 22,
-    marginBottom: 30,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    marginBottom: 10,
     shadowColor: "#075985",
-    shadowOpacity: 0.12,
-    shadowRadius: 7,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
     cursor: "pointer"
   },
   faqItemActive: {
-    borderColor: "#7dd3fc",
-    shadowOpacity: 0.17
+    borderColor: "#075985",
+    backgroundColor: "#f0f9ff",
+    shadowOpacity: 0.14
+  },
+  faqItemHover: {
+    borderColor: "#bae6fd",
+    backgroundColor: "#f8fbff"
+  },
+  faqQuestionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12
   },
   faqQuestion: {
-    color: "#075985",
-    fontSize: 21,
-    fontWeight: "800",
-    lineHeight: 27
+    flex: 1,
+    color: "#1e293b",
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 22
+  },
+  faqQuestionExpanded: {
+    color: "#075985"
+  },
+  faqChevron: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#f0f9ff",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  },
+  faqChevronActive: {
+    backgroundColor: "#075985"
   },
   faqAnswer: {
-    color: "#050505",
-    fontSize: 19,
-    lineHeight: 31,
-    marginTop: 14
+    color: "#475569",
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#e0f2fe"
   },
   branchList: {
     gap: 12
@@ -3492,6 +3751,208 @@ const styles = StyleSheet.create({
   branchPhoneText: {
     color: "#075985",
     fontSize: 14,
+    fontWeight: "800"
+  },
+  aboutPage: {
+    paddingTop: 8,
+    paddingBottom: 16
+  },
+  aboutHero: {
+    alignItems: "center",
+    backgroundColor: "#f0f9ff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#bae6fd",
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    marginBottom: 20
+  },
+  aboutHeroLogo: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    borderColor: "#075985",
+    marginBottom: 14
+  },
+  aboutHeroName: {
+    color: "#075985",
+    fontSize: 26,
+    fontWeight: "900",
+    marginBottom: 8
+  },
+  aboutHeroTagline: {
+    color: "#334155",
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
+    paddingHorizontal: 8
+  },
+  aboutStatsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 20
+  },
+  aboutStatCard: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingVertical: 14,
+    alignItems: "center",
+    shadowColor: "#075985",
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  aboutStatValue: {
+    color: "#075985",
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 3
+  },
+  aboutStatLabel: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5
+  },
+  aboutMission: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: "#075985",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  aboutMissionIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#f0f9ff",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  },
+  aboutMissionTitle: {
+    color: "#0c4a6e",
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 6
+  },
+  aboutMissionText: {
+    color: "#475569",
+    fontSize: 13,
+    lineHeight: 20
+  },
+  aboutSectionTitle: {
+    color: "#0f172a",
+    fontSize: 17,
+    fontWeight: "900",
+    marginBottom: 14
+  },
+  aboutServiceCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 16,
+    marginBottom: 10,
+    shadowColor: "#075985",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  aboutServiceIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#f0f9ff",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  },
+  aboutServiceTitle: {
+    color: "#075985",
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 4
+  },
+  aboutServiceDesc: {
+    color: "#475569",
+    fontSize: 13,
+    lineHeight: 19
+  },
+  aboutValuesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 28
+  },
+  aboutValueCard: {
+    flex: 1,
+    minWidth: "44%",
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 14,
+    alignItems: "center",
+    gap: 8,
+    shadowColor: "#075985",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1
+  },
+  aboutValueIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f0f9ff",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  aboutValueLabel: {
+    color: "#0c4a6e",
+    fontSize: 13,
+    fontWeight: "800"
+  },
+  aboutCTA: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: "#075985",
+    borderRadius: 14,
+    paddingVertical: 16,
+    shadowColor: "#075985",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5
+  },
+  aboutCTAHover: {
+    backgroundColor: "#0c4a6e"
+  },
+  aboutCTAText: {
+    color: "#ffffff",
+    fontSize: 16,
     fontWeight: "800"
   },
   aboutBox: {
