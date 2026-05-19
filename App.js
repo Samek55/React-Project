@@ -238,7 +238,8 @@ const emptyForm = {
   accident: "",
   fuelType: "Petrol",
   features: [],
-  notes: ""
+  notes: "",
+  budget: ""
 };
 
 const appendUpload = (formData, fieldName, file) => {
@@ -280,25 +281,27 @@ const appendFeatureFields = (formData, featuresValue) => {
 
 const buildVehicleSubmission = (form, isSellForm, options = {}) => {
   const formData = new FormData();
+  const isBuyForm = options.isBuyForm || false;
   const evBrandValue =
     options.evBrand !== undefined
       ? options.evBrand
-      : isSellForm
+      : (isSellForm || isBuyForm)
         ? "Other"
         : form.evBrand;
   const financeValue = isSellForm ? "No" : form.finance;
-  const accidentValue = isSellForm ? "No" : form.accident || "No";
+  const accidentValue = (isSellForm || isBuyForm) ? "No" : form.accident || "No";
+  const requestType = isSellForm ? "Sell Used Car" : isBuyForm ? "Buy Used Car" : "Exchange to EV";
 
   formData.append("fullName", form.fullName.trim());
   formData.append("email", form.email.trim());
   formData.append("phone", form.phone.trim());
   formData.append("city", form.city);
-  formData.append("year", form.year.trim());
+  if (!isBuyForm) formData.append("year", form.year.trim());
   formData.append("vehicleType", form.vehicleType);
   formData.append("vehicleBrand", form.brand.trim());
   formData.append("vehicleModel", form.model.trim());
   formData.append("vehicleColor", form.color);
-  formData.append("kmDriven", form.kmDriven.trim());
+  if (!isBuyForm) formData.append("kmDriven", form.kmDriven.trim());
   formData.append("transmission", form.transmission);
   formData.append("fuelType", form.fuelType);
   formData.append("evBrand", evBrandValue);
@@ -310,17 +313,20 @@ const buildVehicleSubmission = (form, isSellForm, options = {}) => {
   formData.append("preferredEvBrand", evBrandValue);
   formData.append("finance", financeValue);
   formData.append("accidents", accidentValue);
-  formData.append("requestType", isSellForm ? "Sell Used Car" : "Exchange to eV");
+  formData.append("requestType", requestType);
   formData.append("notes", form.notes.trim());
+  if (isBuyForm && form.budget.trim()) formData.append("budget", form.budget.trim());
 
   appendFeatureFields(formData, form.features);
-  form.document.forEach((file) => appendUpload(formData, "documents", file));
-  form.photo.forEach((file) => appendUpload(formData, "photos", file));
+  if (!isBuyForm) {
+    form.document.forEach((file) => appendUpload(formData, "documents", file));
+    form.photo.forEach((file) => appendUpload(formData, "photos", file));
+  }
 
   return formData;
 };
 
-const postVehicleSubmission = async (form, isSellForm) => {
+const postVehicleSubmission = async (form, isSellForm, options = {}) => {
   const endpoints = [
     vehicleListingsEndpoint,
     vehicleSubmissionEndpoint,
@@ -333,7 +339,7 @@ const postVehicleSubmission = async (form, isSellForm) => {
     try {
       const response = await fetch(endpoint, {
         method: "POST",
-        body: buildVehicleSubmission(form, isSellForm)
+        body: buildVehicleSubmission(form, isSellForm, options)
       });
 
       const responseText = await response.text();
@@ -947,12 +953,6 @@ function OnboardingScreen({ onDone }) {
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       <View style={[styles.onboardingHeader, { width: contentWidth }]}>
-        <View style={styles.onboardingBrand}>
-          <Image source={nepalFlagLogo} style={styles.onboardingLogo} />
-          <Text allowFontScaling={false} style={styles.onboardingBrandText}>
-            NEPAL Motor
-          </Text>
-        </View>
         <Pressable onPress={onDone}>
           <Text allowFontScaling={false} style={styles.onboardingSkipText}>
             Skip
@@ -1001,6 +1001,679 @@ function OnboardingScreen({ onDone }) {
   );
 }
 
+function DealerPage() {
+  const [form, setForm] = useState({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+
+  const update = (key, value) => setForm((c) => ({ ...c, [key]: value }));
+
+  const pickPhoto = async () => {
+    const slots = Math.max(0, 5 - form.photo.length);
+    if (!slots) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: slots,
+      quality: 0.9
+    });
+    if (result.canceled) return;
+    const picked = result.assets.slice(0, slots).map((a) => ({
+      name: a?.fileName || a?.uri?.split("/").pop() || "photo.jpg",
+      uri: a?.uri,
+      type: a?.mimeType || "image/jpeg",
+      file: a?.file
+    }));
+    setForm((c) => ({ ...c, photo: [...c.photo, ...picked].slice(0, 5) }));
+  };
+
+  const submit = async () => {
+    const newErrors = {};
+    if (!form.fullName.trim()) newErrors.fullName = "Full Name is required";
+    if (!form.companyName.trim()) newErrors.companyName = "Company Name is required";
+    if (!form.phone || form.phone.length !== 10)
+      newErrors.phone = "Enter valid 10-digit phone number";
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("fullName", form.fullName.trim());
+      formData.append("companyName", form.companyName.trim());
+      formData.append("city", form.city);
+      formData.append("phone", form.phone.trim());
+      formData.append("requestType", "Become a Dealer");
+      form.photo.forEach((f) => appendUpload(formData, "photos", f));
+      await fetch(vehicleSubmissionEndpoint, { method: "POST", body: formData });
+      setMessage("Your dealer application has been submitted!");
+      setMessageType("success");
+      setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
+      setErrors({});
+    } catch {
+      setMessage("Submission failed. Please try again.");
+      setMessageType("error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <View>
+      <Text allowFontScaling={false} style={styles.title}>Become a Dealer</Text>
+      <TextField
+        label="Full Name"
+        required
+        value={form.fullName}
+        error={errors.fullName}
+        onChangeText={(v) => update("fullName", v)}
+      />
+      <TextField
+        label="Company Name"
+        required
+        value={form.companyName}
+        error={errors.companyName}
+        onChangeText={(v) => update("companyName", v)}
+      />
+      <SelectField
+        label="City"
+        value={form.city}
+        options={cities}
+        onChange={(v) => update("city", v)}
+      />
+      <TextField
+        label="Phone"
+        required
+        value={form.phone}
+        keyboardType="phone-pad"
+        maxLength={10}
+        error={errors.phone}
+        onChangeText={(v) => update("phone", v.replace(/[^0-9]/g, ""))}
+      />
+      <UploadField
+        label="Showroom / Office Photo"
+        value={form.photo}
+        onRemove={(i) => setForm((c) => ({ ...c, photo: c.photo.filter((_, idx) => idx !== i) }))}
+        onClear={() => update("photo", [])}
+        onPress={pickPhoto}
+      />
+      {message ? (
+        <View style={[styles.messageBox, messageType === "success" ? styles.successBox : styles.errorBox]}>
+          <Text style={[styles.messageText, messageType === "success" ? styles.successText : styles.errorText]}>
+            {message}
+          </Text>
+        </View>
+      ) : null}
+      <View style={styles.formActions}>
+        <Pressable
+          style={({ hovered }) => [styles.clearButton, hovered && !submitting && styles.clearButtonHover, submitting && styles.clearButtonDisabled]}
+          disabled={submitting}
+          onPress={() => { setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] }); setErrors({}); setMessage(""); }}
+        >
+          {({ hovered }) => (
+            <>
+              <Ionicons name="refresh" size={18} color={submitting ? "#93c5fd" : "#006ffd"} />
+              <Text style={[styles.clearText, submitting && styles.clearTextDisabled, hovered && !submitting && styles.clearTextHover]}>Clear form</Text>
+            </>
+          )}
+        </Pressable>
+        <Pressable
+          style={({ hovered }) => [styles.submitButton, hovered && !submitting && styles.submitButtonHover, submitting && styles.submitButtonDisabled]}
+          onPress={submit}
+          disabled={submitting}
+        >
+          <Text style={styles.submitText}>{submitting ? "Submitting..." : "Submit"}</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function TestDrivePage() {
+  const [form, setForm] = useState({
+    fullName: "", email: "", phone: "", city: "Kathmandu",
+    vehicleType: "Hatchback", model: "", brand: "", color: "",
+    transmission: "", accident: "", fuelType: "Petrol",
+    features: [], finance: "", notes: ""
+  });
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [featurePickerOpen, setFeaturePickerOpen] = useState(false);
+  const featurePickerRef = useRef(null);
+  const availableFeatures = features.filter((f) => !form.features.includes(f));
+
+  const update = (key, value) => setForm((c) => ({ ...c, [key]: value }));
+  const closeFeaturePicker = () => setFeaturePickerOpen(false);
+  const toggleFeature = (feature) => {
+    setForm((c) => ({
+      ...c,
+      features: c.features.includes(feature)
+        ? c.features.filter((f) => f !== feature)
+        : [...c.features, feature]
+    }));
+  };
+
+  const emptyTestDrive = {
+    fullName: "", email: "", phone: "", city: "Kathmandu",
+    vehicleType: "Hatchback", model: "", brand: "", color: "",
+    transmission: "", accident: "", fuelType: "Petrol",
+    features: [], finance: "", notes: ""
+  };
+
+  const submit = async () => {
+    const newErrors = {};
+    if (!form.fullName.trim()) newErrors.fullName = "Full Name is required";
+    if (!form.phone || form.phone.length !== 10)
+      newErrors.phone = "Enter valid 10-digit phone number";
+    if (!form.model.trim()) newErrors.model = "Vehicle Model is required";
+    if (!form.brand.trim()) newErrors.brand = "Vehicle Brand is required";
+    if (!form.color) newErrors.color = "Vehicle Color is required";
+    if (!form.transmission) newErrors.transmission = "Transmission / Gear is required";
+    if (!form.fuelType) newErrors.fuelType = "Fuel Type is required";
+    if (!form.finance) newErrors.finance = "Finance selection is required";
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("fullName", form.fullName.trim());
+      formData.append("email", form.email.trim());
+      formData.append("phone", form.phone.trim());
+      formData.append("city", form.city);
+      formData.append("vehicleType", form.vehicleType);
+      formData.append("vehicleModel", form.model.trim());
+      formData.append("vehicleBrand", form.brand.trim());
+      formData.append("vehicleColor", form.color);
+      formData.append("transmission", form.transmission);
+      formData.append("accidents", form.accident || "No");
+      formData.append("fuelType", form.fuelType);
+      formData.append("finance", form.finance);
+      formData.append("notes", form.notes.trim());
+      formData.append("requestType", "Free Test Drive");
+      appendFeatureFields(formData, form.features);
+      await fetch(vehicleSubmissionEndpoint, { method: "POST", body: formData });
+      setMessage("Your test drive request has been submitted!");
+      setMessageType("success");
+      setForm(emptyTestDrive);
+      setErrors({});
+    } catch {
+      setMessage("Submission failed. Please try again.");
+      setMessageType("error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <View>
+      <Text allowFontScaling={false} style={styles.title}>Free Test Drive</Text>
+      <TextField label="Full Name" required value={form.fullName} error={errors.fullName} onFocus={closeFeaturePicker} onChangeText={(v) => update("fullName", v)} />
+      <TextField label="Email" value={form.email} keyboardType="email-address" onFocus={closeFeaturePicker} onChangeText={(v) => update("email", v)} />
+      <TextField
+        label="Phone" required value={form.phone} keyboardType="phone-pad" maxLength={10}
+        error={errors.phone} onFocus={closeFeaturePicker}
+        onChangeText={(v) => update("phone", v.replace(/[^0-9]/g, ""))}
+      />
+      <SelectField label="City" required value={form.city} options={cities} onOpen={closeFeaturePicker} onChange={(v) => update("city", v)} />
+      <SelectField label="Vehicle Type" required value={form.vehicleType} options={vehicleTypes} onOpen={closeFeaturePicker} onChange={(v) => update("vehicleType", v)} />
+      <TextField
+        label="Vehicle Model" required value={form.model} error={errors.model} placeholder="Santro"
+        onFocus={closeFeaturePicker}
+        onChangeText={(v) => {
+          const only = alphabetOnly(v);
+          update("model", only);
+          setErrors((c) => ({ ...c, model: v === only ? "" : "Vehicle Model can only contain alphabets" }));
+        }}
+      />
+      <TextField label="Vehicle Brand" required value={form.brand} error={errors.brand} placeholder="Hyundai" onFocus={closeFeaturePicker} onChangeText={(v) => update("brand", v)} />
+      <SelectField label="Vehicle Color" required value={form.color} error={errors.color} options={colors} onOpen={closeFeaturePicker} onChange={(v) => update("color", v)} />
+      <SelectField label="Transmission / Gear" required value={form.transmission} error={errors.transmission} options={transmissions} onOpen={closeFeaturePicker} onChange={(v) => update("transmission", v)} />
+      <SelectField label="Accidents" value={form.accident} options={accidents} onOpen={closeFeaturePicker} onChange={(v) => update("accident", v)} />
+      <SelectField label="Fuel Type" required value={form.fuelType} error={errors.fuelType} options={fuelTypes} onOpen={closeFeaturePicker} onChange={(v) => update("fuelType", v)} />
+
+      {featurePickerOpen ? (
+        <Pressable style={styles.featurePickerOverlay} onPress={closeFeaturePicker} />
+      ) : null}
+      <View ref={featurePickerRef} style={[styles.field, featurePickerOpen && styles.featureFieldOpen]}>
+        <Label>Features</Label>
+        <View style={styles.featureBox}>
+          <Pressable style={styles.addButton} onPress={() => { Keyboard.dismiss(); setFeaturePickerOpen(true); }}>
+            <Ionicons name="add" size={23} color="#222222" />
+          </Pressable>
+          <View style={styles.featureList}>
+            {form.features.length ? (
+              form.features.map((feature) => (
+                <Pressable key={feature} onPress={() => toggleFeature(feature)} style={[styles.feature, styles.featureSelected]}>
+                  <Text style={styles.featureText}>{feature} x</Text>
+                </Pressable>
+              ))
+            ) : (
+              <Text style={styles.featurePlaceholder}>Tap + to add (Basic, A/C, 4WD, ...)</Text>
+            )}
+          </View>
+        </View>
+        {featurePickerOpen ? (
+          <View style={styles.featureDropdown}>
+            <ScrollView nestedScrollEnabled style={styles.featureOptions}>
+              {availableFeatures.length ? (
+                availableFeatures.map((feature) => (
+                  <Pressable key={feature} onPress={() => toggleFeature(feature)} style={styles.featureOption}>
+                    <Text style={styles.featureOptionText}>{feature}</Text>
+                  </Pressable>
+                ))
+              ) : (
+                <View style={styles.featureOption}>
+                  <Text style={styles.featureOptionTextMuted}>All features selected</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        ) : null}
+      </View>
+
+      <SelectField label="Are you looking for Finance?" required value={form.finance} error={errors.finance} options={financeOptions} onOpen={closeFeaturePicker} onChange={(v) => update("finance", v)} />
+      <TextField label="Notes" value={form.notes} multiline onFocus={closeFeaturePicker} onChangeText={(v) => update("notes", v)} />
+
+      {message ? (
+        <View style={[styles.messageBox, messageType === "success" ? styles.successBox : styles.errorBox]}>
+          <Text style={[styles.messageText, messageType === "success" ? styles.successText : styles.errorText]}>
+            {message}
+          </Text>
+        </View>
+      ) : null}
+      <View style={styles.formActions}>
+        <Pressable
+          style={({ hovered }) => [styles.clearButton, hovered && !submitting && styles.clearButtonHover, submitting && styles.clearButtonDisabled]}
+          disabled={submitting}
+          onPress={() => { setForm(emptyTestDrive); setErrors({}); setMessage(""); }}
+        >
+          {({ hovered }) => (
+            <>
+              <Ionicons name="refresh" size={18} color={submitting ? "#93c5fd" : "#006ffd"} />
+              <Text style={[styles.clearText, submitting && styles.clearTextDisabled, hovered && !submitting && styles.clearTextHover]}>Clear form</Text>
+            </>
+          )}
+        </Pressable>
+        <Pressable
+          style={({ hovered }) => [styles.submitButton, hovered && !submitting && styles.submitButtonHover, submitting && styles.submitButtonDisabled]}
+          onPress={submit}
+          disabled={submitting}
+        >
+          <Text style={styles.submitText}>{submitting ? "Submitting..." : "Submit"}</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+const glossaryData = {
+  A: [
+    { title: "Accident History", definition: "A record of any collisions, damages, or incidents involving a vehicle during its lifetime." },
+    { title: "Asking Price", definition: "The listed selling price a vehicle owner is requesting for their used vehicle." },
+    { title: "Airbag", definition: "A safety device that inflates rapidly during a collision to protect occupants from serious injury." },
+    { title: "Anti-lock Braking System (ABS)", definition: "A safety system that prevents wheels from locking up during hard braking, maintaining steering control." },
+    { title: "All-Wheel Drive (AWD)", definition: "A drivetrain system that powers all four wheels simultaneously for improved traction and stability." },
+    { title: "After-market Parts", definition: "Vehicle components made by third-party manufacturers, not supplied by the original vehicle maker." },
+    { title: "Auto Loan", definition: "A financial product that allows a buyer to purchase a vehicle by borrowing money and repaying in installments." },
+    { title: "Annual Percentage Rate (APR)", definition: "The yearly cost of borrowing money for a vehicle purchase, expressed as a percentage of the loan amount." },
+    { title: "Air Filter", definition: "A component that prevents dust and debris from entering the engine, ensuring clean combustion air." },
+    { title: "Auction Vehicle", definition: "A vehicle sold through a public or dealer-only bidding process, often at below-market prices." }
+  ],
+  B: [
+    { title: "Book Value", definition: "The estimated market value of a vehicle based on standard industry pricing guides." },
+    { title: "Branch Support", definition: "In-person assistance offered at NEPAL Motor branches for valuation, inspection, and paperwork." },
+    { title: "Brake Pads", definition: "Friction material that presses against the brake disc to slow or stop the vehicle." },
+    { title: "Battery (EV)", definition: "The rechargeable energy storage unit that powers an electric vehicle's motor and systems." },
+    { title: "Bumper-to-Bumper Warranty", definition: "A comprehensive warranty covering most vehicle components from the front to rear bumper for a set period." },
+    { title: "Body Type", definition: "The structural and aesthetic design classification of a vehicle, such as sedan, SUV, hatchback, or pickup." },
+    { title: "Brake Fluid", definition: "Hydraulic fluid that transfers braking force from the pedal to the brake components at each wheel." },
+    { title: "Buy Here Pay Here (BHPH)", definition: "A dealership financing model where the dealer provides in-house loans directly to the buyer." },
+    { title: "Bluebook Value", definition: "A widely used reference price for used vehicles based on make, model, year, mileage, and condition." },
+    { title: "Build Year", definition: "The actual calendar year in which a specific vehicle unit was assembled at the manufacturing plant." }
+  ],
+  C: [
+    { title: "Car Exchange", definition: "A transaction where an existing vehicle is traded in and its value is applied toward a new or different vehicle." },
+    { title: "Chassis Number", definition: "A unique identification number stamped on a vehicle's frame used for registration and verification." },
+    { title: "Condition Report", definition: "A documented assessment of a vehicle's physical and mechanical state at the time of inspection." },
+    { title: "Certified Pre-owned (CPO)", definition: "A used vehicle that has passed a manufacturer-approved inspection and comes with an extended warranty." },
+    { title: "Coolant", definition: "A liquid mixture circulated through the engine to regulate temperature and prevent overheating." },
+    { title: "Catalytic Converter", definition: "An exhaust system component that reduces harmful emissions by converting pollutants into less harmful gases." },
+    { title: "Curb Weight", definition: "The total weight of a fully equipped vehicle without passengers or cargo, measured in kilograms." },
+    { title: "Clutch", definition: "A mechanical device in manual transmission vehicles that disengages the engine from the gearbox during gear changes." },
+    { title: "Car Valuation", definition: "A professional estimate of a vehicle's current market worth based on its condition, age, and market demand." },
+    { title: "Credit Score", definition: "A numerical rating of a buyer's creditworthiness used by lenders to determine vehicle loan eligibility and interest rates." }
+  ],
+  D: [
+    { title: "Depreciation", definition: "The gradual reduction in a vehicle's value over time due to age, mileage, and wear." },
+    { title: "Document Verification", definition: "The process of checking vehicle ownership papers, insurance, and registration for authenticity." },
+    { title: "Down Payment", definition: "An upfront payment made at the start of a vehicle purchase, with the remainder financed over time." },
+    { title: "Dealer License", definition: "An official permit authorizing a business or individual to legally buy and sell vehicles commercially." },
+    { title: "Drivetrain", definition: "The system of components that generates power and delivers it to the wheels, including engine, transmission, and axles." },
+    { title: "Dual Airbag", definition: "A safety configuration featuring separate airbags for both the driver and front passenger positions." },
+    { title: "Diagnostic Scan", definition: "An electronic check of a vehicle's onboard computer systems to identify mechanical or electrical faults." },
+    { title: "Drive Type", definition: "The configuration determining which wheels receive engine power: 2WD (two-wheel) or 4WD (four-wheel)." },
+    { title: "Disc Brakes", definition: "A braking system using a rotating disc and caliper-mounted pads to slow the vehicle, offering superior stopping power." },
+    { title: "Deductible", definition: "The amount a vehicle owner must pay out of pocket before their insurance coverage begins to pay a claim." }
+  ],
+  E: [
+    { title: "Engine Capacity (CC)", definition: "The total volume of all cylinders in a vehicle's engine, measured in cubic centimeters (CC)." },
+    { title: "EV (Electric Vehicle)", definition: "A vehicle powered entirely by an electric motor using rechargeable battery packs." },
+    { title: "Exchange Value", definition: "The monetary credit offered for a trade-in vehicle when purchasing a new one." },
+    { title: "Engine Oil", definition: "A lubricant circulated through engine components to reduce friction, cool parts, and prevent wear." },
+    { title: "Exhaust System", definition: "The series of pipes and components that direct combustion gases away from the engine and out of the vehicle." },
+    { title: "Emission Standards", definition: "Government regulations limiting the amount of pollutants a vehicle is permitted to release from its exhaust." },
+    { title: "ECU (Engine Control Unit)", definition: "The onboard computer that manages and optimizes engine functions such as fuel injection, timing, and emissions." },
+    { title: "Engine Overhaul", definition: "A major mechanical service that involves dismantling, inspecting, and rebuilding the engine to restore performance." },
+    { title: "EV Charging Station", definition: "A fixed installation providing electrical power to recharge electric vehicle batteries at home or in public." },
+    { title: "Extended Warranty", definition: "A service contract providing repair coverage beyond the original manufacturer's warranty period." }
+  ],
+  F: [
+    { title: "Fair Market Value", definition: "The price a vehicle would realistically sell for between a willing buyer and seller in the open market." },
+    { title: "Finance", definition: "A payment arrangement allowing a buyer to purchase a vehicle through installments over an agreed period." },
+    { title: "Fuel Type", definition: "The category of fuel a vehicle consumes: Petrol, Diesel, Hybrid, CNG, LPG, or Electric." },
+    { title: "Fleet Vehicle", definition: "A vehicle owned or managed by a company and used for business operations rather than private use." },
+    { title: "Four-Wheel Drive (4WD)", definition: "A drivetrain system that sends engine power to all four wheels, typically used for off-road or rough terrain." },
+    { title: "Front-Wheel Drive (FWD)", definition: "A drivetrain where engine power is delivered only to the front wheels, common in passenger cars." },
+    { title: "Fuel Efficiency", definition: "A measure of how far a vehicle can travel on a given amount of fuel, typically expressed in km per liter." },
+    { title: "Frame Damage", definition: "Structural damage to a vehicle's main chassis, which can compromise safety and significantly reduce resale value." },
+    { title: "Finance Agreement", definition: "A legally binding contract between a lender and buyer outlining the terms, interest, and schedule of a vehicle loan." },
+    { title: "Floor Price", definition: "The minimum acceptable selling price a seller will accept for a vehicle during negotiations." }
+  ],
+  G: [
+    { title: "Genuine Valuation", definition: "An honest, accurate estimation of a vehicle's current market worth by a qualified professional." },
+    { title: "Grey Market Vehicle", definition: "A vehicle imported through unofficial channels, not covered by authorized dealership warranty." },
+    { title: "Ground Clearance", definition: "The distance between the lowest point of a vehicle's underbody and the road surface." },
+    { title: "Gear Ratio", definition: "The ratio between the rotational speeds of the engine and wheels, affecting acceleration and fuel efficiency." },
+    { title: "Gasoline", definition: "A refined petroleum-based fuel used in internal combustion engines; also known as petrol." },
+    { title: "GPS Tracking", definition: "A satellite-based system installed in vehicles to monitor location, movement, and driving behavior in real time." },
+    { title: "Gross Vehicle Weight (GVW)", definition: "The maximum allowable total weight of a vehicle including its own weight plus passengers and cargo." },
+    { title: "Gearbox", definition: "The mechanical assembly containing a vehicle's gears, enabling the driver to change speed and torque output." },
+    { title: "Gas Mileage", definition: "The distance a vehicle travels on a unit of fuel, used as a measure of fuel economy and running cost." },
+    { title: "Grille", definition: "The front-facing panel on a vehicle that allows airflow into the engine compartment while protecting internal components." }
+  ],
+  H: [
+    { title: "Hybrid Vehicle", definition: "A vehicle that uses both a conventional fuel engine and an electric motor to improve fuel efficiency." },
+    { title: "Horsepower (HP)", definition: "A unit measuring an engine's power output; higher horsepower generally means faster acceleration." },
+    { title: "High Mileage Vehicle", definition: "A used vehicle with a significantly high odometer reading, typically indicating heavier use and potential wear." },
+    { title: "Hydraulic Brakes", definition: "A braking system that uses hydraulic pressure to apply force to the brake components at each wheel." },
+    { title: "Hood", definition: "The hinged cover over the engine compartment at the front of the vehicle, providing access for maintenance." },
+    { title: "Highway Fuel Economy", definition: "The measured fuel efficiency of a vehicle when driven at consistent speeds on open highway roads." },
+    { title: "Heated Seats", definition: "A vehicle comfort feature that uses electrical heating elements embedded in seat cushions and backrests." },
+    { title: "Head Unit", definition: "The central infotainment system in a vehicle's dashboard, managing audio, navigation, and connectivity features." },
+    { title: "Heat Shield", definition: "A protective panel installed near hot engine or exhaust components to prevent heat damage to surrounding parts." },
+    { title: "Hard Top", definition: "A vehicle body style featuring a fixed, rigid roof structure as opposed to a convertible soft-top design." }
+  ],
+  I: [
+    { title: "Inspection Report", definition: "A formal document summarizing a vehicle's condition after a thorough professional evaluation." },
+    { title: "Insurance Papers", definition: "Documents proving active vehicle insurance coverage, required during ownership transfer." },
+    { title: "Installment", definition: "A fixed periodic payment made by a buyer to repay a vehicle loan over the agreed loan term." },
+    { title: "Invoice Price", definition: "The price a dealer pays the manufacturer for a vehicle, often used as a starting point in price negotiations." },
+    { title: "Immobilizer", definition: "An electronic anti-theft device that prevents the engine from starting without the correct key or code." },
+    { title: "Idle Speed", definition: "The engine's rotational speed when a vehicle is running but not in motion, measured in RPM." },
+    { title: "Import Duty", definition: "A government tax charged on vehicles brought into the country from abroad, affecting the on-road price." },
+    { title: "Insurance Premium", definition: "The periodic amount paid to an insurer to maintain active coverage on a vehicle." },
+    { title: "In-Car Entertainment (ICE)", definition: "Audio, video, and connectivity systems integrated into a vehicle for driver and passenger use." },
+    { title: "Intake Manifold", definition: "An engine component that distributes the air-fuel mixture evenly to each cylinder for combustion." }
+  ],
+  J: [
+    { title: "Junk Value", definition: "The residual price of a vehicle that is no longer driveable, sold for parts or scrap metal." },
+    { title: "Jump Start", definition: "The process of starting a vehicle with a dead battery by connecting it to a charged battery using jumper cables." },
+    { title: "Joint Ownership", definition: "A vehicle registered under two or more co-owners who share equal legal rights and responsibilities." },
+    { title: "Junkyard", definition: "A facility that collects damaged or old vehicles, salvages usable parts, and recycles the remaining materials." },
+    { title: "Jack Stand", definition: "A safety support device placed under a lifted vehicle to hold it securely during undercarriage maintenance." },
+    { title: "Journey Log", definition: "A record of trips made in a vehicle, used for tracking mileage, fuel costs, and tax compliance." },
+    { title: "Just-Sold Report", definition: "A market report documenting recently completed vehicle transactions to establish current pricing benchmarks." },
+    { title: "Joint Vehicle Inspection", definition: "A pre-sale assessment conducted in the presence of both the buyer and seller to agree on vehicle condition." },
+    { title: "J1772 Connector", definition: "A standardized electric vehicle charging plug used for Level 1 and Level 2 AC charging stations." },
+    { title: "Jet Black Finish", definition: "A deep, high-gloss black paint color commonly featured on premium and luxury vehicle trims." }
+  ],
+  K: [
+    { title: "KM Driven", definition: "The total distance a vehicle has traveled in kilometers, a key factor in determining resale value." },
+    { title: "Keyless Entry", definition: "A system that allows a driver to unlock a vehicle without physically inserting a key, using a remote or proximity sensor." },
+    { title: "Keyless Start", definition: "A feature enabling the driver to start the engine with a push-button while the key fob remains in their pocket." },
+    { title: "Knock Sensor", definition: "An engine sensor that detects abnormal combustion (knocking) and signals the ECU to adjust timing accordingly." },
+    { title: "Kilometer Per Liter (KMPL)", definition: "A fuel efficiency rating measuring how many kilometers a vehicle can travel on one liter of fuel." },
+    { title: "Key Fob", definition: "A small electronic remote device used to lock, unlock, and sometimes start a vehicle from a short distance." },
+    { title: "Kerbside Value", definition: "The assessed market value of a vehicle inspected as-is, without any repairs or preparation by the seller." },
+    { title: "Kinetic Energy Recovery System (KERS)", definition: "A technology that captures energy during braking and stores it for reuse, improving overall vehicle efficiency." },
+    { title: "K-turn (Three-Point Turn)", definition: "A standard driving maneuver used to reverse the direction of a vehicle in a limited space using three movements." },
+    { title: "Kick Panel", definition: "The interior trim panel located at the base of the A-pillar near the driver or passenger footwell area." }
+  ],
+  L: [
+    { title: "Lien", definition: "A legal claim placed on a vehicle by a lender until the associated loan is fully repaid." },
+    { title: "Loan Clearance", definition: "Confirmation that all outstanding financial obligations on a vehicle have been settled before transfer." },
+    { title: "List Price", definition: "The manufacturer's officially published retail price for a new vehicle before any discounts or negotiations." },
+    { title: "Lease Agreement", definition: "A contract allowing a person to use a vehicle for a set period in exchange for monthly payments, without owning it." },
+    { title: "Lubrication", definition: "The application of oil or grease to moving engine and mechanical parts to minimize friction and wear." },
+    { title: "Liability Insurance", definition: "A mandatory vehicle insurance type covering costs if the insured driver causes injury or property damage to others." },
+    { title: "Load Capacity", definition: "The maximum weight of passengers and cargo a vehicle is designed to safely carry, as specified by the manufacturer." },
+    { title: "Lane Assist", definition: "A driver assistance feature that detects lane markings and alerts or steers the vehicle to stay within its lane." },
+    { title: "LED Headlights", definition: "Energy-efficient vehicle lighting using light-emitting diodes that provide brighter illumination and longer lifespan." },
+    { title: "Lemon Law", definition: "A consumer protection regulation requiring manufacturers to repair, replace, or refund defective vehicles." }
+  ],
+  M: [
+    { title: "Market Value", definition: "The current price a vehicle would fetch based on prevailing demand, condition, and competition." },
+    { title: "Mileage", definition: "The total distance a vehicle has covered, used to gauge usage and estimate remaining life." },
+    { title: "Model Year", definition: "The calendar year in which a vehicle model was officially manufactured or released for sale." },
+    { title: "Manual Transmission", definition: "A gearbox requiring the driver to manually select gears using a clutch pedal and gear lever." },
+    { title: "Multi-point Inspection", definition: "A comprehensive vehicle checkup covering multiple systems including engine, brakes, tires, and electrical components." },
+    { title: "Motor Insurance", definition: "A mandatory legal requirement that financially protects a vehicle owner from loss due to accidents or theft." },
+    { title: "Make (Vehicle)", definition: "The brand or manufacturer of a vehicle, such as Toyota, Honda, Suzuki, or Hyundai." },
+    { title: "Master Cylinder", definition: "The hydraulic component in the brake system that converts pedal force into hydraulic pressure." },
+    { title: "Multi-airbag System", definition: "A vehicle safety configuration featuring multiple airbags to protect occupants from various collision angles." },
+    { title: "Mpg / KMPL Rating", definition: "A standardized fuel efficiency metric comparing how far a vehicle travels per unit of fuel consumed." }
+  ],
+  N: [
+    { title: "NEPAL Motor", definition: "A vehicle services company offering exchange to EV, used car buying, and used car selling with branch support." },
+    { title: "No Claim Bonus", definition: "A discount on insurance renewal premiums earned for not making any claims during the policy period." },
+    { title: "NCAP Rating", definition: "A safety score given to vehicles by the New Car Assessment Programme based on crash test performance." },
+    { title: "Number Plate", definition: "An officially issued plate displaying a vehicle's unique registration number for identification and legal purposes." },
+    { title: "Neutral Gear", definition: "A gearbox position where the engine is disconnected from the drivetrain, allowing the vehicle to roll freely." },
+    { title: "Non-accidental Vehicle", definition: "A used vehicle with no recorded collision or accident history, generally commanding a higher resale price." },
+    { title: "Non-refundable Deposit", definition: "An advance payment made to secure a vehicle purchase that is forfeited if the buyer withdraws from the deal." },
+    { title: "Noise, Vibration, Harshness (NVH)", definition: "A measure of the unwanted sound, vibration, and roughness experienced inside a vehicle by its occupants." },
+    { title: "Net Price", definition: "The final agreed selling price of a vehicle after all discounts, negotiations, and adjustments have been applied." },
+    { title: "Night Vision System", definition: "An advanced driver aid using infrared cameras to detect pedestrians or hazards in low-light conditions." }
+  ],
+  O: [
+    { title: "Odometer", definition: "An instrument in a vehicle that records and displays the total distance the vehicle has traveled." },
+    { title: "Ownership Transfer", definition: "The legal process of changing a vehicle's registered ownership from seller to buyer through official paperwork." },
+    { title: "On-road Price", definition: "The total cost of purchasing a vehicle including ex-showroom price, registration, insurance, and applicable taxes." },
+    { title: "OBD Port (On-board Diagnostics)", definition: "A standardized plug on a vehicle used to connect diagnostic tools and read fault codes from the ECU." },
+    { title: "Oil Change", definition: "A routine maintenance service replacing used engine oil and the oil filter to keep the engine running smoothly." },
+    { title: "Original Equipment Manufacturer (OEM)", definition: "The company that originally manufactured a vehicle part or component, ensuring factory-spec quality and fit." },
+    { title: "Open Market Value", definition: "The price a vehicle would command in a competitive, unrestricted market without artificial pricing influence." },
+    { title: "Overhead Cam (OHC)", definition: "An engine design where the camshaft is mounted above the cylinder head, improving performance and efficiency." },
+    { title: "Off-road Vehicle", definition: "A vehicle built with reinforced suspension, higher ground clearance, and 4WD for use on rough or unpaved terrain." },
+    { title: "Option Package", definition: "A bundled set of factory-installed features or accessories offered as an upgrade over a vehicle's base model." }
+  ],
+  P: [
+    { title: "Pre-owned Vehicle", definition: "A vehicle that has been previously registered and driven by at least one owner before resale." },
+    { title: "Power of Attorney", definition: "A legal document that authorizes one person to conduct vehicle transactions on behalf of another." },
+    { title: "Pre-purchase Inspection", definition: "A detailed mechanical and physical assessment of a used vehicle conducted by a professional before buying." },
+    { title: "Paint Condition", definition: "The overall state of a vehicle's exterior paint, including any scratches, fading, oxidation, or repaint areas." },
+    { title: "Parking Sensors", definition: "Ultrasonic or electromagnetic sensors on a vehicle that alert the driver to nearby obstacles when parking." },
+    { title: "Power Steering", definition: "An assisted steering system that reduces the physical effort needed to turn the steering wheel." },
+    { title: "Petrol Engine", definition: "An internal combustion engine that runs on petrol (gasoline), the most common fuel type in passenger vehicles." },
+    { title: "Permanent Registration", definition: "A lifelong vehicle registration issued by transport authorities after initial temporary registration expires." },
+    { title: "Performance Car", definition: "A vehicle engineered for superior acceleration, handling, and speed compared to standard passenger vehicles." },
+    { title: "Proforma Invoice", definition: "A preliminary billing document issued by a seller to a buyer before the formal sale of a vehicle is completed." }
+  ],
+  Q: [
+    { title: "Quality Inspection", definition: "A structured, professional review of a vehicle's mechanical components and physical condition." },
+    { title: "Quiet Title", definition: "A legal process used to establish clear, undisputed ownership of a vehicle, removing any conflicting claims." },
+    { title: "Quick Lube", definition: "A fast oil change and basic vehicle maintenance service completed in a short scheduled appointment." },
+    { title: "Quarterly Service", definition: "Scheduled vehicle maintenance performed every three months to keep components in optimal working condition." },
+    { title: "Qualified Technician", definition: "A certified mechanic with formal training and authorization to inspect, repair, or certify vehicles." },
+    { title: "Quarter Panel", definition: "The body panel on a vehicle covering the area between the rear door and the trunk on each side." },
+    { title: "Quick Release Steering", definition: "A removable steering wheel mechanism used in performance and racing vehicles for easy driver exit." },
+    { title: "Quick Charge (EV)", definition: "A fast-charging method for electric vehicles using high-powered DC current to significantly reduce charging time." },
+    { title: "Quote (Insurance)", definition: "An estimated insurance premium provided by an insurer based on a vehicle's details and the driver's profile." },
+    { title: "Quattro System", definition: "Audi's proprietary all-wheel-drive technology that continuously distributes power across all four wheels." }
+  ],
+  R: [
+    { title: "Registration Certificate (RC)", definition: "An official government document that confirms a vehicle's registration and the identity of its owner." },
+    { title: "Resale Value", definition: "The amount a vehicle can realistically be sold for in the used car market at a given time." },
+    { title: "Road Tax", definition: "A government-mandated tax paid annually to legally operate a vehicle on public roads." },
+    { title: "Recall (Manufacturer)", definition: "An official notice from a manufacturer to return a vehicle for repair of a defect that may affect safety." },
+    { title: "Rear-Wheel Drive (RWD)", definition: "A drivetrain configuration where engine power is delivered only to the rear wheels." },
+    { title: "Radiator", definition: "A heat exchanger that cools the engine by transferring heat from coolant fluid to the surrounding air." },
+    { title: "Reconditioned Vehicle", definition: "A used vehicle that has been repaired, cleaned, and restored to a better working condition before resale." },
+    { title: "Running Costs", definition: "The ongoing expenses of operating a vehicle, including fuel, insurance, maintenance, and road tax." },
+    { title: "Roadworthiness Certificate", definition: "An official certification that a vehicle meets the minimum safety and technical standards for road use." },
+    { title: "Repossession (Repo)", definition: "The legal recovery of a vehicle by a lender when a borrower fails to maintain their loan repayments." }
+  ],
+  S: [
+    { title: "Service History", definition: "A documented record of all maintenance, servicing, and repairs performed on a vehicle over time." },
+    { title: "Salvage Title", definition: "A certificate indicating a vehicle has been declared a total loss and may require significant repair." },
+    { title: "Suspension System", definition: "The network of springs, shocks, and linkages connecting a vehicle's body to its wheels for ride comfort." },
+    { title: "Spare Parts", definition: "Replacement components kept in stock to repair or maintain a vehicle when original parts wear out or fail." },
+    { title: "Showroom Condition", definition: "A description of a used vehicle that appears pristine and well-maintained, resembling a new vehicle on display." },
+    { title: "Steering Column", definition: "The shaft connecting the steering wheel to the steering mechanism, transmitting the driver's turning input." },
+    { title: "Safety Rating", definition: "A score assigned to a vehicle based on its performance in standardized crash tests and safety assessments." },
+    { title: "Seatbelt", definition: "A safety restraint device worn by vehicle occupants to prevent injury during sudden stops or collisions." },
+    { title: "Supercharger (EV)", definition: "A high-speed DC charging station designed to rapidly replenish an electric vehicle's battery pack." },
+    { title: "Second Owner", definition: "A vehicle whose registration has transferred to a second individual, typically reducing its resale price." }
+  ],
+  T: [
+    { title: "Tax Clearance", definition: "A certificate confirming that all applicable road taxes and fees on a vehicle have been paid in full." },
+    { title: "Trade-in", definition: "Exchanging a current vehicle toward payment for a new or different vehicle at a dealership." },
+    { title: "Transmission", definition: "The mechanical system that transfers engine power to the wheels; types include Manual, Automatic, and CVT." },
+    { title: "Turbocharger", definition: "A forced induction device that compresses intake air to boost engine power and improve fuel efficiency." },
+    { title: "Test Drive", definition: "A trial run of a vehicle conducted by a prospective buyer to evaluate its performance, comfort, and condition." },
+    { title: "Torque", definition: "A measure of rotational force produced by an engine, affecting a vehicle's ability to accelerate and haul loads." },
+    { title: "Towing Capacity", definition: "The maximum weight a vehicle is rated to safely tow behind it, as specified by the manufacturer." },
+    { title: "Transfer of Ownership", definition: "The formal legal procedure by which a vehicle's registered title is transferred from one owner to another." },
+    { title: "Tire Tread Depth", definition: "The measurement of remaining rubber on a tire's surface, indicating grip level and when replacement is needed." },
+    { title: "Top-up Insurance", definition: "An additional insurance policy purchased to extend coverage beyond a standard motor insurance plan." }
+  ],
+  U: [
+    { title: "Used Vehicle", definition: "A vehicle that has been previously owned and operated and is being offered for resale." },
+    { title: "Undercarriage", definition: "The structural components underneath a vehicle including the frame, axles, and suspension parts." },
+    { title: "Upholstery", definition: "The interior fabric, leather, or vinyl covering of a vehicle's seats, door panels, and headliner." },
+    { title: "Used Car Warranty", definition: "A guarantee provided by the seller or dealer covering certain repairs on a pre-owned vehicle for a limited period." },
+    { title: "Under-hood Inspection", definition: "A check of engine bay components including fluids, belts, hoses, and battery as part of vehicle evaluation." },
+    { title: "Unibody Construction", definition: "A vehicle design where the body and frame are integrated into a single structural unit for lighter weight and rigidity." },
+    { title: "Unused Loan Balance", definition: "The remaining principal owed on a vehicle finance agreement that has not yet been repaid." },
+    { title: "Upcycled Parts", definition: "Salvaged vehicle components that have been refurbished and resold for reuse in other vehicles." },
+    { title: "Urban Fuel Economy", definition: "The measured fuel efficiency of a vehicle under city driving conditions with frequent stops and lower speeds." },
+    { title: "Under-inflation (Tire)", definition: "A condition where a tire's air pressure falls below the manufacturer's recommended level, affecting safety and economy." }
+  ],
+  V: [
+    { title: "Valuation", definition: "The process of professionally estimating a vehicle's current fair market worth before sale or exchange." },
+    { title: "Vehicle Identification Number (VIN)", definition: "A unique 17-character alphanumeric code assigned to every vehicle for identification and record-keeping." },
+    { title: "Vehicle History Report", definition: "A detailed record of a used vehicle's past including ownership, accidents, service, and title information." },
+    { title: "Valid Insurance", definition: "An active and legally compliant vehicle insurance policy required for registration and road use." },
+    { title: "Vehicle Weight", definition: "The total mass of a vehicle including its standard equipment, measured in kilograms." },
+    { title: "Value-Added Tax (VAT)", definition: "A government tax applied to vehicle purchases and parts, increasing the final transaction cost." },
+    { title: "Vendor Finance", definition: "A financing arrangement where the seller of the vehicle directly provides a loan to the buyer." },
+    { title: "Vehicle Registration", definition: "The official government process of recording a vehicle's ownership and assigning it a unique number plate." },
+    { title: "Variable Valve Timing (VVT)", definition: "An engine technology that adjusts the timing of intake and exhaust valves to optimize performance and efficiency." },
+    { title: "Variation Order", definition: "A formal amendment to a vehicle sales or service contract reflecting changes agreed upon after the original signing." }
+  ],
+  W: [
+    { title: "Warranty", definition: "A guarantee covering specific vehicle repairs for a set period, offered by the manufacturer or dealership." },
+    { title: "Write-off", definition: "A vehicle declared a total loss by an insurance company due to severe damage or repair costs exceeding value." },
+    { title: "Wear and Tear", definition: "The gradual deterioration of vehicle components through normal use over time, expected in any used vehicle." },
+    { title: "Wholesale Price", definition: "The price at which dealers buy vehicles in bulk or at auction, typically lower than the retail selling price." },
+    { title: "Windshield", definition: "The laminated safety glass panel at the front of a vehicle providing visibility and structural support to the roof." },
+    { title: "Wheelbase", definition: "The distance between the centers of the front and rear axles, affecting a vehicle's stability and interior space." },
+    { title: "Water-cooled Engine", definition: "An engine that uses liquid coolant circulated through a radiator to regulate operating temperature." },
+    { title: "Wiper System", definition: "The motorized blades and mechanism on a vehicle's windshield that clear rain, dust, and debris for visibility." },
+    { title: "Wheel Alignment", definition: "The adjustment of a vehicle's wheel angles to ensure straight tracking, even tire wear, and precise steering." },
+    { title: "Working Capital Loan (Auto)", definition: "A short-term loan used by vehicle dealers to finance inventory purchases until vehicles are sold." }
+  ],
+  X: [
+    { title: "Ex-showroom Price", definition: "The manufacturer's listed price of a vehicle at the dealership, before registration, insurance, or road taxes." },
+    { title: "Xenon Headlights", definition: "High-intensity discharge (HID) lights providing significantly brighter illumination than standard halogen bulbs." },
+    { title: "Extended Range EV (XEV)", definition: "An electric vehicle equipped with a small backup combustion engine to extend range beyond battery capacity." },
+    { title: "X-ray Inspection", definition: "A non-invasive scanning technique used to detect hidden structural damage or welding repairs in a vehicle." },
+    { title: "Extra-urban Fuel Economy", definition: "A vehicle's fuel efficiency measured during highway and out-of-town driving at sustained higher speeds." },
+    { title: "Exchange Program", definition: "A structured trade-in scheme by dealers or manufacturers allowing owners to upgrade their vehicle model." },
+    { title: "Exhaust Emission Test", definition: "A regulated test measuring the level of harmful pollutants emitted from a vehicle's exhaust pipe." },
+    { title: "X-Country Vehicle", definition: "A vehicle designed to perform reliably both on paved roads and challenging off-road terrain conditions." },
+    { title: "Cross-traffic Alert", definition: "A sensor-based safety feature that warns the driver of approaching vehicles when reversing out of a space." },
+    { title: "Xtra Load Tires (XL)", definition: "Reinforced tires rated to carry heavier loads than standard tires of the same size designation." }
+  ],
+  Y: [
+    { title: "Year of Manufacture", definition: "The specific calendar year in which the vehicle was produced at the factory." },
+    { title: "Year of Registration", definition: "The calendar year in which a vehicle was first officially registered with transport authorities." },
+    { title: "Yellow Plate (Commercial)", definition: "A license plate designation used in Nepal to identify vehicles registered for commercial passenger or cargo use." },
+    { title: "Year-end Depreciation", definition: "The calculated reduction in a vehicle's book value assessed at the close of each financial year." },
+    { title: "Yearly Maintenance Plan", definition: "A service agreement covering all scheduled maintenance tasks for a vehicle over a one-year period." },
+    { title: "Yaw Control", definition: "A vehicle stability feature that counteracts spinning or sliding by selectively applying brakes to individual wheels." },
+    { title: "Year-Model Difference", definition: "The distinction in features, technology, and value between consecutive annual production versions of a model." },
+    { title: "Yellow Flag (Safety)", definition: "A caution signal used in vehicle testing and motorsport to indicate a hazard requiring reduced speed." },
+    { title: "Yield Management (Auto)", definition: "A pricing strategy used by dealerships to adjust vehicle prices based on demand, inventory, and market timing." },
+    { title: "Young Driver Insurance", definition: "A specialized motor insurance product tailored for new or younger drivers, often with higher premiums." }
+  ],
+  Z: [
+    { title: "Zero Depreciation Cover", definition: "An insurance add-on that pays the full cost of parts replacement without deducting depreciation during a claim." },
+    { title: "Zero Emission Vehicle (ZEV)", definition: "A vehicle that produces no direct exhaust emissions during operation, such as a battery electric vehicle." },
+    { title: "Zero-down Finance", definition: "A vehicle loan arrangement with no upfront down payment required, covering the full purchase price." },
+    { title: "Zero-kilometer Vehicle", definition: "A brand-new vehicle that has never been driven, registered, or previously owned by any individual." },
+    { title: "Zero-rate Finance", definition: "A financing deal offering 0% interest over an agreed repayment term, making the total cost equal to the price." },
+    { title: "Zone Pricing", definition: "A dealer pricing strategy where vehicle prices vary by geographic region based on local demand and competition." },
+    { title: "Zero Emission Zone (ZEZ)", definition: "A designated urban area where only zero-emission vehicles are permitted to enter or operate." },
+    { title: "Zoning Compliance", definition: "Ensuring a vehicle's commercial use or parking meets local authority rules for specific designated zones." },
+    { title: "Zone of Inspection", definition: "The specific areas of a vehicle assessed during a pre-purchase examination, such as body, engine, and undercarriage." },
+    { title: "Z-axis (Vehicle Dynamics)", definition: "The vertical axis of a vehicle used in suspension design and stability analysis to measure bounce and roll forces." }
+  ]
+};
+
+function GlossaryPage() {
+  const [activeLetter, setActiveLetter] = useState("A");
+  const letterRows = [
+    ["A","B","C","D","E","F"],
+    ["G","H","I","J","K","L"],
+    ["M","N","O","P","Q","R"],
+    ["S","T","U","V","W","X"],
+    ["Y","Z"]
+  ];
+  const terms = glossaryData[activeLetter] || [];
+
+  return (
+    <View style={styles.glossaryPage}>
+      <Text allowFontScaling={false} style={styles.glossaryIntro}>
+        Explore common used car, EV exchange, and auto market terms from A to Z.
+      </Text>
+
+      <View style={styles.glossaryAlphabetCard}>
+        {letterRows.map((row, rowIndex) => (
+          <View key={rowIndex} style={styles.glossaryLetterRow}>
+            {row.map((letter) => {
+              const active = activeLetter === letter;
+              return (
+                <Pressable
+                  key={letter}
+                  onPress={() => setActiveLetter(letter)}
+                  style={[styles.glossaryLetterBtn, active && styles.glossaryLetterBtnActive]}
+                >
+                  <Text allowFontScaling={false} style={[styles.glossaryLetterText, active && styles.glossaryLetterTextActive]}>
+                    {letter}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
+      </View>
+
+      <Text allowFontScaling={false} style={styles.glossaryActiveLetter}>{activeLetter}</Text>
+
+      {terms.map((term, i) => (
+        <View key={i} style={styles.glossaryCard}>
+          <Text allowFontScaling={false} style={styles.glossaryTerm}>{term.title}</Text>
+          <Text allowFontScaling={false} style={styles.glossaryDef}>{term.definition}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
   if (!visible) {
     return null;
@@ -1015,15 +1688,16 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
     { label: "Home", icon: "home-outline", navKey: "exchange" },
     { label: "Exchange to EV", icon: "swap-horizontal-outline", navKey: "exchange" },
     { label: "Sell Used Car", icon: "cash-outline", navKey: "sell" },
+    { label: "Buy Used Car", icon: "key-outline", navKey: "buy" },
     { label: "About Us", icon: "information-circle-outline", navKey: "about" },
     { label: "Contact", icon: "call-outline", action: callSupport },
   ];
 
   const secondaryItems = [
-    { label: "Become a Dealer", icon: "business-outline", action: callSupport },
-    { label: "Free Test Drive", icon: "car-sport-outline", action: callSupport },
+    { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
+    { label: "Free Test Drive", icon: "car-sport-outline", navKey: "testdrive" },
     { label: "FAQs", icon: "help-circle-outline", navKey: "faqs" },
-    { label: "Glossary", icon: "book-outline", action: onClose },
+    { label: "Glossary", icon: "book-outline", navKey: "glossary" },
   ];
 
   const handlePress = (item) => {
@@ -1089,7 +1763,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
             })}
           </View>
 
-          <View style={styles.drawerDivider} />
+          <View style={styles.drawerSectionDivider} />
 
           <View style={styles.drawerSection}>
             {secondaryItems.map((item, i) => {
@@ -1182,7 +1856,8 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [forms, setForms] = useState({
     exchange: emptyForm,
-    sell: emptyForm
+    sell: emptyForm,
+    buy: emptyForm
   });
   const [featurePickerOpen, setFeaturePickerOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -1194,7 +1869,9 @@ export default function App() {
   const [activeFooterTab, setActiveFooterTab] = useState("exchange");
   const scrollRef = useRef(null);
   const isSellForm = activeFooterTab === "sell";
-  const formKey = isSellForm ? "sell" : "exchange";
+  const isBuyForm = activeFooterTab === "buy";
+  const isExchangeForm = activeFooterTab === "exchange";
+  const formKey = isSellForm ? "sell" : isBuyForm ? "buy" : "exchange";
   const form = forms[formKey];
   const availableFeatures = features.filter((feature) => !form.features.includes(feature));
 
@@ -1379,7 +2056,7 @@ export default function App() {
     if (!form.phone || form.phone.length !== 10)
       newErrors.phone = "Enter valid 10-digit phone number";
 
-    if (!form.year) newErrors.year = "Year is required";
+    if (!isBuyForm && !form.year) newErrors.year = "Year is required";
 
     if (!form.model.trim())
       newErrors.model = "Vehicle Model is required";
@@ -1392,13 +2069,13 @@ export default function App() {
     if (!form.color)
       newErrors.color = "Vehicle Color is required";
 
-    if (!form.kmDriven.trim())
+    if (!isBuyForm && !form.kmDriven.trim())
       newErrors.kmDriven = "KM Driven is required";
 
-    if (!form.document.length)
+    if (!isBuyForm && !form.document.length)
       newErrors.document = "Upload vehicle document";
 
-    if (!form.photo.length)
+    if (!isBuyForm && !form.photo.length)
       newErrors.photo = "Upload vehicle photo";
 
     if (!form.transmission)
@@ -1407,16 +2084,20 @@ export default function App() {
     if (!form.fuelType)
       newErrors.fuelType = "Fuel Type is required";
 
-    if (!isSellForm && !form.evBrand)
+    if (isExchangeForm && !form.evBrand)
       newErrors.evBrand = "Interested EV Brand is required";
 
-    if (!isSellForm && !form.finance)
+    if ((isExchangeForm || isBuyForm) && !form.finance)
       newErrors.finance = "Finance selection is required";
 
-    const year = Number(form.year);
+    if (isBuyForm && !form.budget.trim())
+      newErrors.budget = "Budget in NPR is required";
 
-    if (form.year && (year < 1981 || year > 2026)) {
-      newErrors.year = "Year must be between 1981 and 2026";
+    if (!isBuyForm) {
+      const year = Number(form.year);
+      if (form.year && (year < 1981 || year > 2026)) {
+        newErrors.year = "Year must be between 1981 and 2026";
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -1430,8 +2111,9 @@ export default function App() {
     setSubmitting(true);
     const submittedFormKey = formKey;
     const submittedIsSellForm = isSellForm;
+    const submittedIsBuyForm = isBuyForm;
     try {
-      const apiResponse = await postVehicleSubmission(form, submittedIsSellForm);
+      const apiResponse = await postVehicleSubmission(form, submittedIsSellForm, { isBuyForm: submittedIsBuyForm });
       console.log("API RESPONSE:", apiResponse);
       console.log("attachments:", apiResponse.received?.attachments);
       if (apiResponse.warning || apiResponse.warnings) {
@@ -1478,16 +2160,20 @@ export default function App() {
         <Header onOpenDrawer={() => setDrawerOpen(true)} />
         {activeFooterTab === "faqs" ? (
           <FAQsPage />
-        ) : activeFooterTab === "buy" ? (
-          <BuyUsedCarPage />
         ) : activeFooterTab === "branches" ? (
           <BranchesPage />
         ) : activeFooterTab === "about" ? (
           <AboutPage />
+        ) : activeFooterTab === "dealer" ? (
+          <DealerPage />
+        ) : activeFooterTab === "testdrive" ? (
+          <TestDrivePage />
+        ) : activeFooterTab === "glossary" ? (
+          <GlossaryPage />
         ) : (
           <>
         <Pressable onPress={closeFeaturePicker}>
-          <Text allowFontScaling={false} style={styles.title}>{isSellForm ? "Sell Used Car" : "Exchange to eV"}</Text>
+          <Text allowFontScaling={false} style={styles.title}>{isSellForm ? "Sell Used Car" : isBuyForm ? "Buy Used Car" : "Exchange to EV"}</Text>
         </Pressable>
 
         <TextField
@@ -1526,30 +2212,30 @@ export default function App() {
           onOpen={closeFeaturePicker}
           onChange={(value) => update("city", value)}
         />
-        <TextField
-          label="Year of Manufacture"
-          required
-          value={form.year}
-          placeholder="2007"
-          keyboardType="numeric"
-          maxLength={4}
-          error={errors.year}
-          onFocus={closeFeaturePicker}
-          onChangeText={(value) => {
-            const onlyNumbers = value.replace(/[^0-9]/g, "").slice(0, 4);
-            update("year", onlyNumbers);
-
-            const year = Number(onlyNumbers);
-
-            setErrors((current) => ({
-              ...current,
-              year:
-                onlyNumbers.length === 4 && (year < 1981 || year > 2026)
-                  ? "Year must be between 1981 and 2026"
-                  : ""
-            }));
-          }}
-        />
+        {!isBuyForm ? (
+          <TextField
+            label="Year of Manufacture"
+            required
+            value={form.year}
+            placeholder="2007"
+            keyboardType="numeric"
+            maxLength={4}
+            error={errors.year}
+            onFocus={closeFeaturePicker}
+            onChangeText={(value) => {
+              const onlyNumbers = value.replace(/[^0-9]/g, "").slice(0, 4);
+              update("year", onlyNumbers);
+              const year = Number(onlyNumbers);
+              setErrors((current) => ({
+                ...current,
+                year:
+                  onlyNumbers.length === 4 && (year < 1981 || year > 2026)
+                    ? "Year must be between 1981 and 2026"
+                    : ""
+              }));
+            }}
+          />
+        ) : null}
         <SelectField
           label="Vehicle Type"
           required
@@ -1595,37 +2281,41 @@ export default function App() {
           onOpen={closeFeaturePicker}
           onChange={(value) => update("color", value)}
         />
-        <TextField
-          label="KM Driven"
-          required
-          value={form.kmDriven}
-          error={errors.kmDriven}
-          keyboardType="numeric"
-          onFocus={closeFeaturePicker}
-          onChangeText={(value) => update("kmDriven", value)}
-        />
-        <UploadField
-          label="Upload Vehicle Document"
-          value={form.document}
-          error={errors.document}
-          onRemove={(index) => removeFile("document", index)}
-          onClear={() => clearFiles("document")}
-          onPress={() => {
-            closeFeaturePicker();
-            pickFile("document");
-          }}
-        />
-        <UploadField
-          label="Upload Vehicle Photo"
-          value={form.photo}
-          error={errors.photo}
-          onRemove={(index) => removeFile("photo", index)}
-          onClear={() => clearFiles("photo")}
-          onPress={() => {
-            closeFeaturePicker();
-            pickFile("photo");
-          }}
-        />
+        {!isBuyForm ? (
+          <>
+            <TextField
+              label="KM Driven"
+              required
+              value={form.kmDriven}
+              error={errors.kmDriven}
+              keyboardType="numeric"
+              onFocus={closeFeaturePicker}
+              onChangeText={(value) => update("kmDriven", value)}
+            />
+            <UploadField
+              label="Upload Vehicle Document"
+              value={form.document}
+              error={errors.document}
+              onRemove={(index) => removeFile("document", index)}
+              onClear={() => clearFiles("document")}
+              onPress={() => {
+                closeFeaturePicker();
+                pickFile("document");
+              }}
+            />
+            <UploadField
+              label="Upload Vehicle Photo"
+              value={form.photo}
+              error={errors.photo}
+              onRemove={(index) => removeFile("photo", index)}
+              onClear={() => clearFiles("photo")}
+              onPress={() => {
+                closeFeaturePicker();
+                pickFile("photo");
+              }}
+            />
+          </>
+        ) : null}
         <SelectField
           label="Transmission / Gear"
           required
@@ -1635,7 +2325,7 @@ export default function App() {
           onOpen={closeFeaturePicker}
           onChange={(value) => update("transmission", value)}
         />
-        {!isSellForm ? (
+        {isExchangeForm ? (
           <SelectField
             label="Accidents"
             value={form.accident}
@@ -1711,27 +2401,40 @@ export default function App() {
           ) : null}
         </View>
 
-        {!isSellForm ? (
-          <>
-            <SelectField
-              label="Interested EV Brand"
-              required
-              value={form.evBrand}
-              error={errors.evBrand}
-              options={evBrands}
-              onOpen={closeFeaturePicker}
-              onChange={(value) => update("evBrand", value)}
-            />
-            <SelectField
-              label="Are you looking for Finance?"
-              required
-              value={form.finance}
-              error={errors.finance}
-              options={financeOptions}
-              onOpen={closeFeaturePicker}
-              onChange={(value) => update("finance", value)}
-            />
-          </>
+        {isExchangeForm ? (
+          <SelectField
+            label="Interested EV Brand"
+            required
+            value={form.evBrand}
+            error={errors.evBrand}
+            options={evBrands}
+            onOpen={closeFeaturePicker}
+            onChange={(value) => update("evBrand", value)}
+          />
+        ) : null}
+
+        {isBuyForm ? (
+          <TextField
+            label="Budget in NPR"
+            required
+            value={form.budget}
+            error={errors.budget}
+            keyboardType="numeric"
+            onFocus={closeFeaturePicker}
+            onChangeText={(value) => update("budget", value.replace(/[^0-9]/g, ""))}
+          />
+        ) : null}
+
+        {(isExchangeForm || isBuyForm) ? (
+          <SelectField
+            label="Are you looking for Finance?"
+            required
+            value={form.finance}
+            error={errors.finance}
+            options={financeOptions}
+            onOpen={closeFeaturePicker}
+            onChange={(value) => update("finance", value)}
+          />
         ) : null}
 
         <TextField
@@ -1894,7 +2597,7 @@ const styles = StyleSheet.create({
   onboardingScreen: {
     flex: 1,
     backgroundColor: "#ffffff",
-    paddingTop: 34,
+    paddingTop: 10,
     paddingBottom: 30
   },
   onboardingHeader: {
@@ -1902,7 +2605,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "flex-end"
   },
   onboardingBrand: {
     flex: 1,
@@ -1923,7 +2626,7 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   onboardingSkipText: {
-    color: "#7c3aed",
+    color: "#075985",
     fontSize: 14,
     fontWeight: "800",
     paddingHorizontal: 12,
@@ -1931,7 +2634,7 @@ const styles = StyleSheet.create({
   },
   onboardingTextBlock: {
     alignSelf: "center",
-    marginTop: 28,
+    marginTop: 10,
     paddingHorizontal: 4
   },
   onboardingTitle: {
@@ -2056,6 +2759,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#e2e8f0",
     marginHorizontal: 16,
     marginVertical: 4
+  },
+  drawerSectionDivider: {
+    height: 1,
+    backgroundColor: "#d1d5db",
+    marginHorizontal: 14,
+    marginTop: 8,
+    marginBottom: 8
   },
   drawerBody: {
     flex: 1
@@ -2683,7 +3393,7 @@ const styles = StyleSheet.create({
     paddingTop: 20
   },
   faqPageTitle: {
-    color: "#064e3b",
+    color: "#075985",
     fontSize: 28,
     fontWeight: "800",
     lineHeight: 35,
@@ -2691,13 +3401,13 @@ const styles = StyleSheet.create({
   },
   faqItem: {
     borderWidth: 1,
-    borderColor: "#9fd8ca",
+    borderColor: "#bae6fd",
     borderRadius: 22,
     backgroundColor: "#ffffff",
     paddingHorizontal: 25,
     paddingVertical: 22,
     marginBottom: 30,
-    shadowColor: "#047857",
+    shadowColor: "#075985",
     shadowOpacity: 0.12,
     shadowRadius: 7,
     shadowOffset: { width: 0, height: 3 },
@@ -2705,11 +3415,11 @@ const styles = StyleSheet.create({
     cursor: "pointer"
   },
   faqItemActive: {
-    borderColor: "#7cc8b7",
+    borderColor: "#7dd3fc",
     shadowOpacity: 0.17
   },
   faqQuestion: {
-    color: "#064e3b",
+    color: "#075985",
     fontSize: 21,
     fontWeight: "800",
     lineHeight: 27
@@ -2863,4 +3573,90 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 6
   },
+  glossaryPage: {
+    paddingTop: 8
+  },
+  glossaryIntro: {
+    textAlign: "center",
+    color: "#475569",
+    fontSize: 17,
+    lineHeight: 26,
+    marginBottom: 24,
+    paddingHorizontal: 8
+  },
+  glossaryAlphabetCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  glossaryLetterGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8
+  },
+  glossaryLetterRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 8
+  },
+  glossaryLetterBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: "#f1f5f9",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  glossaryLetterBtnActive: {
+    backgroundColor: "#075985"
+  },
+  glossaryLetterText: {
+    color: "#475569",
+    fontSize: 15,
+    fontWeight: "700"
+  },
+  glossaryLetterTextActive: {
+    color: "#ffffff"
+  },
+  glossaryActiveLetter: {
+    textAlign: "center",
+    color: "#075985",
+    fontSize: 32,
+    fontWeight: "900",
+    marginBottom: 16
+  },
+  glossaryCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#075985",
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  glossaryTerm: {
+    color: "#0c4a6e",
+    fontSize: 16,
+    fontWeight: "800",
+    marginBottom: 6
+  },
+  glossaryDef: {
+    color: "#475569",
+    fontSize: 14,
+    lineHeight: 22
+  }
 });
