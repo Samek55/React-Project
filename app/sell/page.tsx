@@ -3,7 +3,7 @@ import { ExchangeToEvForm } from "../ExchangeToEvForm";
 import { SiteShell } from "../SiteShell";
 
 export const metadata: Metadata = {
-  title: "Sell Any Car | Nepal Motor",
+  title: "Sell Used Car | Nepal Motor",
   description:
     "Sell your used car with NEPAL Motor — fair valuation, inspection, and hassle-free paperwork.",
 };
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function SellPage() {
   return (
     <SiteShell
-      title="Sell Any Car"
+      title="Sell Used Car"
       description="Get a fair market valuation and sell your vehicle with professional support."
       activeNav="sell"
       variant="form"

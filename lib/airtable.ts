@@ -64,6 +64,7 @@ export type ListingPayload = {
   vehicleModel: string;
   vehicleColor: string;
   kmDriven: string;
+  expectedValuation?: string;
   evBrand: string;
   finance: string;
   transmission: string;
@@ -530,6 +531,10 @@ export function buildAirtableFields(
 ): Record<string, unknown> {
   const year = parseInt(payload.year, 10);
   const km = parseInt(payload.kmDriven, 10);
+  const expectedValuationRaw = payload.expectedValuation?.trim() ?? "";
+  const expectedValuation = expectedValuationRaw
+    ? parseInt(expectedValuationRaw.replace(/,/g, ""), 10)
+    : NaN;
   const choices = target.selectChoices;
 
   const notes = payload.notes.trim();
@@ -595,6 +600,10 @@ export function buildAirtableFields(
     ["Vehicle Brand", payload.vehicleBrand.trim()],
     ["Vehicle Color", vehicleColor],
     ["KM Driven", Number.isFinite(km) ? km : undefined],
+    [
+      "Expected Valuation",
+      Number.isFinite(expectedValuation) ? expectedValuation : undefined,
+    ],
     ["Transmission / Gear", transmission],
     ["Accidents", accidents],
     ["Fuel Type", fuelType],

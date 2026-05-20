@@ -41,6 +41,7 @@ export async function parseListingPayload(
   const vehicleModel = String(form.get("vehicleModel") ?? "").trim();
   const vehicleColor = String(form.get("vehicleColor") ?? "").trim();
   const kmDriven = String(form.get("kmDriven") ?? "").trim();
+  const expectedValuation = String(form.get("expectedValuation") ?? "").trim();
   const evBrand = parseEvBrandFromForm(form);
   const { finance, notes } = reconcileFinanceAndNotes(
     parseFinanceFromForm(form),
@@ -77,6 +78,7 @@ export async function parseListingPayload(
     vehicleModel,
     vehicleColor,
     kmDriven,
+    ...(expectedValuation ? { expectedValuation } : {}),
     evBrand,
     finance,
     transmission,

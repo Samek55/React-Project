@@ -214,6 +214,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
   const [km, setKm] = useState("");
+  const [expectedValuation, setExpectedValuation] = useState("");
   const [docFiles, setDocFiles] = useState<File[]>([]);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [evBrand, setEvBrand] = useState("");
@@ -243,6 +244,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     setBrand("");
     setColor("");
     setKm("");
+    setExpectedValuation("");
     setDocFiles([]);
     setPhotoFiles([]);
     setEvBrand("");
@@ -336,6 +338,9 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     body.append("vehicleModel", model.trim());
     body.append("vehicleColor", color);
     body.append("kmDriven", km.trim());
+    if (isSellForm && expectedValuation.trim()) {
+      body.append("expectedValuation", expectedValuation.trim());
+    }
     body.append("evBrand", evBrandValue);
     body.append("finance", financeValue);
     body.append("transmission", transmission);
@@ -526,6 +531,26 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
           onChange={(e) => setKm(e.target.value)}
         />
       </div>
+
+      {isSellForm ? (
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor={`${formId}-valuation`}
+            className="text-[13px] text-black"
+          >
+            Expected Valuation
+          </label>
+          <input
+            id={`${formId}-valuation`}
+            className={textInputClass()}
+            style={{ borderColor: BORDER }}
+            inputMode="numeric"
+            placeholder="e.g. 2500000"
+            value={expectedValuation}
+            onChange={(e) => setExpectedValuation(e.target.value)}
+          />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1.5">
         <span className="text-[13px] text-black">Upload Vehicle Document</span>
