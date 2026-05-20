@@ -1092,15 +1092,15 @@ function OnboardingScreen({ onDone }) {
     <SafeAreaView style={styles.onboardingScreen}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <View style={[styles.onboardingHeader, { width: contentWidth }]}>
-        <Pressable onPress={onDone}>
-          <Text allowFontScaling={false} style={styles.onboardingSkipText}>
-            Skip
-          </Text>
-        </Pressable>
-      </View>
-
       <View style={styles.onboardingCenter}>
+        <View style={[styles.onboardingSkipRow, { width: contentWidth }]}>
+          <Pressable onPress={onDone}>
+            <Text allowFontScaling={false} style={styles.onboardingSkipText}>
+              Skip
+            </Text>
+          </Pressable>
+        </View>
+
         <View style={[styles.onboardingTextBlock, { width: contentWidth }]}>
           <Text allowFontScaling={false} style={styles.onboardingTitle}>
             {slide.title}
@@ -1822,6 +1822,12 @@ function GlossaryPage() {
 }
 
 function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
+  const { height: screenHeight } = useWindowDimensions();
+  const statusBarH = StatusBar.currentHeight || 24;
+  const drawerTop = statusBarH + 8;
+  const footerH = 84;
+  const drawerHeight = 800;
+
   if (!visible) {
     return null;
   }
@@ -1841,8 +1847,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
 
   const secondaryItems = [
     { label: "About Us", icon: "information-circle-outline", navKey: "about" },
-    { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
     { label: "Free Test Drive", icon: "car-sport-outline", navKey: "testdrive" },
+    { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
     { label: "FAQs", icon: "help-circle-outline", navKey: "faqs" },
     { label: "Glossary", icon: "book-outline", navKey: "glossary" },
   ];
@@ -1864,7 +1870,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
         onPress={onClose}
         style={styles.drawerScrim}
       />
-      <View style={styles.drawerPanel}>
+      <View style={[styles.drawerPanel, { height: drawerHeight, marginTop: drawerTop }]}>
         <View style={styles.drawerHeader}>
           <Image source={nepalFlagLogo} style={styles.drawerLogo} />
           <Text allowFontScaling={false} numberOfLines={1} style={styles.drawerTitle}>
@@ -1883,8 +1889,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
 
         <View style={styles.drawerDivider} />
 
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.drawerBody} contentContainerStyle={{ flexGrow: 0 }}>
-          <View style={styles.drawerSection}>
+        <View style={styles.drawerBody}>
+          <View style={[styles.drawerSection, { flex: 1, justifyContent: "space-evenly" }]}>
             {primaryItems.map((item, i) => {
               const active = item.navKey && activeTab === item.navKey && item.label !== "Home";
               return (
@@ -1899,8 +1905,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 20)
-                    : <Ionicons name={item.icon} size={20} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 26)
+                    : <Ionicons name={item.icon} size={26} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -1914,7 +1920,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
 
           <View style={styles.drawerSectionDivider} />
 
-          <View style={styles.drawerSection}>
+          <View style={[styles.drawerSection, { flex: 1, justifyContent: "space-evenly" }]}>
             {secondaryItems.map((item, i) => {
               const active = item.navKey && activeTab === item.navKey;
               return (
@@ -1929,8 +1935,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 20)
-                    : <Ionicons name={item.icon} size={20} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 26)
+                    : <Ionicons name={item.icon} size={26} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -1950,7 +1956,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
               <Text allowFontScaling={false} style={styles.drawerAdminText}>Admin Login</Text>
             </Pressable>
           </View>
-        </ScrollView>
+        </View>
       </View>
     </View>
   );
@@ -1998,7 +2004,7 @@ function Header({ onOpenDrawer }) {
 }
 
 export default function App() {
-  const [appPhase, setAppPhase] = useState("splash");
+  const [appPhase, setAppPhase] = useState("loading");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [forms, setForms] = useState({
     exchange: emptyForm,
@@ -2022,23 +2028,19 @@ export default function App() {
   const availableFeatures = features.filter((feature) => !form.features.includes(feature));
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const loadOnboardingState = async () => {
-        let onboardingComplete = false;
+    const loadOnboardingState = async () => {
+      let onboardingComplete = false;
 
-        if (Platform.OS === "web" && typeof window !== "undefined") {
-          onboardingComplete = window.localStorage?.getItem(onboardingStorageKey) === "true";
-        } else {
-          onboardingComplete = (await AsyncStorage.getItem(onboardingStorageKey)) === "true";
-        }
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        onboardingComplete = window.localStorage?.getItem(onboardingStorageKey) === "true";
+      } else {
+        onboardingComplete = (await AsyncStorage.getItem(onboardingStorageKey)) === "true";
+      }
 
-        setAppPhase(onboardingComplete ? "main" : "onboarding");
-      };
+      setAppPhase(onboardingComplete ? "main" : "onboarding");
+    };
 
-      loadOnboardingState().catch(() => setAppPhase("onboarding"));
-    }, 1400);
-
-    return () => clearTimeout(timer);
+    loadOnboardingState().catch(() => setAppPhase("onboarding"));
   }, []);
 
   useEffect(() => {
@@ -2285,8 +2287,8 @@ export default function App() {
     }
   };
 
-  if (appPhase === "splash") {
-    return <SplashScreen />;
+  if (appPhase === "loading") {
+    return null;
   }
 
   if (appPhase === "onboarding") {
@@ -2753,15 +2755,13 @@ const styles = StyleSheet.create({
   onboardingScreen: {
     flex: 1,
     backgroundColor: "#ffffff",
-    paddingTop: 10,
     paddingBottom: 28
   },
-  onboardingHeader: {
+  onboardingSkipRow: {
     alignSelf: "center",
-    minHeight: 36,
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end"
+    justifyContent: "flex-end",
+    marginBottom: 8
   },
   onboardingBrand: {
     flex: 1,
@@ -2859,18 +2859,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     paddingLeft: 16,
-    paddingTop: 36,
-    paddingBottom: 16
+    paddingTop: 0
   },
   drawerScrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(15, 23, 42, 0.48)"
   },
   drawerPanel: {
-    width: "80%",
-    maxWidth: 320,
-    maxHeight: "88%",
-    alignSelf: "flex-start",
+    width: "82%",
+    maxWidth: 340,
     backgroundColor: "#f1f5f9",
     borderRadius: 20,
     overflow: "hidden",
@@ -2883,22 +2880,22 @@ const styles = StyleSheet.create({
   drawerHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 10
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
+    gap: 14
   },
   drawerLogo: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 1,
     borderColor: "#e2e8f0"
   },
   drawerTitle: {
     flex: 1,
     color: "#075985",
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: "900"
   },
   drawerClose: {
@@ -2925,20 +2922,20 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
   drawerBody: {
-    flexGrow: 0
+    flex: 1,
+    flexDirection: "column"
   },
   drawerSection: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 1
+    paddingHorizontal: 10,
+    paddingVertical: 2
   },
   drawerItem: {
-    minHeight: 44,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12
+    gap: 18
   },
   drawerItemHover: {
     backgroundColor: "#e2e8f0"
@@ -2949,7 +2946,7 @@ const styles = StyleSheet.create({
   drawerItemText: {
     flex: 1,
     color: "#334155",
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: "600"
   },
   drawerItemTextActive: {
@@ -2957,15 +2954,15 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   drawerAdminWrap: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 6
+    paddingHorizontal: 18,
+    paddingBottom: 20,
+    paddingTop: 10
   },
   drawerAdminButton: {
-    minHeight: 40,
+    minHeight: 52,
     alignSelf: "flex-start",
-    paddingHorizontal: 22,
-    borderRadius: 8,
+    paddingHorizontal: 30,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: "#334155",
     alignItems: "center",
@@ -2976,7 +2973,7 @@ const styles = StyleSheet.create({
   },
   drawerAdminText: {
     color: "#334155",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "700"
   },
   buyHero: {
