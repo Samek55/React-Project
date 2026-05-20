@@ -2859,7 +2859,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     flexDirection: "row",
     alignItems: "flex-start",
-    paddingLeft: "30%",
+    paddingLeft: 16,
     paddingTop: 0
   },
   drawerScrim: {
@@ -2867,8 +2867,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(15, 23, 42, 0.48)"
   },
   drawerPanel: {
-    width: "70%",
-    maxWidth: 360,
+    width: "82%",
+    maxWidth: 340,
     backgroundColor: "#f1f5f9",
     borderRadius: 20,
     overflow: "hidden",
