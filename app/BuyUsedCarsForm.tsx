@@ -44,7 +44,7 @@ const COLORS = [
   "Red",
   "Blue",
   "Green",
-  "Any",
+  "Other",
 ];
 
 const TRANSMISSION = ["Manual", "Automatic", "Semi Automatic", "CVT", "Other"];
@@ -84,7 +84,7 @@ const ALPHABET_ONLY = /^[A-Za-z ]+$/;
 const onlyAlpha = (v: string) => v.replace(/[^A-Za-z ]/g, "");
 const onlyDigits = (v: string) => v.replace(/[^0-9]/g, "");
 
-export function TestDriveForm() {
+export function BuyUsedCarsForm() {
   const formId = useId();
 
   const [fullName, setFullName] = useState("");
@@ -99,6 +99,7 @@ export function TestDriveForm() {
   const [fuelType, setFuelType] = useState("Petrol");
   const [features, setFeatures] = useState<string[]>([]);
   const [featuresPickerOpen, setFeaturesPickerOpen] = useState(false);
+  const [budget, setBudget] = useState("");
   const [finance, setFinance] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -122,6 +123,7 @@ export function TestDriveForm() {
     setFuelType("Petrol");
     setFeatures([]);
     setFeaturesPickerOpen(false);
+    setBudget("");
     setFinance("");
     setNotes("");
     setSubmitError(null);
@@ -151,11 +153,14 @@ export function TestDriveForm() {
     if (
       !fullName.trim() ||
       phone.length !== 10 ||
+      !city ||
+      !vehicleType ||
       !vehicleModel.trim() ||
       !vehicleBrand.trim() ||
       !vehicleColor ||
       !transmission ||
       !fuelType ||
+      !budget.trim() ||
       !finance
     ) {
       setSubmitError("Please fill in all required fields.");
@@ -170,7 +175,7 @@ export function TestDriveForm() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/test-drive", {
+      const res = await fetch("/api/buy-used-cars", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -185,6 +190,7 @@ export function TestDriveForm() {
           transmission,
           fuelType,
           features,
+          budget: budget.trim(),
           finance,
           notes: notes.trim(),
         }),
@@ -198,7 +204,7 @@ export function TestDriveForm() {
 
       clear();
       setSubmitSuccess(
-        "Thank you! Your test drive request has been submitted.",
+        "Thank you! Your buy used car request has been submitted.",
       );
     } catch {
       setSubmitError(
@@ -415,6 +421,21 @@ export function TestDriveForm() {
             </ul>
           ) : null}
         </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${formId}-budget`} className="text-[13px] text-black">
+          Budget in NPR<span className="text-red-600"> *</span>
+        </label>
+        <input
+          id={`${formId}-budget`}
+          className={textInputClass()}
+          style={{ borderColor: BORDER }}
+          inputMode="numeric"
+          placeholder="e.g. 1500000"
+          value={budget}
+          onChange={(e) => setBudget(onlyDigits(e.target.value))}
+        />
       </div>
 
       <PillSelect

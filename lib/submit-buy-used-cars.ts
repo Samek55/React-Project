@@ -9,33 +9,32 @@ import {
 } from "@/lib/airtable-env";
 
 /**
- * Test drive rows use **AIRTABLE_BASE_ID** (the `app…` in the base URL).
- * Table tab name: **AIRTABLE_TEST_DRIVE_TABLE_NAME** (default `Test drive requests`).
+ * Buy used car submissions land in the same Airtable base as the rest of the site
+ * (**AIRTABLE_BASE_ID**, the `app…` id) but in a dedicated tab named by
+ * **AIRTABLE_BUY_USED_CARS_TABLE_NAME** (default `Buy used cars`).
  *
- * Optional **AIRTABLE_TEST_DRIVE_TABLE_ID** (`tbl…` from the URL when that tab is open):
- * used only when the Metadata API does not list that tab (common when `.env.local`
- * pointed at a different base than the one in the browser).
+ * Optional **AIRTABLE_BUY_USED_CARS_TABLE_ID** (`tbl…` from the URL when that
+ * tab is open) is used only when the Metadata API does not list the tab.
  *
- * Expected fields on the test-drive table (parity with the mobile app's
- * Free Test Drive screen):
+ * Expected fields on the table:
  * Full Name, Email, Phone, City, Vehicle Type, Vehicle Brand, Vehicle Model,
- * Vehicle Color, Transmission, Fuel Type, Features, Finance, Notes, Request Type.
+ * Vehicle Color, Transmission, Fuel Type, Features, Budget, Finance, Notes,
+ * Request Type.
  */
 
-const REQUEST_TYPE = "Free Test Drive";
+const REQUEST_TYPE = "Buy Used Car";
 
-function readTestDriveTableName(): string {
-  const nameRaw = process.env["AIRTABLE_TEST_DRIVE_TABLE_NAME"];
+function readBuyUsedCarsTableName(): string {
+  const nameRaw = process.env["AIRTABLE_BUY_USED_CARS_TABLE_NAME"];
   if (typeof nameRaw === "string") {
     const v = nameRaw.trim().replace(/^['"]|['"]$/g, "");
     if (v) return v;
   }
-  return "Test drive requests";
+  return "Buy used car";
 }
 
-/** Optional `tbl…` from the table URL when schema API omits the tab. */
-function readTestDriveTableIdFallback(): string | null {
-  const raw = process.env["AIRTABLE_TEST_DRIVE_TABLE_ID"];
+function readBuyUsedCarsTableIdFallback(): string | null {
+  const raw = process.env["AIRTABLE_BUY_USED_CARS_TABLE_ID"];
   if (typeof raw !== "string") return null;
   const id = raw.trim().replace(/^['"]|['"]$/g, "");
   return /^tbl[a-zA-Z0-9]+$/i.test(id) ? id : null;
@@ -63,18 +62,16 @@ function wrongBaseHint(
   configuredBaseId: string,
 ): string {
   const list = formatTableList(tables);
-  const tableIdHint = readTestDriveTableIdFallback()
+  const tableIdHint = readBuyUsedCarsTableIdFallback()
     ? ""
-    : ` Or set AIRTABLE_TEST_DRIVE_TABLE_ID to the tbl… id from the URL when the "${configuredName}" tab is open.`;
+    : ` Or set AIRTABLE_BUY_USED_CARS_TABLE_ID to the tbl… id from the URL when the "${configuredName}" tab is open.`;
   return (
     `Tables visible to the API for base ${configuredBaseId}: ${list}. ` +
-    `Could not use "${configuredName}". ` +
-    `If .env.local has a different AIRTABLE_BASE_ID than your browser URL (app…), fix that first — ` +
-    `for nepalmotor.com use appVSOoJqoGXs4tAZ.${tableIdHint}`
+    `Could not use "${configuredName}".${tableIdHint}`
   );
 }
 
-export type TestDriveJsonBody = {
+export type BuyUsedCarsJsonBody = {
   fullName?: string;
   email?: string;
   phone?: string;
@@ -86,6 +83,7 @@ export type TestDriveJsonBody = {
   transmission?: string;
   fuelType?: string;
   features?: unknown;
+  budget?: string;
   finance?: string;
   notes?: string;
 };
@@ -94,9 +92,9 @@ function validationError(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
-function parseJsonBody(raw: unknown): TestDriveJsonBody | null {
+function parseJsonBody(raw: unknown): BuyUsedCarsJsonBody | null {
   if (!raw || typeof raw !== "object") return null;
-  return raw as TestDriveJsonBody;
+  return raw as BuyUsedCarsJsonBody;
 }
 
 function parseFeatures(value: unknown): string[] {
@@ -140,7 +138,7 @@ async function tryCreate(
   }
 }
 
-async function createTestDriveRecord(
+async function createBuyUsedCarsRecord(
   configuredName: string,
   fields: Record<string, unknown>,
 ): Promise<{ ok: true } | { error: string }> {
@@ -153,7 +151,7 @@ async function createTestDriveRecord(
   } catch (metaErr) {
     const metaMsg =
       metaErr instanceof Error ? metaErr.message : String(metaErr);
-    const tableId = readTestDriveTableIdFallback();
+    const tableId = readBuyUsedCarsTableIdFallback();
     if (tableId) {
       const r = await tryCreate(tableId, fields);
       if ("ok" in r) return r;
@@ -171,10 +169,12 @@ async function createTestDriveRecord(
   if (resolved) {
     const r = await tryCreate(resolved.id, fields);
     if ("ok" in r) return r;
-    return { error: `${r.error} ${wrongBaseHint(tables, configuredName, configuredBaseId)}` };
+    return {
+      error: `${r.error} ${wrongBaseHint(tables, configuredName, configuredBaseId)}`,
+    };
   }
 
-  const tableId = readTestDriveTableIdFallback();
+  const tableId = readBuyUsedCarsTableIdFallback();
   if (tableId) {
     const r = await tryCreate(tableId, fields);
     if ("ok" in r) return r;
@@ -191,7 +191,7 @@ async function createTestDriveRecord(
   };
 }
 
-export async function handleTestDriveSubmission(
+export async function handleBuyUsedCarsSubmission(
   request: Request,
 ): Promise<NextResponse> {
   const env = getAirtableEnv();
@@ -202,7 +202,7 @@ export async function handleTestDriveSubmission(
     );
   }
 
-  let body: TestDriveJsonBody | null;
+  let body: BuyUsedCarsJsonBody | null;
   try {
     body = parseJsonBody(await request.json());
   } catch {
@@ -221,6 +221,7 @@ export async function handleTestDriveSubmission(
   const vehicleColor = String(body.vehicleColor ?? "").trim();
   const transmission = String(body.transmission ?? "").trim();
   const fuelType = String(body.fuelType ?? "").trim();
+  const budget = String(body.budget ?? "").trim();
   const finance = String(body.finance ?? "").trim();
   const notes = String(body.notes ?? "").trim();
   const features = parseFeatures(body.features);
@@ -235,6 +236,7 @@ export async function handleTestDriveSubmission(
     !vehicleColor ||
     !transmission ||
     !fuelType ||
+    !budget ||
     !finance
   ) {
     return validationError("Please fill in all required fields.");
@@ -248,6 +250,10 @@ export async function handleTestDriveSubmission(
     return validationError("Vehicle Model can only contain alphabets.");
   }
 
+  if (!/^\d+$/.test(budget)) {
+    return validationError("Budget must be a number.");
+  }
+
   const fields: Record<string, unknown> = {
     "Full Name": fullName,
     Phone: phone,
@@ -258,6 +264,7 @@ export async function handleTestDriveSubmission(
     "Vehicle Color": vehicleColor,
     Transmission: transmission,
     "Fuel Type": fuelType,
+    Budget: Number(budget),
     Finance: finance,
     "Request Type": REQUEST_TYPE,
   };
@@ -265,8 +272,8 @@ export async function handleTestDriveSubmission(
   if (features.length > 0) fields.Features = features;
   if (notes) fields.Notes = notes;
 
-  const configuredName = readTestDriveTableName();
-  const result = await createTestDriveRecord(configuredName, fields);
+  const configuredName = readBuyUsedCarsTableName();
+  const result = await createBuyUsedCarsRecord(configuredName, fields);
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 502 });
   }
