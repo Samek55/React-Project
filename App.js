@@ -1868,7 +1868,7 @@ function GlossaryPage() {
 function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight = 88 }) {
   const { height: screenHeight } = useWindowDimensions();
   const drawerTop = headerHeight + 6;
-  const drawerHeight = screenHeight - drawerTop - 90;
+  const drawerHeight = screenHeight - drawerTop - 85;
 
   if (!visible) {
     return null;
