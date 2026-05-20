@@ -30,7 +30,7 @@ const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
 
-const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
+const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Any"];
 const cities = [
   "Itahari",
   "Kathmandu",
@@ -43,7 +43,7 @@ const cities = [
 const vehicleTypes = ["Hatchback", "Sedan", "SUV", "Crossover", "Pickup", "Van", "Other"];
 const evBrands = ["BYD", "Tesla", "Nissan", "Hyundai", "MG", "Tata", "Mahindra", "Other"];
 const financeOptions = ["Yes", "No"];
-const transmissions = ["Manual", "Automatic", "CVT", "Other"];
+const transmissions = ["Manual", "Automatic", "Semi Automatic", "CVT", "Other"];
 const accidents = ["No", "Minor", "Major", "Prefer not to say"];
 const fuelTypes = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "Other"];
 const fuelTypesWithEV = ["Petrol", "Diesel", "EV", "Hybrid", "CNG", "LPG", "Other"];
@@ -73,7 +73,7 @@ const navigationItems = [
   { key: "faqs", label: "FAQs", drawerLabel: "FAQs", icon: "help-circle-outline", svgIcon: "graphql" },
   { key: "sell", label: "Sell", drawerLabel: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide" },
   { key: "about", label: "About", drawerLabel: "About NEPAL Motor", icon: "information-circle-outline", svgIcon: "steering" },
-  { key: "branches", label: "Branches", drawerLabel: "Branches", icon: "location-outline", svgIcon: "locationPin" },
+  { key: "branches", label: "Dealers", drawerLabel: "Dealers", icon: "location-outline", svgIcon: "locationPin" },
   { key: "buy", label: "Buy", drawerLabel: "Buy Used Car", icon: "key-outline", footer: false },
 ];
 const footerNavItems = navigationItems.filter((item) => item.footer !== false);
@@ -748,11 +748,45 @@ function FAQsPage() {
 }
 
 function BranchesPage() {
+  const cities = ["All", ...Array.from(new Set(branches.map((b) => b.location)))];
+  const [selectedCity, setSelectedCity] = React.useState("All");
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
+  const filtered = selectedCity === "All" ? branches : branches.filter((b) => b.location === selectedCity);
+
   return (
     <View>
-      <Text style={styles.title}>Branches</Text>
+      <Text style={styles.title}>Dealers</Text>
+
+      {/* City dropdown */}
+      <View style={styles.cityDropdownWrap}>
+        <Text style={styles.cityDropdownLabel}>Filter by City</Text>
+        <Pressable
+          style={styles.cityDropdownBtn}
+          onPress={() => setDropdownOpen((o) => !o)}
+        >
+          <Text style={styles.cityDropdownBtnText}>{selectedCity}</Text>
+          <Ionicons name={dropdownOpen ? "chevron-up-outline" : "chevron-down-outline"} size={18} color="#075985" />
+        </Pressable>
+        {dropdownOpen && (
+          <View style={styles.cityDropdownList}>
+            {cities.map((city) => (
+              <Pressable
+                key={city}
+                style={[styles.cityDropdownOption, selectedCity === city && styles.cityDropdownOptionActive]}
+                onPress={() => { setSelectedCity(city); setDropdownOpen(false); }}
+              >
+                <Text style={[styles.cityDropdownOptionText, selectedCity === city && styles.cityDropdownOptionTextActive]}>
+                  {city}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </View>
+
       <View style={styles.branchList}>
-        {branches.map((branch) => (
+        {filtered.map((branch) => (
           <View key={branch.phone} style={styles.branchCard}>
             <View style={styles.branchIcon}>
               <Ionicons name="location-outline" size={24} color="#075985" />
@@ -773,6 +807,9 @@ function BranchesPage() {
             </View>
           </View>
         ))}
+        {filtered.length === 0 && (
+          <Text style={styles.cityDropdownEmpty}>No dealers found in {selectedCity}.</Text>
+        )}
       </View>
     </View>
   );
@@ -780,7 +817,7 @@ function BranchesPage() {
 
 function AboutPage() {
   const stats = [
-    { value: "3+", label: "Branches" },
+    { value: "3+", label: "Dealers" },
     { value: "500+", label: "Cars Sold" },
     { value: "100%", label: "Verified" },
     { value: "24/7", label: "Support" },
@@ -3732,6 +3769,74 @@ const styles = StyleSheet.create({
     color: "#075985",
     fontSize: 14,
     fontWeight: "800"
+  },
+  cityDropdownWrap: {
+    marginBottom: 16,
+    zIndex: 10
+  },
+  cityDropdownLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#64748b",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.5
+  },
+  cityDropdownBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    backgroundColor: "#ffffff"
+  },
+  cityDropdownBtnText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0f172a"
+  },
+  cityDropdownList: {
+    position: "absolute",
+    top: 72,
+    left: 0,
+    right: 0,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 10,
+    overflow: "hidden",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 }
+  },
+  cityDropdownOption: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9"
+  },
+  cityDropdownOptionActive: {
+    backgroundColor: "#e5f3ff"
+  },
+  cityDropdownOptionText: {
+    fontSize: 15,
+    color: "#334155",
+    fontWeight: "500"
+  },
+  cityDropdownOptionTextActive: {
+    color: "#075985",
+    fontWeight: "700"
+  },
+  cityDropdownEmpty: {
+    textAlign: "center",
+    color: "#94a3b8",
+    fontSize: 15,
+    paddingVertical: 24
   },
   aboutPage: {
     paddingTop: 8,
