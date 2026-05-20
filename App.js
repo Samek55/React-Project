@@ -1364,23 +1364,26 @@ function TestDrivePage() {
 
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append("fullName", form.fullName.trim());
-      formData.append("email", form.email.trim());
-      formData.append("phone", form.phone.trim());
-      formData.append("city", form.city);
-      formData.append("vehicleType", form.vehicleType);
-      formData.append("vehicleModel", form.model.trim());
-      formData.append("vehicleBrand", form.brand.trim());
-      formData.append("vehicleColor", form.color);
-      formData.append("transmission", form.transmission);
-      formData.append("accidents", form.accident || "No");
-      formData.append("fuelType", form.fuelType);
-      formData.append("finance", form.finance);
-      formData.append("notes", form.notes.trim());
-      formData.append("requestType", "Free Test Drive");
-      appendFeatureFields(formData, form.features);
-      await fetch(vehicleSubmissionEndpoint, { method: "POST", body: formData });
+      await fetch("https://nepalmotor.com/api/test-drive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: form.fullName.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          city: form.city,
+          vehicle: `${form.brand.trim()} ${form.model.trim()}`,
+          vehicleType: form.vehicleType,
+          vehicleBrand: form.brand.trim(),
+          vehicleModel: form.model.trim(),
+          vehicleColor: form.color,
+          transmission: form.transmission,
+          fuelType: form.fuelType,
+          features: form.features,
+          finance: form.finance,
+          notes: form.notes.trim(),
+        }),
+      });
       setMessage("Your test drive request has been submitted!");
       setMessageType("success");
       setForm(emptyTestDrive);
