@@ -1827,7 +1827,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
   const { height: screenHeight } = useWindowDimensions();
   const statusBarH = StatusBar.currentHeight || 24;
   const drawerTop = statusBarH + 8;
-  const drawerHeight = 800;
+  const drawerHeight = screenHeight * 0.70;
 
   if (!visible) {
     return null;
@@ -1906,8 +1906,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 26)
-                    : <Ionicons name={item.icon} size={26} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 20)
+                    : <Ionicons name={item.icon} size={20} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -1936,8 +1936,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 26)
-                    : <Ionicons name={item.icon} size={26} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 20)
+                    : <Ionicons name={item.icon} size={20} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -2881,22 +2881,22 @@ const styles = StyleSheet.create({
   drawerHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 18,
-    paddingHorizontal: 18,
-    paddingBottom: 14,
-    gap: 14
+    paddingTop: 12,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+    gap: 10
   },
   drawerLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 1,
     borderColor: "#e2e8f0"
   },
   drawerTitle: {
     flex: 1,
     color: "#075985",
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "900"
   },
   drawerClose: {
@@ -2927,16 +2927,16 @@ const styles = StyleSheet.create({
     flexDirection: "column"
   },
   drawerSection: {
-    paddingHorizontal: 10,
-    paddingVertical: 2
+    paddingHorizontal: 8,
+    paddingVertical: 0
   },
   drawerItem: {
     borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     flexDirection: "row",
     alignItems: "center",
-    gap: 18
+    gap: 12
   },
   drawerItemHover: {
     backgroundColor: "#e2e8f0"
@@ -2947,7 +2947,7 @@ const styles = StyleSheet.create({
   drawerItemText: {
     flex: 1,
     color: "#334155",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "600"
   },
   drawerItemTextActive: {
@@ -2955,9 +2955,9 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   drawerAdminWrap: {
-    paddingHorizontal: 18,
-    paddingBottom: 20,
-    paddingTop: 10
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 6
   },
   drawerAdminButton: {
     minHeight: 52,
