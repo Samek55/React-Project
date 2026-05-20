@@ -12,6 +12,13 @@ const siteTitle = "Nepal Motor | Exchange old cars to EV";
 const siteDescription =
   "Nepal Motor is Nepal's No. 1 Car Trading Portal";
 
+/** Used so Open Graph / Twitter resolve relative image paths to absolute production URLs. */
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.nepalmotor.com";
+
+/** Bump when replacing the OG file so Facebook/WhatsApp drop their old cache. */
+const ogImage = "/og/default.jpeg?v=2";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -20,6 +27,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: siteTitle,
   description: siteDescription,
   icons: {
@@ -28,15 +36,18 @@ export const metadata: Metadata = {
     apple: "/logo.jpeg",
   },
   openGraph: {
+    type: "website",
+    url: siteUrl,
+    siteName: "Nepal Motor",
     title: siteTitle,
     description: siteDescription,
-    images: [{ url: "/og/default.jpeg", width: 1200, height: 630 }],
+    images: [{ url: ogImage, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: siteTitle,
     description: siteDescription,
-    images: ["/og/default.jpeg"],
+    images: [ogImage],
   },
 };
 
