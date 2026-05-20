@@ -673,9 +673,6 @@ function FAQsPage() {
       <Text allowFontScaling={false} style={styles.faqPageTitle}>
         Frequently Asked{"\n"}Questions
       </Text>
-      <Text allowFontScaling={false} style={styles.faqPageSubtitle}>
-        {totalCount} questions answered across all topics
-      </Text>
 
       <ScrollView
         horizontal
@@ -1081,6 +1078,7 @@ function OnboardingScreen({ onDone }) {
     Platform.OS === "web" && typeof window !== "undefined" ? window.innerWidth : width;
   const inset = Platform.OS === "web" ? 132 : 40;
   const contentWidth = Math.max(280, Math.min(viewportWidth, 564) - inset);
+  const imageHeight = screenHeight * 0.44;
 
   const goNext = () => {
     if (finalSlide) {
@@ -1102,43 +1100,45 @@ function OnboardingScreen({ onDone }) {
         </Pressable>
       </View>
 
-      <View style={[styles.onboardingTextBlock, { width: contentWidth }]}>
-        <Text allowFontScaling={false} style={styles.onboardingTitle}>
-          {slide.title}
-        </Text>
-        <Text allowFontScaling={false} style={styles.onboardingBody}>
-          {slide.body}
-        </Text>
-      </View>
+      <View style={styles.onboardingCenter}>
+        <View style={[styles.onboardingTextBlock, { width: contentWidth }]}>
+          <Text allowFontScaling={false} style={styles.onboardingTitle}>
+            {slide.title}
+          </Text>
+          <Text allowFontScaling={false} style={styles.onboardingBody}>
+            {slide.body}
+          </Text>
+        </View>
 
-      <View style={styles.onboardingVisual}>
-        <Image
-          source={slide.image}
-          resizeMode={slide.resizeMode || "cover"}
-          style={styles.onboardingImage}
-        />
-      </View>
-
-      <View style={styles.onboardingDots}>
-        {onboardingSlides.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.onboardingDot,
-              index === slideIndex && styles.onboardingDotActive
-            ]}
+        <View style={[styles.onboardingVisual, { height: imageHeight }]}>
+          <Image
+            source={slide.image}
+            resizeMode={slide.resizeMode || "cover"}
+            style={styles.onboardingImage}
           />
-        ))}
-      </View>
+        </View>
 
-      <Pressable
-        style={styles.onboardingButton}
-        onPress={goNext}
-      >
-        <Text allowFontScaling={false} style={styles.onboardingButtonText}>
-          {finalSlide ? "Get Started" : "Next"}
-        </Text>
-      </Pressable>
+        <View style={styles.onboardingDots}>
+          {onboardingSlides.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.onboardingDot,
+                index === slideIndex && styles.onboardingDotActive
+              ]}
+            />
+          ))}
+        </View>
+
+        <Pressable
+          style={styles.onboardingButton}
+          onPress={goNext}
+        >
+          <Text allowFontScaling={false} style={styles.onboardingButtonText}>
+            {finalSlide ? "Get Started" : "Next"}
+          </Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -1883,7 +1883,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
 
         <View style={styles.drawerDivider} />
 
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.drawerBody}>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.drawerBody} contentContainerStyle={{ flexGrow: 0 }}>
           <View style={styles.drawerSection}>
             {primaryItems.map((item, i) => {
               const active = item.navKey && activeTab === item.navKey && item.label !== "Home";
@@ -1899,8 +1899,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 22)
-                    : <Ionicons name={item.icon} size={22} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 20)
+                    : <Ionicons name={item.icon} size={20} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -1929,8 +1929,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 22)
-                    : <Ionicons name={item.icon} size={22} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 20)
+                    : <Ionicons name={item.icon} size={20} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -1961,8 +1961,10 @@ function Header({ onOpenDrawer }) {
     Linking.openURL(`tel:${phoneNumber}`);
   };
 
+  const statusBarHeight = StatusBar.currentHeight || 24;
+
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: statusBarHeight + 6 }]}>
       <View style={styles.navCard}>
         <View style={styles.brand}>
           <Image source={nepalFlagLogo} style={styles.logo} />
@@ -1972,31 +1974,22 @@ function Header({ onOpenDrawer }) {
         </View>
         <View style={styles.headerActions}>
           <Pressable
-            style={({ hovered }) => [styles.menuButton, hovered && styles.menuButtonHover]}
-            accessibilityRole="button"
-            accessibilityLabel="Open navigation drawer"
-            hitSlop={12}
-            onPress={onOpenDrawer}
-          >
-            <Ionicons name="menu" size={28} color="#0f172a" />
-          </Pressable>
-          <Pressable
-            style={({ hovered }) => [styles.phoneButton, hovered && styles.phoneButtonHover]}
+            style={({ hovered }) => [styles.iconButton, hovered && styles.iconButtonHover]}
             accessibilityRole="button"
             accessibilityLabel="Call NEPAL Motor"
-            hitSlop={12}
+            hitSlop={10}
             onPress={callNepalMotor}
           >
-            {({ hovered }) => (
-              <>
-                <HelplineIcon size={26} />
-                {hovered ? (
-                  <View style={styles.phoneTooltip}>
-                    <Text style={styles.phoneTooltipText}>Call +977 9852024365</Text>
-                  </View>
-                ) : null}
-              </>
-            )}
+            <Ionicons name="call-outline" size={24} color="#0f172a" />
+          </Pressable>
+          <Pressable
+            style={({ hovered }) => [styles.iconButton, hovered && styles.iconButtonHover]}
+            accessibilityRole="button"
+            accessibilityLabel="Open navigation drawer"
+            hitSlop={10}
+            onPress={onOpenDrawer}
+          >
+            <Ionicons name="menu" size={26} color="#0f172a" />
           </Pressable>
         </View>
       </View>
@@ -2307,7 +2300,7 @@ export default function App() {
       <Header onOpenDrawer={() => setDrawerOpen(true)} />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingTop: (StatusBar.currentHeight || 24) + 92 }]}
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={closeFeaturePicker}
       >
@@ -2761,7 +2754,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ffffff",
     paddingTop: 10,
-    paddingBottom: 16
+    paddingBottom: 28
   },
   onboardingHeader: {
     alignSelf: "center",
@@ -2795,10 +2788,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6
   },
+  onboardingCenter: {
+    flex: 1,
+    justifyContent: "center"
+  },
   onboardingTextBlock: {
     alignSelf: "center",
-    marginTop: 2,
-    marginBottom: 0,
+    marginBottom: 10,
     paddingHorizontal: 4
   },
   onboardingTitle: {
@@ -2814,8 +2810,6 @@ const styles = StyleSheet.create({
     lineHeight: 24
   },
   onboardingVisual: {
-    flex: 1,
-    marginTop: 4,
     overflow: "hidden"
   },
   onboardingImage: {
@@ -2827,7 +2821,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 7,
-    paddingVertical: 10
+    paddingVertical: 8
   },
   onboardingDot: {
     width: 8,
@@ -2843,7 +2837,7 @@ const styles = StyleSheet.create({
     width: 200,
     minHeight: 54,
     alignSelf: "center",
-    marginTop: 4,
+    marginTop: 2,
     borderRadius: 27,
     backgroundColor: "#075985",
     alignItems: "center",
@@ -2863,9 +2857,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingLeft: 16,
-    paddingVertical: 28
+    paddingTop: 36,
+    paddingBottom: 16
   },
   drawerScrim: {
     ...StyleSheet.absoluteFillObject,
@@ -2874,7 +2869,8 @@ const styles = StyleSheet.create({
   drawerPanel: {
     width: "80%",
     maxWidth: 320,
-    maxHeight: "92%",
+    maxHeight: "88%",
+    alignSelf: "flex-start",
     backgroundColor: "#f1f5f9",
     borderRadius: 20,
     overflow: "hidden",
@@ -2887,22 +2883,22 @@ const styles = StyleSheet.create({
   drawerHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 22,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
-    gap: 12
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 10
   },
   drawerLogo: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     borderColor: "#e2e8f0"
   },
   drawerTitle: {
     flex: 1,
     color: "#075985",
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "900"
   },
   drawerClose: {
@@ -2918,31 +2914,31 @@ const styles = StyleSheet.create({
   drawerDivider: {
     height: 1,
     backgroundColor: "#e2e8f0",
-    marginHorizontal: 16,
-    marginVertical: 4
+    marginHorizontal: 14,
+    marginVertical: 2
   },
   drawerSectionDivider: {
     height: 1,
     backgroundColor: "#d1d5db",
     marginHorizontal: 14,
-    marginTop: 8,
-    marginBottom: 8
+    marginTop: 4,
+    marginBottom: 4
   },
   drawerBody: {
-    flex: 1
+    flexGrow: 0
   },
   drawerSection: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 2
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 1
   },
   drawerItem: {
-    minHeight: 52,
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    minHeight: 44,
+    borderRadius: 8,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14
+    gap: 12
   },
   drawerItemHover: {
     backgroundColor: "#e2e8f0"
@@ -2953,23 +2949,23 @@ const styles = StyleSheet.create({
   drawerItemText: {
     flex: 1,
     color: "#334155",
-    fontSize: 15,
-    fontWeight: "700"
+    fontSize: 14,
+    fontWeight: "600"
   },
   drawerItemTextActive: {
     color: "#075985",
     fontWeight: "800"
   },
   drawerAdminWrap: {
-    paddingHorizontal: 18,
-    paddingBottom: 32,
-    paddingTop: 10
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 6
   },
   drawerAdminButton: {
-    minHeight: 44,
-    alignSelf: "center",
-    paddingHorizontal: 32,
-    borderRadius: 10,
+    minHeight: 40,
+    alignSelf: "flex-start",
+    paddingHorizontal: 22,
+    borderRadius: 8,
     borderWidth: 1.5,
     borderColor: "#334155",
     alignItems: "center",
@@ -2980,8 +2976,8 @@ const styles = StyleSheet.create({
   },
   drawerAdminText: {
     color: "#334155",
-    fontSize: 15,
-    fontWeight: "800"
+    fontSize: 14,
+    fontWeight: "700"
   },
   buyHero: {
     borderRadius: 8,
@@ -3081,7 +3077,7 @@ const styles = StyleSheet.create({
   },
   header: {
     position: "absolute",
-    top: 8,
+    top: 0,
     left: 0,
     right: 0,
     paddingHorizontal: 18,
@@ -3111,17 +3107,16 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4
+    gap: 2
   },
-  menuButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 8,
+  iconButton: {
+    padding: 7,
     alignItems: "center",
     justifyContent: "center"
   },
-  menuButtonHover: {
-    backgroundColor: "#f1f5f9"
+  iconButtonHover: {
+    backgroundColor: "#f1f5f9",
+    borderRadius: 8
   },
   brand: {
     minWidth: 0,
@@ -3143,18 +3138,6 @@ const styles = StyleSheet.create({
     color: "#020617",
     fontSize: 25,
     fontWeight: "800"
-  },
-  phoneButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    position: "relative"
-  },
-  phoneButtonHover: {
-    backgroundColor: "#f2f2f2"
   },
   phoneTooltip: {
     position: "absolute",
@@ -3183,7 +3166,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     position: "relative",
     paddingHorizontal: 18,
-    paddingTop: 90,
     paddingBottom: 128
   },
   title: {
