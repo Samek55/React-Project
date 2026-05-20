@@ -8,10 +8,10 @@ import {
   useState,
 } from "react";
 
-const BORDER = "#E0E0E0";
+const BORDER = "#e4e4e7";
 const MAX_PHOTOS = 5;
-const TAG_BG = "#E8F4FC";
-const TAG_TEXT = "#0c4a6e";
+const TAG_BG = "#f4f4f5";
+const TAG_TEXT = "#3f3f46";
 
 const CITIES = [
   "Itahari",
@@ -200,8 +200,7 @@ function PillSelect({
           aria-expanded={open}
           aria-haspopup="listbox"
           onClick={() => setOpen((o) => !o)}
-          className="flex w-full min-h-[42px] items-center justify-between gap-2 rounded-md border bg-white px-3 py-2 text-left text-[15px] outline-none transition-[box-shadow] focus-visible:ring-2 focus-visible:ring-black/15"
-          style={{ borderColor: BORDER }}
+          className="flex w-full min-h-[42px] items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50/50 px-3.5 py-2 text-left text-[15px] outline-none transition-[border-color,box-shadow,background-color] focus:border-zinc-300 focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-900/10"
         >
           <span className="min-w-0 flex-1">
             {value ? (
@@ -246,9 +245,9 @@ function PillSelect({
 
 function textInputClass() {
   return [
-    "w-full rounded-md border bg-white px-3 py-2.5 text-[15px] text-black",
-    "placeholder:text-zinc-400 outline-none transition-[box-shadow]",
-    "focus-visible:ring-2 focus-visible:ring-black/15",
+    "w-full rounded-lg border border-zinc-200 bg-zinc-50/50 px-3.5 py-2.5 text-[15px] text-zinc-900",
+    "placeholder:text-zinc-400 outline-none transition-[border-color,box-shadow,background-color]",
+    "focus:border-zinc-300 focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-900/10",
   ].join(" ");
 }
 
@@ -337,7 +336,14 @@ function FilePreviewGrid({ files, onRemove }: FilePreviewGridProps) {
   );
 }
 
-export function ExchangeToEvForm() {
+type FormVariant = "exchange" | "sell";
+
+type ExchangeToEvFormProps = {
+  variant?: FormVariant;
+};
+
+export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps) {
+  const isSellForm = variant === "sell";
   const formId = useId();
 
   const [fullName, setFullName] = useState("");
@@ -448,14 +454,18 @@ export function ExchangeToEvForm() {
       !brand.trim() ||
       !color ||
       !km.trim() ||
-      !evBrand ||
-      !finance ||
+      (!isSellForm && !evBrand) ||
+      (!isSellForm && !finance) ||
       !transmission ||
       !fuelType
     ) {
       setSubmitError("Please fill in all required fields.");
       return;
     }
+
+    const evBrandValue = isSellForm ? "Other / undecided" : evBrand;
+    const financeValue = isSellForm ? "No" : finance;
+    const accidentsValue = isSellForm ? "No" : accidents;
 
     const body = new FormData();
     body.append("fullName", fullName.trim());
@@ -468,13 +478,16 @@ export function ExchangeToEvForm() {
     body.append("vehicleModel", model.trim());
     body.append("vehicleColor", color);
     body.append("kmDriven", km.trim());
-    body.append("evBrand", evBrand);
-    body.append("finance", finance);
+    body.append("evBrand", evBrandValue);
+    body.append("finance", financeValue);
     body.append("transmission", transmission);
-    body.append("accidents", accidents);
+    body.append("accidents", accidentsValue);
     body.append("fuelType", fuelType);
     body.append("features", JSON.stringify(features));
     body.append("notes", notes.trim());
+    if (isSellForm) {
+      body.append("requestType", "Sell Used Car");
+    }
     for (const file of docFiles) body.append("documents", file);
     for (const file of photoFiles) body.append("photos", file);
 
@@ -507,7 +520,9 @@ export function ExchangeToEvForm() {
 
       const message =
         data.warning ??
-        "Thank you! Your exchange request has been submitted.";
+        (isSellForm
+          ? "Thank you! Your sell used car request has been submitted."
+          : "Thank you! Your exchange request has been submitted.");
       clear();
       setSubmitSuccess(message);
     } catch {
@@ -517,7 +532,7 @@ export function ExchangeToEvForm() {
     }
   };
 
-  const fieldGap = "flex flex-col gap-7";
+  const fieldGap = "flex flex-col gap-6";
 
   return (
     <form
@@ -673,7 +688,9 @@ export function ExchangeToEvForm() {
           <CloudIcon className="text-zinc-400" />
           <span className="text-[14px] text-zinc-600">
             Drop files here or{" "}
-            <span className="text-blue-600 underline">browse</span>
+            <span className="font-medium text-zinc-900 underline decoration-zinc-300 underline-offset-2">
+              browse
+            </span>
           </span>
           <input
             ref={docInputRef}
@@ -706,7 +723,9 @@ export function ExchangeToEvForm() {
           <CloudIcon className="text-zinc-400" />
           <span className="text-[14px] text-zinc-600">
             Drop files here or{" "}
-            <span className="text-blue-600 underline">browse</span>
+            <span className="font-medium text-zinc-900 underline decoration-zinc-300 underline-offset-2">
+              browse
+            </span>
             {photoFiles.length < MAX_PHOTOS ? (
               <span className="block text-[12px] text-zinc-500">
                 Up to {MAX_PHOTOS} photos
@@ -834,23 +853,27 @@ export function ExchangeToEvForm() {
         </div>
       </div>
 
-      <PillSelect
-        id={`${formId}-ev`}
-        label="Interested EV Brand"
-        required
-        options={EV_BRANDS}
-        value={evBrand}
-        onChange={setEvBrand}
-      />
+      {!isSellForm ? (
+        <PillSelect
+          id={`${formId}-ev`}
+          label="Interested EV Brand"
+          required
+          options={EV_BRANDS}
+          value={evBrand}
+          onChange={setEvBrand}
+        />
+      ) : null}
 
-      <PillSelect
-        id={`${formId}-fin`}
-        label="Are you looking for Finance?"
-        required
-        options={YES_NO}
-        value={finance}
-        onChange={setFinance}
-      />
+      {!isSellForm ? (
+        <PillSelect
+          id={`${formId}-fin`}
+          label="Are you looking for Finance?"
+          required
+          options={YES_NO}
+          value={finance}
+          onChange={setFinance}
+        />
+      ) : null}
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${formId}-notes`} className="text-[13px] text-black">
@@ -888,15 +911,15 @@ export function ExchangeToEvForm() {
           type="button"
           onClick={clear}
           disabled={submitting}
-          className="inline-flex items-center gap-1.5 text-[14px] text-blue-600 hover:underline disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 text-[14px] text-zinc-500 transition-colors hover:text-zinc-900 disabled:opacity-50"
         >
-          <ResetIcon className="text-blue-600" />
+          <ResetIcon className="text-zinc-500" />
           Clear form
         </button>
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-black px-5 py-2 text-[13px] font-semibold text-white hover:bg-zinc-800 disabled:opacity-60"
+          className="rounded-lg bg-zinc-900 px-6 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-60"
         >
           {submitting ? "Submitting…" : "Submit"}
         </button>
