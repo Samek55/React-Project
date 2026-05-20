@@ -158,7 +158,7 @@ export function SiteNav() {
 
       {drawerOpen ? (
         <div
-          className="fixed inset-0 z-[100] flex flex-row items-start pl-4 pt-0"
+          className="fixed inset-0 z-[100] flex flex-row items-start justify-start pl-4 pt-0 md:justify-center md:pl-0 md:pt-2"
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
@@ -169,12 +169,9 @@ export function SiteNav() {
             aria-label="Close menu"
             onClick={closeDrawer}
           />
+          <div className="relative z-[101] w-full max-w-[564px] md:flex md:justify-end md:px-[18px]">
           <div
-            className="relative z-[101] flex w-[min(340px,82vw)] flex-col overflow-hidden rounded-[20px] bg-[#f1f5f9] shadow-[0_4px_24px_rgba(0,0,0,0.28)]"
-            style={{
-              marginTop: "max(32px, calc(env(safe-area-inset-top, 0px) + 8px))",
-              height: "70vh",
-            }}
+            className="relative z-[101] mt-[max(32px,calc(env(safe-area-inset-top,0px)+8px))] flex h-[70vh] w-[min(340px,82vw)] flex-col overflow-hidden rounded-[20px] bg-[#f1f5f9] shadow-[0_4px_24px_rgba(0,0,0,0.28)] md:mt-6 md:h-auto md:max-h-[min(720px,85vh)] md:w-[340px] md:max-w-[340px]"
           >
             <div className="flex flex-row items-center gap-2.5 px-3.5 pb-2.5 pt-3">
               <Image
@@ -199,8 +196,8 @@ export function SiteNav() {
 
             <div className="mx-3.5 my-0.5 h-px bg-slate-200" />
 
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-              <div className="flex flex-1 flex-col justify-center gap-0.5 px-2 py-1">
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:min-h-0">
+              <div className="flex flex-1 flex-col justify-center gap-0.5 px-2 py-1 md:flex-none md:justify-start">
                 {primaryItems.map((item, i) => {
                   const active = Boolean(
                     item.navKey &&
@@ -220,7 +217,7 @@ export function SiteNav() {
 
               <div className="mx-3.5 my-1 h-px bg-slate-300" />
 
-              <div className="flex flex-1 flex-col justify-center gap-0.5 px-2 py-1">
+              <div className="flex flex-1 flex-col justify-center gap-0.5 px-2 py-1 md:flex-none md:justify-start">
                 {secondaryItems.map((item, i) => {
                   const active = Boolean(
                     item.navKey && activeNavKey === item.navKey,
@@ -246,6 +243,7 @@ export function SiteNav() {
                 </button>
               </div>
             </div>
+          </div>
           </div>
         </div>
       ) : null}
