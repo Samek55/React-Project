@@ -150,6 +150,10 @@ export const branches: Branch[] = [
   },
 ];
 
+/** Matches React-Project App.js `phoneNumber` for tel: and About CTA */
+export const HELPLINE_TEL = "tel:+9779800000000";
+export const HELPLINE_DISPLAY = "+977 9800000000";
+
 export const aboutParagraphs = [
   "NEPAL Motor helps customers exchange, buy, and sell used cars through a trusted, transparent, and customer-focused process designed to simplify every stage of vehicle ownership and resale. The company provides fair and market-based vehicle valuation, detailed professional inspection services, verified documentation checks, and complete ownership transfer assistance to ensure safe, reliable, and hassle-free transactions for both buyers and sellers.",
   "NEPAL Motor supports a wide range of automotive services for petrol, diesel, and electric vehicles, helping customers smoothly transition between traditional fuel vehicles and modern EV options. Customers can exchange their existing vehicles toward electric vehicles, directly sell used cars at competitive market value, or receive expert branch-based consultation for vehicle inspection, resale guidance, and valuation support.",

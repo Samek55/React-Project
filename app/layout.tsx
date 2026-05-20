@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { GoogleAnalytics } from "./GoogleAnalytics";
 import "./globals.css";
@@ -11,6 +11,13 @@ const geistSans = Geist({
 const siteTitle = "Nepal Motor | Exchange old cars to EV";
 const siteDescription =
   "Nepal Motor is Nepal's No. 1 Car Trading Portal";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
+};
 
 export const metadata: Metadata = {
   title: siteTitle,

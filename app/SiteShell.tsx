@@ -31,7 +31,7 @@ export function SiteShell({
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <main className="flex-1 pb-24">
+      <main className="flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))]">
         <SiteNav />
         <div
           className={`mx-auto w-full px-4 sm:px-6 lg:px-8 ${contentWidth}`}
