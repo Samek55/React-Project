@@ -142,6 +142,14 @@ async function fetchTablesMeta(): Promise<AirtableTableMeta[]> {
   return data.tables ?? [];
 }
 
+/** List tables in the configured base (requires `schema.bases:read` on the token). */
+export async function listAirtableTableSummaries(): Promise<
+  { id: string; name: string }[]
+> {
+  const tables = await fetchTablesMeta();
+  return tables.map((t) => ({ id: t.id, name: t.name }));
+}
+
 export async function resolveTableTarget(): Promise<TableTarget> {
   const tableName = configuredTableName();
   if (tableTargetCache?.tableName === tableName) return tableTargetCache;
@@ -607,6 +615,35 @@ export async function createListingRecord(
   const { tableName } = await resolveTableTarget();
   const res = await fetch(
     `${AIRTABLE_API}/${baseId()}/${encodeURIComponent(tableName)}`,
+    {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ records: [{ fields }], typecast: true }),
+    },
+  );
+
+  const data = (await res.json()) as {
+    records?: { id: string }[];
+    error?: { type: string; message: string };
+  };
+
+  if (!res.ok) {
+    throw new Error(data.error?.message ?? `Airtable error (${res.status})`);
+  }
+
+  const id = data.records?.[0]?.id;
+  if (!id) throw new Error("Airtable did not return a record id");
+  return id;
+}
+
+/** Create one record in an arbitrary table (same base as vehicle listings). */
+export async function createRecordInTable(
+  /** Table display name or table id (`tbl…`). */
+  tableNameOrId: string,
+  fields: Record<string, unknown>,
+): Promise<string> {
+  const res = await fetch(
+    `${AIRTABLE_API}/${baseId()}/${encodeURIComponent(tableNameOrId)}`,
     {
       method: "POST",
       headers: authHeaders(),
