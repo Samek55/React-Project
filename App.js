@@ -1826,7 +1826,7 @@ function GlossaryPage() {
 function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
   const { height: screenHeight } = useWindowDimensions();
   const statusBarH = StatusBar.currentHeight || 24;
-  const drawerTop = statusBarH + 8;
+  const drawerTop = statusBarH + 6 + 64 + 12 + 6; // below header: statusBar + header paddingTop + navCard height + navCard paddingVertical + gap
   const drawerHeight = screenHeight * 0.70;
 
   if (!visible) {
