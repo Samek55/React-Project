@@ -30,7 +30,7 @@ const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
 
-const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Any"];
+const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
   "Itahari",
   "Kathmandu",
@@ -1413,7 +1413,7 @@ function TestDrivePage() {
         }}
       />
       <TextField label="Vehicle Brand" required value={form.brand} error={errors.brand} placeholder="Hyundai" onFocus={closeFeaturePicker} onChangeText={(v) => update("brand", v)} />
-      <SelectField label="Vehicle Color" required value={form.color} error={errors.color} options={colors} onOpen={closeFeaturePicker} onChange={(v) => update("color", v)} />
+      <SelectField label="Vehicle Color" required value={form.color} error={errors.color} options={colors.map((c) => c === "Other" ? "Any" : c)} onOpen={closeFeaturePicker} onChange={(v) => update("color", v)} />
       <SelectField label="Transmission / Gear" required value={form.transmission} error={errors.transmission} options={transmissions} onOpen={closeFeaturePicker} onChange={(v) => update("transmission", v)} />
       <SelectField label="Fuel Type" required value={form.fuelType} error={errors.fuelType} options={fuelTypesWithEV} onOpen={closeFeaturePicker} onChange={(v) => update("fuelType", v)} />
 
