@@ -108,7 +108,7 @@ const onboardingSlides = [
     resizeMode: "contain"
   }
 ];
-const faqSections = [
+const faqSectionData = [
   {
     title: "Car Exchange Page FAQs",
     items: [
@@ -202,6 +202,10 @@ const faqSections = [
       }
     ]
   }
+];
+const faqSections = [
+  { title: "All FAQs", items: faqSectionData.flatMap((s) => s.items) },
+  ...faqSectionData
 ];
 const branches = [
   {
@@ -652,7 +656,7 @@ function FooterNavigation({ activeTab, onChange }) {
 }
 
 const faqChipMap = {
-  "All": null,
+  "All": "All FAQs",
   "Exchange": "Car Exchange Page FAQs",
   "General": "General FAQs",
   "Sell": "Sell Used Car FAQs",
@@ -664,9 +668,7 @@ function FAQsPage() {
   const [activeChip, setActiveChip] = useState("All");
   const totalCount = faqSections.flatMap((s) => s.items).length;
 
-  const visibleSections = activeChip === "All"
-    ? faqSections
-    : faqSections.filter((s) => s.title === faqChipMap[activeChip]);
+  const visibleSections = faqSections.filter((s) => s.title === faqChipMap[activeChip]);
 
   return (
     <View style={styles.faqPage}>
@@ -1825,7 +1827,6 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
   const { height: screenHeight } = useWindowDimensions();
   const statusBarH = StatusBar.currentHeight || 24;
   const drawerTop = statusBarH + 8;
-  const footerH = 84;
   const drawerHeight = 800;
 
   if (!visible) {
