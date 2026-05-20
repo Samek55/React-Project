@@ -16,6 +16,7 @@ import {
   Keyboard
 } from "react-native";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -579,6 +580,7 @@ function renderNavSvgIcon(svgIcon, color, size = 22) {
 }
 
 function FooterNavigation({ activeTab, onChange }) {
+  const insets = useSafeAreaInsets();
   const renderFooterIcon = (item, color) => {
     if (item.svgIcon === "exchange" || item.svgIcon === "carSide") {
       return renderNavSvgIcon(item.svgIcon, color, 22);
@@ -621,7 +623,7 @@ function FooterNavigation({ activeTab, onChange }) {
   };
 
   return (
-    <View style={styles.footerNavShell}>
+    <View style={[styles.footerNavShell, { bottom: Math.max(insets.bottom, 8) }]}>
       <View style={styles.footerNav}>
         {footerNavItems.map((item) => {
           const active = activeTab === item.key;
@@ -2326,14 +2328,15 @@ export default function App() {
   };
 
   if (appPhase === "loading") {
-    return null;
+    return <SafeAreaProvider>{null}</SafeAreaProvider>;
   }
 
   if (appPhase === "onboarding") {
-    return <OnboardingScreen onDone={completeOnboarding} />;
+    return <SafeAreaProvider><OnboardingScreen onDone={completeOnboarding} /></SafeAreaProvider>;
   }
 
   return (
+    <SafeAreaProvider>
     <SafeAreaView style={styles.safeArea}>
       <ExpoStatusBar style="dark" />
       <StatusBar barStyle="dark-content" />
@@ -2693,6 +2696,7 @@ export default function App() {
         onSelect={changeFooterTab}
       />
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
