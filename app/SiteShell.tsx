@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BottomNav } from "./BottomNav";
 import { SiteNav } from "./SiteNav";
 
 export const CALL_URL = "https://b.broadpress.org/nepalmotorcall";
@@ -29,14 +30,14 @@ export function SiteShell({
         : "max-w-3xl lg:max-w-4xl";
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteNav activeNav={activeNav} />
-      <main className="flex-1">
+    <div className="flex min-h-screen flex-col bg-white">
+      <main className="flex-1 pb-24">
+        <SiteNav />
         <div
-          className={`mx-auto w-full px-4 py-8 sm:px-6 sm:py-10 lg:px-8 ${contentWidth}`}
+          className={`mx-auto w-full px-4 sm:px-6 lg:px-8 ${contentWidth}`}
         >
-          <div className="mb-8 sm:mb-10">
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
               {title}
             </h1>
             {description ? (
@@ -48,12 +49,13 @@ export function SiteShell({
           {children}
         </div>
       </main>
-      <footer className="border-t border-zinc-200/80 bg-white py-6">
+      <footer className="hidden border-t border-zinc-200/80 bg-white py-6 md:block">
         <div className="mx-auto max-w-6xl px-4 text-center text-[12px] text-zinc-400 sm:px-6 lg:px-8">
           © {new Date().getFullYear()} NEPAL Motor. Nepal&apos;s trusted car
           trading portal.
         </div>
       </footer>
+      <BottomNav activeNav={activeNav} />
     </div>
   );
 }
