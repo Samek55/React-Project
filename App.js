@@ -2304,16 +2304,41 @@ export default function App() {
     const submittedIsSellForm = isSellForm;
     const submittedIsBuyForm = isBuyForm;
     try {
-      const apiResponse = await postVehicleSubmission(form, submittedIsSellForm, { isBuyForm: submittedIsBuyForm });
-      console.log("API RESPONSE:", apiResponse);
-      console.log("attachments:", apiResponse.received?.attachments);
-      if (apiResponse.warning || apiResponse.warnings) {
-        console.warn("API warning:", apiResponse.warning || apiResponse.warnings);
+      if (submittedIsBuyForm) {
+        await fetch("https://nepalmotor.com/api/buy-used-cars", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: form.fullName.trim(),
+            email: form.email.trim(),
+            phone: form.phone.trim(),
+            city: form.city,
+            vehicleType: form.vehicleType,
+            vehicleModel: form.model.trim(),
+            vehicleBrand: form.brand.trim(),
+            vehicleColor: form.color,
+            transmission: form.transmission,
+            fuelType: form.fuelType,
+            features: form.features,
+            budget: form.budget.trim(),
+            finance: form.finance,
+            notes: form.notes.trim(),
+          }),
+        });
+      } else {
+        const apiResponse = await postVehicleSubmission(form, submittedIsSellForm, { isBuyForm: false });
+        console.log("API RESPONSE:", apiResponse);
+        console.log("attachments:", apiResponse.received?.attachments);
+        if (apiResponse.warning || apiResponse.warnings) {
+          console.warn("API warning:", apiResponse.warning || apiResponse.warnings);
+        }
       }
 
       setMessageType("success");
       setMessage(
-        submittedIsSellForm
+        submittedIsBuyForm
+          ? "Thank you! Your buy used car request has been submitted."
+          : submittedIsSellForm
           ? "Thank you! Your sell used car request has been submitted."
           : "Thank you! Your exchange request has been submitted."
       );
