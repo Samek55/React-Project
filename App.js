@@ -2858,8 +2858,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "flex-start",
-    paddingLeft: 16,
     paddingTop: 0
   },
   drawerScrim: {
@@ -2867,8 +2867,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(15, 23, 42, 0.48)"
   },
   drawerPanel: {
-    width: "82%",
-    maxWidth: 340,
+    width: "88%",
+    maxWidth: 400,
     backgroundColor: "#f1f5f9",
     borderRadius: 20,
     overflow: "hidden",
