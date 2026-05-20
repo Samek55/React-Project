@@ -1865,11 +1865,10 @@ function GlossaryPage() {
   );
 }
 
-function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
+function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight = 88 }) {
   const { height: screenHeight } = useWindowDimensions();
-  const statusBarH = StatusBar.currentHeight || 24;
-  const drawerTop = statusBarH + 6 + 64 + 12 + 6; // below header: statusBar + header paddingTop + navCard height + navCard paddingVertical + gap
-  const drawerHeight = screenHeight * 0.8;
+  const drawerTop = headerHeight + 6;
+  const drawerHeight = screenHeight - drawerTop - 90;
 
   if (!visible) {
     return null;
@@ -2005,7 +2004,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect }) {
   );
 }
 
-function Header({ onOpenDrawer }) {
+function Header({ onOpenDrawer, onLayout }) {
   const callNepalMotor = () => {
     Linking.openURL(`tel:${phoneNumber}`);
   };
@@ -2013,7 +2012,7 @@ function Header({ onOpenDrawer }) {
   const statusBarHeight = StatusBar.currentHeight || 24;
 
   return (
-    <View style={[styles.header, { paddingTop: statusBarHeight + 6 }]}>
+    <View onLayout={onLayout} style={[styles.header, { paddingTop: statusBarHeight + 6 }]}>
       <View style={styles.navCard}>
         <View style={styles.brand}>
           <Image source={nepalFlagLogo} style={styles.logo} />
@@ -2049,6 +2048,7 @@ function Header({ onOpenDrawer }) {
 export default function App() {
   const [appPhase, setAppPhase] = useState("loading");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(88);
   const [forms, setForms] = useState({
     exchange: emptyForm,
     sell: emptyForm,
@@ -2368,7 +2368,10 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <ExpoStatusBar style="dark" />
       <StatusBar barStyle="dark-content" />
-      <Header onOpenDrawer={() => setDrawerOpen(true)} />
+      <Header
+        onOpenDrawer={() => setDrawerOpen(true)}
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+      />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[styles.container, { paddingTop: (StatusBar.currentHeight || 24) + 92 }]}
@@ -2722,6 +2725,7 @@ export default function App() {
         visible={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onSelect={changeFooterTab}
+        headerHeight={headerHeight}
       />
     </SafeAreaView>
     </SafeAreaProvider>
