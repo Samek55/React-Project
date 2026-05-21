@@ -1,23 +1,28 @@
 # NEPAL Motor Exchange Form
 
-NEPAL Motor Exchange Form is a mobile-first React Native application built with Expo. It collects customer vehicle exchange requests for an exchange-to-EV workflow, including contact details, vehicle information, uploaded documents, photos, and selected vehicle features.
+NEPAL Motor Exchange Form is a mobile-first React Native application built with Expo. It collects customer vehicle exchange, sell, buy, test-drive, and dealer requests, including contact details, vehicle information, uploaded documents, photos, and selected vehicle features.
 
 The project supports Expo web previews during development and includes a native Android project for release APK generation.
 
 ## Overview
 
 - **App name:** `NEPAL Motor`
-- **Android package:** `com.broadpress.nepalmotor`
-- **Version:** `1.0.0`
-- **Version code:** `1`
+- **Android package:** `com.pracas.nepalmotor`
+- **Expo version:** `1.0.0`
+- **Android version:** `1.0.37`
+- **Android version code:** `37`
 - **Primary platform:** Android
 - **Development preview:** Expo web
 
 ## Key Features
 
-- Customer exchange-to-EV request form
+- Customer exchange, sell, buy, and free test-drive request forms
+- Dealer application form and dealer listing page
+- Dealer listing sync from Airtable when an `AIRTABLE_TOKEN` is configured
+- Terms of Service, Privacy Policy, Refund Policy, and Disclaimer pages
+- Required agreement checkbox before inquiry form submission
 - Vehicle details including type, year, model, brand, color, fuel, transmission, and kilometers driven
-- Inline validation for required fields
+- Inline validation for required fields, phone numbers, email format, and vehicle year
 - Numeric constraints for phone number and vehicle year
 - Upload support for vehicle documents and photos
 - Multiple file selection with a five-file limit
@@ -31,9 +36,14 @@ The project supports Expo web previews during development and includes a native 
 - [Expo](https://expo.dev/) SDK 51
 - React Native 0.74
 - React 18
-- Expo Document Picker
 - Expo Font
+- Expo Image Picker
+- Expo Status Bar
 - Expo Vector Icons
+- React Native Async Storage
+- React Native Dotenv
+- React Native Safe Area Context
+- React Native SVG
 - React Native Web
 
 ## Requirements
@@ -51,6 +61,22 @@ Install the following before running or building the project:
 ```bash
 npm install
 ```
+
+## Environment Variables
+
+Create a local `.env` file from the example file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Set the Airtable personal access token used by the dealer listing sync:
+
+```text
+AIRTABLE_TOKEN=your_airtable_personal_access_token_here
+```
+
+The `.env` file is ignored by Git so secrets are not committed.
 
 ## Development Commands
 
@@ -141,7 +167,7 @@ Before sharing a release, verify the APK identity:
 Expected package:
 
 ```text
-com.broadpress.nepalmotor
+com.pracas.nepalmotor
 ```
 
 ## Project Structure
@@ -151,7 +177,9 @@ App.js                         Main React Native application
 app.json                       Expo configuration and app identity
 assets/                        App icon and image assets
 android/                       Native Android project
+dist/                          Generated web export output
 release/                       Packaged APK release archive
+.env.example                   Example local environment configuration
 package.json                   npm scripts and dependencies
 package-lock.json              Locked dependency versions
 babel.config.js                Babel configuration
