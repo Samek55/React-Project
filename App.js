@@ -2373,7 +2373,7 @@ export default function App() {
       />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.container, { paddingTop: (StatusBar.currentHeight || 24) + 92 }]}
+        contentContainerStyle={[styles.container, { paddingTop: headerHeight + 4 }]}
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={closeFeaturePicker}
       >
@@ -3874,7 +3874,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24
   },
   aboutPage: {
-    paddingTop: 8,
+    marginTop: -16,
     paddingBottom: 16
   },
   aboutHero: {
@@ -3883,9 +3883,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#bae6fd",
-    paddingVertical: 32,
+    paddingTop: 12,
+    paddingBottom: 24,
     paddingHorizontal: 20,
-    marginBottom: 20
+    marginBottom: 16
   },
   aboutHeroLogo: {
     width: 72,
