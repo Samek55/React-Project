@@ -24,7 +24,6 @@ export const metadata: Metadata = {
 
 const stats = [
   { value: "3+", label: "Branches" },
-  { value: "500+", label: "Cars Sold" },
   { value: "100%", label: "Verified" },
   { value: "24/7", label: "Support" },
 ] as const;
