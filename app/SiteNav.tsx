@@ -65,7 +65,7 @@ const secondaryItems: DrawerItemConfig[] = [
   },
   {
     label: "Become a Dealer",
-    href: "/dealers",
+    href: "/become-a-dealer",
     navKey: "dealer",
     mode: "business",
   },
@@ -79,6 +79,7 @@ function activeNavKeyFromPath(pathname: string): NavKey | null {
   if (pathname.startsWith("/buy")) return "buy";
   if (pathname.startsWith("/about")) return "about";
   if (pathname.startsWith("/test-drive")) return "testdrive";
+  if (pathname.startsWith("/become-a-dealer")) return "dealer";
   if (pathname.startsWith("/dealers")) return "dealer";
   if (pathname.startsWith("/faqs")) return "faqs";
   if (pathname.startsWith("/glossary")) return "glossary";
