@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { AIRTABLE_TOKEN } from "@env";
 import {
   Animated,
   Image,
@@ -12,7 +13,8 @@ import {
   TextInput,
   useWindowDimensions,
   View,
-  Keyboard
+  Keyboard,
+  BackHandler
 } from "react-native";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,6 +32,8 @@ const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
 const dealerEndpoint = "https://www.nepalmotor.com/api/become-a-dealer";
+const AIRTABLE_BASE = "appVSOoJqoGXs4tAZ";
+const AIRTABLE_TABLE = "tblp2d6royVCxsWYY";
 
 const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
@@ -42,12 +46,31 @@ const cities = [
   "Other"
 ];
 const vehicleTypes = ["Hatchback", "Sedan", "SUV", "Crossover", "Pickup", "Van", "Other"];
-const evBrands = ["BYD", "Tesla", "Nissan", "Hyundai", "MG", "Tata", "Mahindra", "Other"];
+const evBrands = ["Tata Nexon EV", "Tata Tigor EV", "Tata Punch EV", "BYD Atto 3", "BYD Dolphine", "BYD e6", "MG ZS EV", "MG4 EV", "MG S5 EV", "Neta V", "Neta U", "Neta X", "Hyundai Kona Electric", "Hyundai Ioniq 5", "Hyundai Creta EV", "Kia EV6", "Kia EV9", "Kia Niro EV", "I need suggestion", "Other"];
 const financeOptions = ["Yes", "No"];
 const transmissions = ["Manual", "Automatic", "Semi Automatic", "CVT", "Other"];
-const accidents = ["No", "Minor", "Major", "Prefer not to say"];
-const fuelTypes = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "Other"];
+const accidents = ["None", "Minor", "Major", "Prefer not to say"];
+const fuelTypes = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "EV", "Other"];
 const fuelTypesWithEV = ["Petrol", "Diesel", "EV", "Hybrid", "CNG", "LPG", "Other"];
+
+const policiesContent = {
+  terms: {
+    title: "Terms of Service",
+    content: "By accessing NEPAL Motor's website, mobile experience, or inquiry forms, you agree to these Terms of Service.\n\n1. About NEPAL Motor\nNEPAL Motor operates a platform and branch network to help customers exchange, buy, and sell used vehicles across fuel types including petrol, diesel, hybrid, and electric vehicles. Transactions are facilitated through authorized branch partners.\n\n2. Eligibility and Account Responsibility\nYou must provide accurate, complete, and current information when using our services. You are responsible for all activities associated with your submitted details.\n\n3. Inquiries and Submissions\nSubmitting an inquiry form does not create a binding contract. Agreements are only formed after NEPAL Motor provides written confirmation following inspection and documentation review. By submitting a form, you consent to being contacted via phone, email, or messaging apps regarding your inquiry.\n\n4. Vehicle Information and Inspections\nDescriptions, photos, valuations, and market estimates are indicative and subject to physical inspection, document verification, and applicable laws. Final pricing and terms are determined after professional assessment.\n\n5. Prohibited Conduct\nYou agree not to submit fraudulent or misleading information, upload malicious software, access our systems without authorization, or use our services for any purpose unlawful under Nepali law.\n\n6. Intellectual Property\nNEPAL Motor owns or licenses all branding, website content, and materials. Reproduction requires written permission.\n\n7. Third-Party Services\nNEPAL Motor is not responsible for linked third-party services or content unless expressly agreed in writing.\n\n8. Disclaimers\nOur services are provided \"as is.\" We disclaim all warranties to the fullest extent permitted by applicable law.\n\n9. Limitation of Liability\nNEPAL Motor's liability for indirect, incidental, or consequential damages is limited to the amount paid for the relevant transaction or NPR 10,000, whichever is lower.\n\n10. Changes and Termination\nThese Terms may be updated at any time. Continued use of our services constitutes acceptance of updated Terms. We may suspend access for violations.\n\n11. Governing Law\nThese Terms are governed by the laws of Nepal. Disputes are subject to the exclusive jurisdiction of Nepali courts.\n\n12. Contact\nFor questions, contact NEPAL Motor through our helpline or branch information published on our website."
+  },
+  privacy: {
+    title: "Privacy Policy",
+    content: "NEPAL Motor (\"we,\" \"us,\" or \"our\") respects your privacy. This Privacy Policy explains what information we collect when you use our website and forms, how we use it, and the choices you have.\n\n1. Information We Collect\nWe may collect the following categories of information:\n- Identity and contact data: name, phone number, email address, city\n- Vehicle and transaction data: brand, model, year, mileage, fuel type, budget, finance preference, notes\n- Documents and media you upload: registration copies, photos, showroom images\n- Technical data: device type, browser, approximate usage data, and form submission timestamps\n\n2. How We Use Information\nWe use personal information to:\n- Process and respond to your exchange, sell, buy, test drive, or dealer inquiries\n- Conduct valuations, inspections, and ownership transfer support\n- Communicate with you about your request and related services\n- Improve our website, forms, and customer experience\n- Comply with legal obligations and prevent fraud or abuse\n\n3. Legal Basis\nWe process your information based on your consent (including when you agree to our policies on forms), performance of services you request, our legitimate interests in operating a secure marketplace, and compliance with applicable law.\n\n4. Sharing of Information\nWe may share information with authorized branch partners, inspectors, and service providers who assist with valuations, documentation, storage, or customer support. We require such parties to use data only for the purposes we specify.\n\nWe may also disclose information when required by law, court order, or government authority, or to protect the rights, safety, and security of NEPAL Motor, our customers, and the public.\n\n5. Data Retention\nWe retain personal information for as long as needed to fulfill the purposes described in this policy, including record-keeping for transactions, disputes, and legal compliance. When data is no longer required, we take reasonable steps to delete or anonymize it.\n\n6. Security\nWe implement reasonable administrative, technical, and organizational measures to protect your information. No method of transmission or storage is completely secure; please avoid submitting passwords through forms.\n\n7. Your Rights and Choices\nDepending on applicable law, you may request access, correction, or deletion of your personal information, or withdraw consent where processing is consent-based. Contact us using the details on our website to make a request. We may need to verify your identity before responding.\n\n8. Cookies and Analytics\nWe may use cookies or similar technologies and analytics tools to understand how visitors use our website. You can adjust browser settings to limit cookies; some features may not function properly without them.\n\n9. Children's Privacy\nOur Services are not directed to individuals under 18 years of age. We do not knowingly collect personal information from children.\n\n10. International Transfers\nYour information is primarily processed in Nepal. If data is transferred to service providers in other countries, we take steps to ensure appropriate safeguards consistent with applicable law.\n\n11. Changes to This Policy\nWe may update this Privacy Policy from time to time. Material changes will be reflected on this page.\n\n12. Contact\nFor privacy-related questions, contact NEPAL Motor through the helpline or branch information published on our website."
+  },
+  refund: {
+    title: "Refund Policy",
+    content: "This policy outlines circumstances in which you may obtain a refund on payments made to NEPAL Motor or authorized branches for vehicle services. Vehicle purchase and sale terms appear separately in transaction documents.\n\n1. Scope\nThis policy covers service fees, booking deposits, inspection charges, documentation fees, and similar payments where a refund is requested. It does not replace warranties, transfer agreements, or third-party financing terms.\n\n2. Non-Refundable Items\nThe following are generally not eligible for refund:\n- Completed vehicle inspections and valuation reports\n- Government charges, taxes, or transfer fees paid on behalf of customers\n- Third-party costs (insurance, finance processing, towing) already incurred\n- Services explicitly agreed as non-refundable in writing\n\n3. Eligible Refunds\nA refund may be considered if:\n- NEPAL Motor cancels a paid service before delivery\n- A duplicate payment was processed in error\n- We are unable to complete agreed services due to internal reasons\n\nDeposits for pending transactions may be refunded if the transaction does not proceed and no non-refundable work has been completed, subject to the written deposit terms.\n\n4. Vehicle Transaction Cancellations\nFor cancelled vehicle sales, purchases, or exchanges following a mutual written agreement, refunds are governed by the signed sale or exchange terms, minus any documented costs already incurred.\n\n5. How to Request a Refund\nSubmit your request within 14 days of payment (or 7 days after service completion, whichever is later) to the relevant branch or helpline. Include your name, phone number, payment reference, date, and reason for the request.\n\n6. Processing Time\nApproved refunds are typically processed within 7-15 business days to the original payment method where possible. Bank or mobile-wallet processing times may vary.\n\n7. Disputes\nIf you disagree with a refund decision, contact NEPAL Motor management with supporting documentation for a good-faith review and timely response.\n\n8. Policy Updates\nThe version published on our website applies to new refund requests."
+  },
+  disclaimer: {
+    title: "Disclaimer",
+    content: "The information on the NEPAL Motor website and forms is provided for general guidance only.\n\n1. No Professional Advice\nContent on our website does not constitute legal, tax, financial, or mechanical advice. You should obtain independent professional advice before making vehicle purchase, sale, finance, or registration decisions.\n\n2. Accuracy of Information\nWhile we strive to keep information current and accurate, we make no warranties regarding descriptions, prices, availability, images, or specifications. Vehicle details are confirmed only after inspection and document verification.\n\n3. Valuations and Estimates\nOnline or verbal valuations, market ranges, and budget guidance are estimates only. Final offers may vary based on the vehicle's condition, accident history, service records, market demand, and regulatory factors.\n\n4. Third-Party Content and Links\nOur website may reference or link to external businesses, platforms, or resources. NEPAL Motor does not control and is not responsible for third-party content, products, or policies.\n\n5. Limitation of Liability\nNEPAL Motor is not liable for any loss or damage arising from reliance on information provided on our website or forms, technical interruptions, delays, or actions taken before a signed agreement is in place.\n\n6. User Submissions\nYou are responsible for the accuracy of information and documents you submit. NEPAL Motor may decline to process submissions that are incomplete, inconsistent, or otherwise problematic.\n\n7. Changes\nThis Disclaimer may be updated without prior notice. Continued use of our website following any update constitutes your acceptance of the revised Disclaimer."
+  }
+};
 const features = [
   "Basic",
   "A/C",
@@ -62,7 +85,7 @@ const features = [
   "Fog Lamps",
   "Sunroof",
   "Leather Seats",
-  "Backup Camera",
+  "Reverse Camera",
   "Cruise Control",
   "Keyless Entry"
 ];
@@ -411,6 +434,7 @@ function TextField({
   helper,
   placeholder,
   onFocus,
+  onBlur,
   maxLength,
   error
 }) {
@@ -425,6 +449,7 @@ function TextField({
         keyboardType={keyboardType}
         multiline={multiline}
         onFocus={onFocus}
+        onBlur={onBlur}
         maxLength={maxLength}
         placeholderTextColor="#9ca3af"
         style={[styles.input, multiline && styles.notes]}
@@ -750,17 +775,45 @@ function FAQsPage() {
 }
 
 function BranchesPage() {
-  const cities = ["All", ...Array.from(new Set(branches.map((b) => b.location)))];
   const [selectedCity, setSelectedCity] = React.useState("All");
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [airtableDealers, setAirtableDealers] = React.useState([]);
 
-  const filtered = selectedCity === "All" ? branches : branches.filter((b) => b.location === selectedCity);
+  React.useEffect(() => {
+    if (!AIRTABLE_TOKEN) return undefined;
+
+    const fetchDealers = async () => {
+      try {
+        const formula = encodeURIComponent('{Status}="Yes"');
+        const res = await fetch(
+          `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${formula}`,
+          { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } }
+        );
+        const data = await res.json();
+        if (data.records) {
+          setAirtableDealers(data.records.map((r) => ({
+            id: r.id,
+            name: r.fields["Company Name"] || "",
+            location: r.fields["City"] || "",
+            contact: r.fields["Full Name"] || "",
+            phone: String(r.fields["Phone"] || "")
+          })));
+        }
+      } catch {}
+    };
+    fetchDealers();
+    const interval = setInterval(fetchDealers, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const allDealers = [...branches, ...airtableDealers];
+  const cities = ["All", ...Array.from(new Set(allDealers.map((b) => b.location).filter(Boolean)))];
+  const filtered = selectedCity === "All" ? allDealers : allDealers.filter((b) => b.location === selectedCity);
 
   return (
     <View>
       <Text style={styles.title}>Dealers</Text>
 
-      {/* City dropdown */}
       <View style={styles.cityDropdownWrap}>
         <Text style={styles.cityDropdownLabel}>Filter by City</Text>
         <Pressable
@@ -789,7 +842,7 @@ function BranchesPage() {
 
       <View style={styles.branchList}>
         {filtered.map((branch) => (
-          <View key={branch.phone} style={styles.branchCard}>
+          <View key={branch.id || branch.phone} style={styles.branchCard}>
             <View style={styles.branchIcon}>
               <Ionicons name="location-outline" size={24} color="#075985" />
             </View>
@@ -1109,6 +1162,64 @@ function TextSvg({ x, y, text, size, color }) {
   );
 }
 
+function PolicyPage({ policyKey }) {
+  const policy = policiesContent[policyKey];
+  const paragraphs = policy.content.split("\n\n");
+  return (
+    <View style={styles.policyPage}>
+      <Text allowFontScaling={false} style={styles.policyPageTitle}>{policy.title}</Text>
+      {paragraphs.map((para, i) => {
+        const newlineIndex = para.indexOf("\n");
+        const isSection = /^\d+\./.test(para);
+        if (isSection && newlineIndex !== -1) {
+          const heading = para.slice(0, newlineIndex);
+          const body = para.slice(newlineIndex + 1);
+          return (
+            <View key={i} style={styles.policySection}>
+              <Text allowFontScaling={false} style={styles.policySectionHeading}>{heading}</Text>
+              <Text allowFontScaling={false} style={styles.policySectionBody}>{body}</Text>
+            </View>
+          );
+        }
+        return (
+          <Text key={i} allowFontScaling={false} style={styles.policyIntro}>{para}</Text>
+        );
+      })}
+    </View>
+  );
+}
+
+function AgreementRow({ agreed, onToggle, error, onNavigate }) {
+  return (
+    <View style={styles.agreementWrap}>
+      <View style={styles.agreementRow}>
+        <Pressable
+          onPress={onToggle}
+          hitSlop={8}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: agreed }}
+          style={styles.checkboxHitArea}
+        >
+          <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
+            {agreed ? <Ionicons name="checkmark" size={13} color="#ffffff" /> : null}
+          </View>
+        </Pressable>
+        <Text allowFontScaling={false} style={styles.agreementText}>
+          {"I agree to the "}
+          <Text style={styles.policyLink} onPress={() => onNavigate("terms")}>Terms of Service</Text>
+          {", "}
+          <Text style={styles.policyLink} onPress={() => onNavigate("privacy")}>Privacy Policy</Text>
+          {", "}
+          <Text style={styles.policyLink} onPress={() => onNavigate("refund")}>Refund Policy</Text>
+          {", and "}
+          <Text style={styles.policyLink} onPress={() => onNavigate("disclaimer")}>Disclaimer</Text>
+        </Text>
+      </View>
+      {error ? <Text allowFontScaling={false} style={styles.errorText}>{error}</Text> : null}
+    </View>
+  );
+}
+
 function OnboardingScreen({ onDone }) {
   const { width, height: screenHeight } = useWindowDimensions();
   const [slideIndex, setSlideIndex] = useState(0);
@@ -1183,12 +1294,13 @@ function OnboardingScreen({ onDone }) {
   );
 }
 
-function DealerPage() {
+function DealerPage({ onNavigate }) {
   const [form, setForm] = useState({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
   const update = (key, value) => setForm((c) => ({ ...c, [key]: value }));
 
@@ -1217,6 +1329,7 @@ function DealerPage() {
     if (!form.companyName.trim()) newErrors.companyName = "Company Name is required";
     if (!form.phone || form.phone.length !== 10)
       newErrors.phone = "Enter valid 10-digit phone number";
+    if (!termsAgreed) newErrors.termsAgreed = "You must agree to the Terms of Service, Privacy Policy, Refund Policy, and Disclaimer";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setSubmitting(true);
@@ -1232,6 +1345,7 @@ function DealerPage() {
       setMessage("Your dealer application has been submitted!");
       setMessageType("success");
       setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
+      setTermsAgreed(false);
       setErrors({});
     } catch {
       setMessage("Submission failed. Please try again.");
@@ -1287,11 +1401,17 @@ function DealerPage() {
           </Text>
         </View>
       ) : null}
+      <AgreementRow
+        agreed={termsAgreed}
+        onToggle={() => setTermsAgreed((t) => !t)}
+        error={errors.termsAgreed}
+        onNavigate={onNavigate}
+      />
       <View style={styles.actions}>
         <Pressable
           style={[styles.clearButton, submitting && styles.clearButtonDisabled]}
           disabled={submitting}
-          onPress={() => { setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] }); setErrors({}); setMessage(""); }}
+          onPress={() => { setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] }); setTermsAgreed(false); setErrors({}); setMessage(""); }}
         >
           {({ hovered }) => (
             <>
@@ -1308,14 +1428,11 @@ function DealerPage() {
           <Text style={styles.submitText}>{submitting ? "Submitting..." : "Submit"}</Text>
         </Pressable>
       </View>
-      <Text style={styles.footer}>
-        Do not submit passwords through this form. <Text style={styles.report}>Report malicious form</Text>
-      </Text>
     </View>
   );
 }
 
-function TestDrivePage() {
+function TestDrivePage({ onNavigate }) {
   const [form, setForm] = useState({
     fullName: "", email: "", phone: "", city: "Kathmandu",
     vehicleType: "Hatchback", model: "", brand: "", color: "",
@@ -1326,6 +1443,7 @@ function TestDrivePage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [featurePickerOpen, setFeaturePickerOpen] = useState(false);
   const featurePickerRef = useRef(null);
   const availableFeatures = features.filter((f) => !form.features.includes(f));
@@ -1351,6 +1469,7 @@ function TestDrivePage() {
   const submit = async () => {
     const newErrors = {};
     if (!form.fullName.trim()) newErrors.fullName = "Full Name is required";
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) newErrors.email = "Enter a valid email address";
     if (!form.phone || form.phone.length !== 10)
       newErrors.phone = "Enter valid 10-digit phone number";
     if (!form.model.trim()) newErrors.model = "Vehicle Model is required";
@@ -1359,6 +1478,7 @@ function TestDrivePage() {
     if (!form.transmission) newErrors.transmission = "Transmission / Gear is required";
     if (!form.fuelType) newErrors.fuelType = "Fuel Type is required";
     if (!form.finance) newErrors.finance = "Finance selection is required";
+    if (!termsAgreed) newErrors.termsAgreed = "You must agree to the Terms of Service, Privacy Policy, Refund Policy, and Disclaimer";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setSubmitting(true);
@@ -1386,6 +1506,7 @@ function TestDrivePage() {
       setMessage("Your test drive request has been submitted!");
       setMessageType("success");
       setForm(emptyTestDrive);
+      setTermsAgreed(false);
       setErrors({});
     } catch {
       setMessage("Submission failed. Please try again.");
@@ -1399,7 +1520,20 @@ function TestDrivePage() {
     <View>
       <Text allowFontScaling={false} style={styles.title}>Free Test Drive</Text>
       <TextField label="Full Name" required value={form.fullName} error={errors.fullName} onFocus={closeFeaturePicker} onChangeText={(v) => update("fullName", v)} />
-      <TextField label="Email" value={form.email} keyboardType="email-address" onFocus={closeFeaturePicker} onChangeText={(v) => update("email", v)} />
+      <TextField
+        label="Email"
+        value={form.email}
+        keyboardType="email-address"
+        error={errors.email}
+        onFocus={closeFeaturePicker}
+        onChangeText={(v) => { update("email", v); setErrors((e) => ({ ...e, email: "" })); }}
+        onBlur={() => {
+          const val = form.email.trim();
+          if (val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+            setErrors((e) => ({ ...e, email: "Enter a valid email address" }));
+          }
+        }}
+      />
       <TextField
         label="Phone" required value={form.phone} keyboardType="phone-pad" maxLength={10}
         error={errors.phone} onFocus={closeFeaturePicker}
@@ -1471,11 +1605,17 @@ function TestDrivePage() {
           </Text>
         </View>
       ) : null}
+      <AgreementRow
+        agreed={termsAgreed}
+        onToggle={() => setTermsAgreed((t) => !t)}
+        error={errors.termsAgreed}
+        onNavigate={onNavigate}
+      />
       <View style={styles.actions}>
         <Pressable
           style={[styles.clearButton, submitting && styles.clearButtonDisabled]}
           disabled={submitting}
-          onPress={() => { setForm(emptyTestDrive); setErrors({}); setMessage(""); }}
+          onPress={() => { setForm(emptyTestDrive); setTermsAgreed(false); setErrors({}); setMessage(""); }}
         >
           {({ hovered }) => (
             <>
@@ -1492,9 +1632,6 @@ function TestDrivePage() {
           <Text style={styles.submitText}>{submitting ? "Submitting..." : "Submit"}</Text>
         </Pressable>
       </View>
-      <Text style={styles.footer}>
-        Do not submit passwords through this form. <Text style={styles.report}>Report malicious form</Text>
-      </Text>
     </View>
   );
 }
@@ -2060,7 +2197,9 @@ export default function App() {
   const [yearError, setYearError] = useState("");
   const featurePickerRef = useRef(null);
   const [errors, setErrors] = useState({});
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [activeFooterTab, setActiveFooterTab] = useState("exchange");
+  const [previousTab, setPreviousTab] = useState(null);
   const scrollRef = useRef(null);
   const isSellForm = activeFooterTab === "sell";
   const isBuyForm = activeFooterTab === "buy";
@@ -2100,6 +2239,21 @@ export default function App() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [featurePickerOpen]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (policyPageKeys.includes(activeFooterTab) && previousTab !== null) {
+        setActiveFooterTab(previousTab);
+        setPreviousTab(null);
+        requestAnimationFrame(() => {
+          scrollRef.current?.scrollTo({ y: 0, animated: true });
+        });
+        return true;
+      }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [activeFooterTab, previousTab]);
 
   const update = (key, value) => {
     setForms((current) => ({
@@ -2144,7 +2298,10 @@ export default function App() {
     setMessageType("");
     setSubmitting(false);
     setErrors({});
+    setTermsAgreed(false);
   };
+
+  const policyPageKeys = ["terms", "privacy", "refund", "disclaimer"];
 
   const changeFooterTab = (tab) => {
     closeFeaturePicker();
@@ -2153,6 +2310,16 @@ export default function App() {
     setMessage("");
     setMessageType("");
     setSubmitting(false);
+    const isGoingToPolicy = policyPageKeys.includes(tab);
+    const isComingFromPolicy = policyPageKeys.includes(activeFooterTab);
+    if (!isGoingToPolicy && !isComingFromPolicy) {
+      setTermsAgreed(false);
+    }
+    if (isGoingToPolicy) {
+      setPreviousTab(activeFooterTab);
+    } else {
+      setPreviousTab(null);
+    }
     setActiveFooterTab(tab);
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -2243,6 +2410,8 @@ export default function App() {
 
     if (!form.fullName.trim()) newErrors.fullName = "Full Name is required";
 
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) newErrors.email = "Enter a valid email address";
+
     if (!form.phone || form.phone.length !== 10)
       newErrors.phone = "Enter valid 10-digit phone number";
 
@@ -2288,6 +2457,10 @@ export default function App() {
       if (form.year && (year < 1981 || year > 2026)) {
         newErrors.year = "Year must be between 1981 and 2026";
       }
+    }
+
+    if (!termsAgreed) {
+      newErrors.termsAgreed = "You must agree to the Terms of Service, Privacy Policy, Refund Policy, and Disclaimer";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -2345,6 +2518,7 @@ export default function App() {
         ...current,
         [submittedFormKey]: emptyForm
       }));
+      setTermsAgreed(false);
       setErrors({});
     } catch (error) {
       setMessageType("error");
@@ -2384,11 +2558,19 @@ export default function App() {
         ) : activeFooterTab === "about" ? (
           <AboutPage />
         ) : activeFooterTab === "dealer" ? (
-          <DealerPage />
+          <DealerPage onNavigate={changeFooterTab} />
         ) : activeFooterTab === "testdrive" ? (
-          <TestDrivePage />
+          <TestDrivePage onNavigate={changeFooterTab} />
         ) : activeFooterTab === "glossary" ? (
           <GlossaryPage />
+        ) : activeFooterTab === "terms" ? (
+          <PolicyPage policyKey="terms" />
+        ) : activeFooterTab === "privacy" ? (
+          <PolicyPage policyKey="privacy" />
+        ) : activeFooterTab === "refund" ? (
+          <PolicyPage policyKey="refund" />
+        ) : activeFooterTab === "disclaimer" ? (
+          <PolicyPage policyKey="disclaimer" />
         ) : (
           <>
         <Pressable onPress={closeFeaturePicker}>
@@ -2407,8 +2589,15 @@ export default function App() {
           label="Email"
           value={form.email}
           keyboardType="email-address"
+          error={errors.email}
           onFocus={closeFeaturePicker}
-          onChangeText={(value) => update("email", value)}
+          onChangeText={(value) => { update("email", value); setErrors((e) => ({ ...e, email: "" })); }}
+          onBlur={() => {
+            const val = form.email.trim();
+            if (val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+              setErrors((e) => ({ ...e, email: "Enter a valid email address" }));
+            }
+          }}
         />
         <TextField
           label="Phone"
@@ -2682,6 +2871,13 @@ export default function App() {
           </View>
         ) : null}
 
+        <AgreementRow
+          agreed={termsAgreed}
+          onToggle={() => setTermsAgreed((t) => !t)}
+          error={errors.termsAgreed}
+          onNavigate={changeFooterTab}
+        />
+
         <View style={styles.actions}>
           <Pressable
             style={[styles.clearButton, submitting && styles.clearButtonDisabled]}
@@ -2709,9 +2905,6 @@ export default function App() {
           </Pressable>
         </View>
 
-        <Text style={styles.footer}>
-          Do not submit passwords through this form. <Text style={styles.report}>Report malicious form</Text>
-        </Text>
           </>
         )}
       </ScrollView>
@@ -4240,5 +4433,102 @@ const styles = StyleSheet.create({
     color: "#475569",
     fontSize: 14,
     lineHeight: 22
-  }
+  },
+  policyPage: {
+    paddingTop: 8,
+    paddingBottom: 16
+  },
+  policyPageTitle: {
+    color: "#075985",
+    fontSize: 26,
+    fontWeight: "900",
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e2e8f0"
+  },
+  policyIntro: {
+    color: "#475569",
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 20
+  },
+  policySection: {
+    marginBottom: 20
+  },
+  policySectionHeading: {
+    color: "#0c4a6e",
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 6
+  },
+  policySectionBody: {
+    color: "#475569",
+    fontSize: 14,
+    lineHeight: 22
+  },
+  drawerLegalRow: {
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 4,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    borderTopWidth: 1,
+    borderTopColor: "#e2e8f0"
+  },
+  drawerLegalLink: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6
+  },
+  drawerLegalLinkHover: {
+    backgroundColor: "#e2e8f0"
+  },
+  drawerLegalText: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: "600"
+  },
+  drawerLegalTextActive: {
+    color: "#075985"
+  },
+  agreementWrap: {
+    marginTop: 20,
+    marginBottom: 4
+  },
+  agreementRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10
+  },
+  checkboxHitArea: {
+    paddingTop: 1
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: "#94a3b8",
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0
+  },
+  checkboxChecked: {
+    backgroundColor: "#075985",
+    borderColor: "#075985"
+  },
+  agreementText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#334155"
+  },
+  policyLink: {
+    color: "#075985",
+    textDecorationLine: "underline",
+    fontWeight: "600"
+  },
 });
