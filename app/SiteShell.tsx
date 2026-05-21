@@ -12,6 +12,8 @@ type SiteShellProps = {
   activeNav?: NavKey;
   /** Narrower column for long forms */
   variant?: "default" | "form" | "wide";
+  /** Full-viewport layout without page title (e.g. app download) */
+  compact?: boolean;
   children: ReactNode;
 };
 
@@ -20,6 +22,7 @@ export function SiteShell({
   description,
   activeNav,
   variant = "default",
+  compact = false,
   children,
 }: SiteShellProps) {
   const contentWidth =
@@ -30,22 +33,40 @@ export function SiteShell({
         : "max-w-3xl lg:max-w-4xl";
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <main className="flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))]">
+    <div
+      className={
+        compact
+          ? "flex h-dvh max-h-dvh flex-col overflow-hidden bg-white"
+          : "flex min-h-screen flex-col bg-white"
+      }
+    >
+      <main
+        className={
+          compact
+            ? "flex min-h-0 flex-1 flex-col overflow-hidden pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))]"
+            : "flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))]"
+        }
+      >
         <SiteNav />
         <div
-          className={`mx-auto w-full px-4 sm:px-6 lg:px-8 ${contentWidth}`}
+          className={
+            compact
+              ? "flex min-h-0 flex-1 flex-col overflow-hidden px-3"
+              : `mx-auto w-full px-4 sm:px-6 lg:px-8 ${contentWidth}`
+          }
         >
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-              {title}
-            </h1>
-            {description ? (
-              <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-zinc-500">
-                {description}
-              </p>
-            ) : null}
-          </div>
+          {!compact ? (
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+                {title}
+              </h1>
+              {description ? (
+                <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-zinc-500">
+                  {description}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           {children}
         </div>
       </main>

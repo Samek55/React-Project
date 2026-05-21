@@ -11,93 +11,58 @@ export const metadata: Metadata = {
 const PLAY_STORE_URL = "#";
 const APP_STORE_URL = "#";
 
-const stats = [
-  { value: "500+", label: "Cars Sold" },
-  { value: "Whole Nepal", label: "Coverage" },
-] as const;
+const storeButtonClass =
+  "flex w-[148px] items-center justify-center gap-2 rounded-[10px] bg-slate-900 px-3 py-2 text-white shadow-[0_3px_8px_rgba(7,89,133,0.25)] transition-colors hover:bg-black";
 
 export default function DownloadAppPage() {
   return (
-    <SiteShell title="Download App" variant="wide">
-      <section className="overflow-hidden rounded-[20px] border border-sky-200 bg-sky-50 px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-14">
-        <div className="mx-auto grid max-w-5xl items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
-          <div className="text-center lg:text-left">
-            <p className="text-[12px] font-extrabold uppercase tracking-[0.18em] text-sky-700">
-              NEPAL Motor
-            </p>
-            <h1 className="mt-3 text-[28px] font-black leading-[1.15] text-sky-950 sm:text-[34px] lg:text-[40px]">
-              Get the NEPAL Motor App
-            </h1>
-            <p className="mt-3 text-[14px] leading-relaxed text-slate-600 sm:text-[15px]">
-              Buy, sell, and exchange used cars across Nepal — right from your
-              phone.
-            </p>
-
-            <div className="mt-6 flex flex-wrap items-stretch justify-center gap-3 lg:justify-start">
-              {stats.map((s) => (
-                <div
-                  key={s.label}
-                  className="flex min-w-[140px] flex-1 flex-col items-center rounded-[14px] border border-slate-200 bg-white py-3.5 px-3 shadow-[0_2px_6px_rgba(7,89,133,0.07)] lg:flex-none"
-                >
-                  <span className="text-[20px] font-black text-sky-800 sm:text-[22px]">
-                    {s.value}
-                  </span>
-                  <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    {s.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start">
-              <a
-                href={PLAY_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Get it on Google Play"
-                className="flex w-full max-w-[220px] items-center justify-center gap-3 rounded-[14px] bg-slate-900 px-5 py-3.5 text-white shadow-[0_4px_10px_rgba(7,89,133,0.3)] transition-colors hover:bg-black sm:w-auto"
-              >
-                <PlayStoreIcon className="h-7 w-7" />
-                <span className="flex flex-col items-start leading-tight">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-white/80">
-                    GET IT ON
-                  </span>
-                  <span className="text-[16px] font-extrabold">
-                    Google Play
-                  </span>
-                </span>
-              </a>
-
-              <a
-                href={APP_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Download on the App Store"
-                className="flex w-full max-w-[220px] items-center justify-center gap-3 rounded-[14px] bg-slate-900 px-5 py-3.5 text-white shadow-[0_4px_10px_rgba(7,89,133,0.3)] transition-colors hover:bg-black sm:w-auto"
-              >
-                <AppStoreIcon className="h-7 w-7" />
-                <span className="flex flex-col items-start leading-tight">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-white/80">
-                    Download on the
-                  </span>
-                  <span className="text-[16px] font-extrabold">App Store</span>
-                </span>
-              </a>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center lg:justify-end">
-            <Image
-              src="/app-download/phone-preview.png"
-              alt="NEPAL Motor app preview"
-              width={360}
-              height={780}
-              priority
-              className="h-auto w-[240px] drop-shadow-[0_30px_40px_rgba(7,89,133,0.18)] sm:w-[280px] lg:w-[320px]"
-            />
-          </div>
+    <SiteShell title="Download App" compact>
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-between gap-2 overflow-hidden py-1">
+        <div className="relative min-h-0 w-full max-w-[min(78vw,260px)] flex-1">
+          <Image
+            src="/app-download/phone-preview.png"
+            alt="NEPAL Motor app on mobile"
+            fill
+            priority
+            sizes="(max-width: 640px) 78vw, 260px"
+            className="object-contain object-center"
+          />
         </div>
-      </section>
+
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 pb-0.5">
+          <a
+            href={PLAY_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Get it on Google Play"
+            className={storeButtonClass}
+          >
+            <PlayStoreIcon className="h-5 w-5 shrink-0" />
+            <span className="flex flex-col items-start leading-tight">
+              <span className="text-[8px] font-medium uppercase tracking-wide text-white/80">
+                GET IT ON
+              </span>
+              <span className="text-[13px] font-extrabold">Google Play</span>
+            </span>
+          </a>
+
+          <a
+            href={APP_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Download on the App Store"
+            className={storeButtonClass}
+          >
+            <AppStoreIcon className="h-5 w-5 shrink-0" />
+            <span className="flex flex-col items-start leading-tight">
+              <span className="text-[8px] font-medium uppercase tracking-wide text-white/80">
+                Download on the
+              </span>
+              <span className="text-[13px] font-extrabold">App Store</span>
+            </span>
+          </a>
+        </div>
+      </div>
     </SiteShell>
   );
 }
@@ -114,12 +79,18 @@ function PlayStoreIcon({ className }: { className?: string }) {
         d="M3.6 1.86a1.5 1.5 0 0 0-.6 1.2v17.88c0 .48.21.93.57 1.2L13.2 12 3.6 1.86z"
         fill="#34A853"
       />
-      <path d="M16.7 8.55 13.2 12l3.5 3.45 4.65-2.62a1.5 1.5 0 0 0 0-2.65l-4.65-2.63z" fill="#FBBC04" />
+      <path
+        d="M16.7 8.55 13.2 12l3.5 3.45 4.65-2.62a1.5 1.5 0 0 0 0-2.65l-4.65-2.63z"
+        fill="#FBBC04"
+      />
       <path
         d="M3 21.21c.3.23.71.27 1.07.07L16.7 15.45 13.2 12 3 21.21z"
         fill="#EA4335"
       />
-      <path d="M4.07 1.78c-.36-.2-.77-.16-1.07.08L13.2 12l3.5-3.45L4.07 1.78z" fill="#4285F4" />
+      <path
+        d="M4.07 1.78c-.36-.2-.77-.16-1.07.08L13.2 12l3.5-3.45L4.07 1.78z"
+        fill="#4285F4"
+      />
     </svg>
   );
 }
