@@ -10,8 +10,8 @@ type SiteShellProps = {
   title: string;
   description?: string;
   activeNav?: NavKey;
-  /** Narrower column for long forms */
-  variant?: "default" | "form" | "wide";
+  /** Narrower column for long forms; dealers matches mobile app layout */
+  variant?: "default" | "form" | "wide" | "dealers";
   /** Full-viewport layout without page title (e.g. app download) */
   compact?: boolean;
   children: ReactNode;
@@ -28,9 +28,16 @@ export function SiteShell({
   const contentWidth =
     variant === "form"
       ? "max-w-xl"
-      : variant === "wide"
-        ? "max-w-6xl"
-        : "max-w-3xl lg:max-w-4xl";
+      : variant === "dealers"
+        ? "max-w-[564px]"
+        : variant === "wide"
+          ? "max-w-6xl"
+          : "max-w-3xl lg:max-w-4xl";
+
+  const contentPadding =
+    variant === "dealers"
+      ? "px-[18px] max-[440px]:px-2.5"
+      : "px-4 sm:px-6 lg:px-8";
 
   return (
     <div
@@ -52,20 +59,28 @@ export function SiteShell({
           className={
             compact
               ? "flex min-h-0 flex-1 flex-col overflow-hidden px-3"
-              : `mx-auto w-full px-4 sm:px-6 lg:px-8 ${contentWidth}`
+              : `mx-auto w-full ${contentPadding} ${contentWidth}`
           }
         >
           {!compact ? (
-            <div className="mb-6 sm:mb-8">
-              <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-                {title}
-              </h1>
-              {description ? (
-                <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-zinc-500">
-                  {description}
-                </p>
-              ) : null}
-            </div>
+            variant === "dealers" ? (
+              <div className="mb-5 border-b border-slate-200 pb-4">
+                <h1 className="text-[26px] font-bold leading-tight text-[#020617]">
+                  {title}
+                </h1>
+              </div>
+            ) : (
+              <div className="mb-6 sm:mb-8">
+                <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+                  {title}
+                </h1>
+                {description ? (
+                  <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-zinc-500">
+                    {description}
+                  </p>
+                ) : null}
+              </div>
+            )
           ) : null}
           {children}
         </div>
