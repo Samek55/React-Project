@@ -5,7 +5,6 @@ import {
   Linking,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -16,7 +15,7 @@ import {
   Keyboard
 } from "react-native";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -1185,7 +1184,7 @@ function OnboardingScreen({ onDone }) {
 }
 
 function DealerPage() {
-  const [form, setForm] = useState({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
+  const [form, setForm] = useState({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [], status: "Yes" });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -1227,12 +1226,13 @@ function DealerPage() {
       formData.append("companyName", form.companyName.trim());
       formData.append("city", form.city);
       formData.append("phone", form.phone.trim());
+      formData.append("status", form.status);
       formData.append("requestType", "Become a Dealer");
       form.photo.forEach((f) => appendUpload(formData, "photos", f));
       await fetch(vehicleSubmissionEndpoint, { method: "POST", body: formData });
       setMessage("Your dealer application has been submitted!");
       setMessageType("success");
-      setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
+      setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [], status: "Yes" });
       setErrors({});
     } catch {
       setMessage("Submission failed. Please try again.");
@@ -1274,6 +1274,12 @@ function DealerPage() {
         error={errors.phone}
         onChangeText={(v) => update("phone", v.replace(/[^0-9]/g, ""))}
       />
+      <SelectField
+        label="Status"
+        value={form.status}
+        options={["Yes"]}
+        onChange={(v) => update("status", v)}
+      />
       <UploadField
         label="Showroom / Office Photo"
         value={form.photo}
@@ -1292,7 +1298,7 @@ function DealerPage() {
         <Pressable
           style={[styles.clearButton, submitting && styles.clearButtonDisabled]}
           disabled={submitting}
-          onPress={() => { setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] }); setErrors({}); setMessage(""); }}
+          onPress={() => { setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [], status: "Yes" }); setErrors({}); setMessage(""); }}
         >
           {({ hovered }) => (
             <>
