@@ -29,6 +29,7 @@ const phoneNumber = "+9779852024365";
 const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings";
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
+const dealerEndpoint = "https://www.nepalmotor.com/api/become-a-dealer";
 
 const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
@@ -1184,7 +1185,7 @@ function OnboardingScreen({ onDone }) {
 }
 
 function DealerPage() {
-  const [form, setForm] = useState({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [], status: "Yes" });
+  const [form, setForm] = useState({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -1226,13 +1227,12 @@ function DealerPage() {
       formData.append("companyName", form.companyName.trim());
       formData.append("city", form.city);
       formData.append("phone", form.phone.trim());
-      formData.append("status", form.status);
       formData.append("requestType", "Become a Dealer");
       form.photo.forEach((f) => appendUpload(formData, "photos", f));
-      await fetch(vehicleSubmissionEndpoint, { method: "POST", body: formData });
+      await fetch(dealerEndpoint, { method: "POST", body: formData });
       setMessage("Your dealer application has been submitted!");
       setMessageType("success");
-      setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [], status: "Yes" });
+      setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
       setErrors({});
     } catch {
       setMessage("Submission failed. Please try again.");
@@ -1274,12 +1274,6 @@ function DealerPage() {
         error={errors.phone}
         onChangeText={(v) => update("phone", v.replace(/[^0-9]/g, ""))}
       />
-      <SelectField
-        label="Status"
-        value={form.status}
-        options={["Yes"]}
-        onChange={(v) => update("status", v)}
-      />
       <UploadField
         label="Showroom / Office Photo"
         value={form.photo}
@@ -1298,7 +1292,7 @@ function DealerPage() {
         <Pressable
           style={[styles.clearButton, submitting && styles.clearButtonDisabled]}
           disabled={submitting}
-          onPress={() => { setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [], status: "Yes" }); setErrors({}); setMessage(""); }}
+          onPress={() => { setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] }); setErrors({}); setMessage(""); }}
         >
           {({ hovered }) => (
             <>
