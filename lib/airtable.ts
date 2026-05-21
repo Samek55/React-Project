@@ -354,9 +354,9 @@ function mapTransmission(value: string): string {
     CVT: "Semi Automatic",
     Other: "Semi Automatic",
   };
-  const allowed = new Set(["Automatic", "Manual", "Semi Automatic"]);
-  const mapped = map[value] ?? value;
-  return allowed.has(mapped) ? mapped : "Semi Automatic";
+  const allowed = new Set(["Automatic", "Manual", "Semi Automatic", "CVT","Other"]);
+  const mapped = map[value] ?? value; 
+  return allowed.has(mapped) ? mapped : "Other";
 }
 
 const EV_FORM_TO_MODEL: Record<string, string> = {

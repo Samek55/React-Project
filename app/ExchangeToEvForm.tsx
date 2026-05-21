@@ -78,7 +78,7 @@ const EV_BRANDS = [
 
 const YES_NO = ["Yes", "No"];
 
-const TRANSMISSION = ["Manual", "Automatic", "CVT", "Other"];
+const TRANSMISSION = ["Manual", "Automatic", "Semi Automatic", "CVT", "Other"];
 
 const ACCIDENTS = ["None", "Minor", "Major", "Prefer not to say"];
 
