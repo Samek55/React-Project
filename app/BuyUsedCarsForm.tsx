@@ -15,6 +15,7 @@ import {
   TAG_TEXT,
   textInputClass,
 } from "./form-controls";
+import { FormLegalConsent, LEGAL_CONSENT_ERROR } from "./FormLegalConsent";
 
 const CITIES = [
   "Itahari",
@@ -104,6 +105,7 @@ export function BuyUsedCarsForm() {
   const [finance, setFinance] = useState("");
   const [notes, setNotes] = useState("");
 
+  const [agreedToLegal, setAgreedToLegal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
@@ -127,6 +129,7 @@ export function BuyUsedCarsForm() {
     setBudget("");
     setFinance("");
     setNotes("");
+    setAgreedToLegal(false);
     setSubmitError(null);
     setSubmitSuccess(null);
     setModelError(null);
@@ -171,6 +174,11 @@ export function BuyUsedCarsForm() {
     if (!ALPHABET_ONLY.test(vehicleModel.trim())) {
       setModelError("Vehicle Model can only contain alphabets");
       setSubmitError("Vehicle Model can only contain alphabets.");
+      return;
+    }
+
+    if (!agreedToLegal) {
+      setSubmitError(LEGAL_CONSENT_ERROR);
       return;
     }
 
@@ -479,6 +487,12 @@ export function BuyUsedCarsForm() {
         </p>
       ) : null}
 
+      <FormLegalConsent
+        id={formId}
+        checked={agreedToLegal}
+        onCheckedChange={setAgreedToLegal}
+      />
+
       <div className="flex items-center justify-between pt-2">
         <button
           type="button"
@@ -491,7 +505,7 @@ export function BuyUsedCarsForm() {
         </button>
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !agreedToLegal}
           className="rounded-lg bg-zinc-900 px-6 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-60"
         >
           {submitting ? "Submitting…" : "Submit"}

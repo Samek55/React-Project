@@ -15,6 +15,7 @@ import {
   TAG_TEXT,
   textInputClass,
 } from "./form-controls";
+import { FormLegalConsent, LEGAL_CONSENT_ERROR } from "./FormLegalConsent";
 
 const MAX_PHOTOS = 5;
 
@@ -225,6 +226,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
   const [features, setFeatures] = useState<string[]>([]);
   const [featuresPickerOpen, setFeaturesPickerOpen] = useState(false);
   const [notes, setNotes] = useState("");
+  const [agreedToLegal, setAgreedToLegal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
@@ -255,6 +257,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     setFeatures([]);
     setFeaturesPickerOpen(false);
     setNotes("");
+    setAgreedToLegal(false);
     setSubmitError(null);
     setSubmitSuccess(null);
     if (docInputRef.current) docInputRef.current.value = "";
@@ -320,6 +323,11 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
       !fuelType
     ) {
       setSubmitError("Please fill in all required fields.");
+      return;
+    }
+
+    if (!agreedToLegal) {
+      setSubmitError(LEGAL_CONSENT_ERROR);
       return;
     }
 
@@ -789,6 +797,12 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
         </p>
       ) : null}
 
+      <FormLegalConsent
+        id={formId}
+        checked={agreedToLegal}
+        onCheckedChange={setAgreedToLegal}
+      />
+
       <div className="flex items-center justify-between pt-2">
         <button
           type="button"
@@ -801,16 +815,12 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
         </button>
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !agreedToLegal}
           className="rounded-lg bg-zinc-900 px-6 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-60"
         >
           {submitting ? "Submitting…" : "Submit"}
         </button>
       </div>
-
-      <p className="pt-2 text-center text-[11px] leading-relaxed text-zinc-400">
-        Do not submit passwords through this form. Report malicious form
-      </p>
     </form>
   );
 }
