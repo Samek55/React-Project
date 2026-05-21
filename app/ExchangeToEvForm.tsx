@@ -67,7 +67,7 @@ const TRANSMISSION = ["Manual", "Automatic", "CVT", "Other"];
 
 const ACCIDENTS = ["None", "Minor", "Major", "Prefer not to say"];
 
-const FUEL_TYPES = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "Other"];
+const FUEL_TYPES = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "EV", "Other"];
 
 /** Preset options shown when tapping + on Features */
 const FEATURE_PRESETS = [

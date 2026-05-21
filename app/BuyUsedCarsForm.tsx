@@ -56,6 +56,7 @@ const FUEL_TYPES_WITH_EV = [
   "Hybrid",
   "CNG",
   "LPG",
+  "EV",
   "Other",
 ];
 

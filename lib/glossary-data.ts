@@ -62,7 +62,7 @@ export const glossaryData = {
   F: [
     { title: "Fair Market Value", definition: "The price a vehicle would realistically sell for between a willing buyer and seller in the open market." },
     { title: "Finance", definition: "A payment arrangement allowing a buyer to purchase a vehicle through installments over an agreed period." },
-    { title: "Fuel Type", definition: "The category of fuel a vehicle consumes: Petrol, Diesel, Hybrid, CNG, LPG, or Electric." },
+    { title: "Fuel Type", definition: "The category of fuel a vehicle consumes: Petrol, Diesel, Hybrid, CNG, LPG, EV, or Other." },
     { title: "Fleet Vehicle", definition: "A vehicle owned or managed by a company and used for business operations rather than private use." },
     { title: "Four-Wheel Drive (4WD)", definition: "A drivetrain system that sends engine power to all four wheels, typically used for off-road or rough terrain." },
     { title: "Front-Wheel Drive (FWD)", definition: "A drivetrain where engine power is delivered only to the front wheels, common in passenger cars." },
