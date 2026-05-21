@@ -51,8 +51,8 @@ type DrawerItemConfig = {
 };
 
 const primaryItems: DrawerItemConfig[] = [
-  { label: "Home", href: "/", navKey: "exchange", mode: "home" },
-  { label: "Exchange to EV", href: "/", navKey: "exchange", mode: "exchangeSvg" },
+  { label: "Home", href: "/exchange", navKey: "exchange", mode: "home" },
+  { label: "Exchange to EV", href: "/exchange", navKey: "exchange", mode: "exchangeSvg" },
   { label: "Sell Used Car", href: "/sell", navKey: "sell", mode: "sellSvg" },
   { label: "Buy Used Car", href: "/buy", navKey: "buy", mode: "key" },
   { label: "Contact", mode: "callTel" },
@@ -83,7 +83,7 @@ const secondaryItems: DrawerItemConfig[] = [
 ];
 
 function activeNavKeyFromPath(pathname: string): NavKey | null {
-  if (pathname === "/") return "exchange";
+  if (pathname === "/" || pathname.startsWith("/exchange")) return "exchange";
   if (pathname.startsWith("/sell")) return "sell";
   if (pathname.startsWith("/buy")) return "buy";
   if (pathname.startsWith("/about")) return "about";
@@ -129,7 +129,7 @@ export function SiteNav() {
       <header className="sticky top-0 z-40 bg-white px-[18px] pb-3 pt-[max(8px,env(safe-area-inset-top,0px))] max-[440px]:px-2.5">
         <div className="mx-auto grid min-h-16 w-full max-w-[564px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-[7px] gap-y-0 rounded-[18px] border border-slate-200 bg-white px-[7px] py-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.18)] max-[440px]:gap-x-1 max-[440px]:px-1">
           <Link
-            href="/"
+            href="/exchange"
             className="flex min-w-0 items-center gap-2 pr-1 transition-opacity hover:opacity-90 max-[440px]:gap-1.5 max-[440px]:pr-0"
             onClick={closeDrawer}
           >

@@ -19,6 +19,21 @@ import { FormLegalConsent, LEGAL_CONSENT_ERROR } from "./FormLegalConsent";
 
 const MAX_PHOTOS = 5;
 
+const YEAR_MIN = 1981;
+const YEAR_MAX = new Date().getFullYear();
+
+function yearRangeError(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed.length !== 4) return null;
+  const y = Number.parseInt(trimmed, 10);
+  if (Number.isNaN(y) || y < YEAR_MIN || y > YEAR_MAX) {
+    return `Year must be between ${YEAR_MIN} and ${YEAR_MAX}`;
+  }
+  return null;
+}
+
+const onlyDigits = (v: string) => v.replace(/[^0-9]/g, "");
+
 const CITIES = [
   "Itahari",
   "Kathmandu",
@@ -36,7 +51,6 @@ const VEHICLE_TYPES = [
   "Crossover",
   "Pickup",
   "Van",
-  "Two-wheeler",
   "Other",
 ];
 
@@ -228,6 +242,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
   const [notes, setNotes] = useState("");
   const [agreedToLegal, setAgreedToLegal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [yearError, setYearError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
@@ -258,6 +273,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     setFeaturesPickerOpen(false);
     setNotes("");
     setAgreedToLegal(false);
+    setYearError(null);
     setSubmitError(null);
     setSubmitSuccess(null);
     if (docInputRef.current) docInputRef.current.value = "";
@@ -323,6 +339,20 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
       !fuelType
     ) {
       setSubmitError("Please fill in all required fields.");
+      return;
+    }
+
+    const trimmedYear = year.trim();
+    if (trimmedYear.length !== 4) {
+      const incompleteYearError = `Year must be between ${YEAR_MIN} and ${YEAR_MAX}`;
+      setYearError(incompleteYearError);
+      setSubmitError(incompleteYearError);
+      return;
+    }
+    const yearValidation = yearRangeError(year);
+    if (yearValidation) {
+      setYearError(yearValidation);
+      setSubmitError(yearValidation);
       return;
     }
 
@@ -474,10 +504,23 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
           className={textInputClass()}
           style={{ borderColor: BORDER }}
           placeholder="2007"
+          type="text"
           inputMode="numeric"
+          maxLength={4}
           value={year}
-          onChange={(e) => setYear(e.target.value)}
+          onChange={(e) => {
+            const cleaned = onlyDigits(e.target.value).slice(0, 4);
+            setYear(cleaned);
+            setYearError(yearRangeError(cleaned));
+          }}
+          aria-invalid={yearError ? true : undefined}
+          aria-describedby={yearError ? `${formId}-year-error` : undefined}
         />
+        {yearError ? (
+          <p id={`${formId}-year-error`} className="text-[12px] text-red-600">
+            {yearError}
+          </p>
+        ) : null}
       </div>
 
       <PillSelect

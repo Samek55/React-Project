@@ -11,7 +11,7 @@ const bottomNavItems: {
   href: string;
   icon: "exchange" | "faqs" | "sell" | "about" | "dealers";
 }[] = [
-  { key: "exchange", label: "Exchange", href: "/", icon: "exchange" },
+  { key: "exchange", label: "Exchange", href: "/exchange", icon: "exchange" },
   { key: "faqs", label: "FAQs", href: "/faqs", icon: "faqs" },
   { key: "sell", label: "Sell", href: "/sell", icon: "sell" },
   { key: "about", label: "About", href: "/about", icon: "about" },
@@ -27,7 +27,9 @@ export function BottomNav({ activeNav }: BottomNavProps) {
 
   const isActive = (key: NavKey, href: string) => {
     if (activeNav) return activeNav === key;
-    if (href === "/") return pathname === "/";
+    if (key === "exchange") {
+      return pathname === "/" || pathname.startsWith("/exchange");
+    }
     return pathname.startsWith(href);
   };
 
