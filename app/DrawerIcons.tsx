@@ -110,6 +110,26 @@ export function DrawerIconHelpCircle({ color }: { color: string }) {
   );
 }
 
+export function DrawerIconDownload({ color }: { color: string }) {
+  return (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 4v10M8.5 10.5 12 14l3.5-3.5"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5 19h14"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function DrawerIconBook({ color }: { color: string }) {
   return (
     <svg width={20} height={20} viewBox="0 0 24 24" fill="none" aria-hidden>

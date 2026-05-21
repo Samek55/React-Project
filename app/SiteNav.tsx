@@ -11,6 +11,7 @@ import {
   DrawerIconCallOutline,
   DrawerIconCarSport,
   DrawerIconClose,
+  DrawerIconDownload,
   DrawerIconHelpCircle,
   DrawerIconHome,
   DrawerIconInformationCircle,
@@ -26,7 +27,8 @@ type NavKey =
   | "testdrive"
   | "dealer"
   | "faqs"
-  | "glossary";
+  | "glossary"
+  | "download";
 
 type DrawerMode =
   | "home"
@@ -38,7 +40,8 @@ type DrawerMode =
   | "carSport"
   | "business"
   | "help"
-  | "book";
+  | "book"
+  | "download";
 
 type DrawerItemConfig = {
   label: string;
@@ -57,6 +60,12 @@ const primaryItems: DrawerItemConfig[] = [
 
 const secondaryItems: DrawerItemConfig[] = [
   { label: "About Us", href: "/about", navKey: "about", mode: "info" },
+  {
+    label: "Download App",
+    href: "/d",
+    navKey: "download",
+    mode: "download",
+  },
   {
     label: "Free Test Drive",
     href: "/test-drive",
@@ -78,6 +87,7 @@ function activeNavKeyFromPath(pathname: string): NavKey | null {
   if (pathname.startsWith("/sell")) return "sell";
   if (pathname.startsWith("/buy")) return "buy";
   if (pathname.startsWith("/about")) return "about";
+  if (pathname === "/d" || pathname.startsWith("/d/")) return "download";
   if (pathname.startsWith("/test-drive")) return "testdrive";
   if (pathname.startsWith("/become-a-dealer")) return "dealer";
   if (pathname.startsWith("/dealers")) return "dealer";
@@ -321,6 +331,8 @@ function renderDrawerIcon(mode: DrawerMode, color: string) {
       return <DrawerIconHelpCircle color={color} />;
     case "book":
       return <DrawerIconBook color={color} />;
+    case "download":
+      return <DrawerIconDownload color={color} />;
     default:
       return null;
   }
