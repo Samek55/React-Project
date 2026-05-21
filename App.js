@@ -819,20 +819,19 @@ function BranchesPage() {
 
 function AboutPage() {
   const stats = [
-    { value: "3+", label: "Dealers" },
-    { value: "500+", label: "Cars Sold" },
+    { value: "3+", label: "Branches" },
     { value: "100%", label: "Verified" },
     { value: "24/7", label: "Support" },
   ];
 
   const services = [
     {
-      icon: "swap-horizontal-outline",
+      svgIcon: "exchange",
       title: "Exchange to EV",
       desc: "Trade your petrol or diesel vehicle for a modern electric car with guided valuation and full exchange support."
     },
     {
-      icon: "cash-outline",
+      svgIcon: "carSide",
       title: "Sell Used Car",
       desc: "Get a genuine market-based valuation, professional inspection, and hassle-free ownership transfer."
     },
@@ -890,7 +889,7 @@ function AboutPage() {
       {services.map((s) => (
         <View key={s.title} style={styles.aboutServiceCard}>
           <View style={styles.aboutServiceIcon}>
-            <Ionicons name={s.icon} size={22} color="#075985" />
+            {s.svgIcon ? renderNavSvgIcon(s.svgIcon, "#075985", 22) : <Ionicons name={s.icon} size={22} color="#075985" />}
           </View>
           <View style={{ flex: 1 }}>
             <Text allowFontScaling={false} style={styles.aboutServiceTitle}>{s.title}</Text>
