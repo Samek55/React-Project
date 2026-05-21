@@ -407,26 +407,19 @@ export function BuyUsedCarsForm() {
               className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-md border bg-white py-1 shadow-sm"
               style={{ borderColor: BORDER }}
             >
-              {FEATURE_PRESETS.map((name) => {
-                const taken = features.includes(name);
-                return (
-                  <li key={name} role="option" aria-selected={taken}>
+              {FEATURE_PRESETS.filter((name) => !features.includes(name)).map(
+                (name) => (
+                  <li key={name} role="option">
                     <button
                       type="button"
-                      disabled={taken}
-                      className={
-                        taken
-                          ? "w-full cursor-default px-3 py-2 text-left text-[14px] text-zinc-400"
-                          : "w-full px-3 py-2 text-left text-[14px] text-zinc-800 hover:bg-zinc-50"
-                      }
+                      className="w-full px-3 py-2 text-left text-[14px] text-zinc-800 hover:bg-zinc-50"
                       onClick={() => addPresetFeature(name)}
                     >
                       {name}
-                      {taken ? " · added" : ""}
                     </button>
                   </li>
-                );
-              })}
+                ),
+              )}
             </ul>
           ) : null}
         </div>
