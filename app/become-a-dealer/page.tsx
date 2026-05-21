@@ -12,7 +12,6 @@ export default function BecomeADealerPage() {
   return (
     <SiteShell
       title="Become a Dealer"
-      description="Tell us about your showroom and our team will get in touch to onboard you as a NEPAL Motor partner."
       variant="form"
     >
       <div className="rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm sm:p-6">
