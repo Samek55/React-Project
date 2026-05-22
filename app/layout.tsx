@@ -17,7 +17,7 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.nepalmotor.com";
 
 /** Bump when replacing the OG file so Facebook/WhatsApp drop their old cache. */
-const ogImage = "/og/default.jpeg?v=2";
+const ogImage = "/og/default.jpeg?v=3";
 
 export const viewport: Viewport = {
   width: "device-width",
