@@ -359,24 +359,13 @@ function mapTransmission(value: string): string {
   return allowed.has(mapped) ? mapped : "Other";
 }
 
-const EV_FORM_TO_MODEL: Record<string, string> = {
-  BYD: "BYD Atto 3",
-  MG: "MG ZS EV",
-  Nissan: "Other",
-  Hyundai: "Hyundai Kona Electric",
-  Tata: "Tata Nexon EV",
-  Mahindra: "Other",
-  Tesla: "Other",
-};
-
 function evBrandCandidates(formBrand: string): string[] {
   const value = formBrand.trim();
+  if (!value) return [];
   if (value === "Other / undecided") {
-    return ["Other/undecide", "I need suggestion", "Other", value];
+    return ["I need suggestion", "Other", value];
   }
-  const candidates = [value];
-  if (EV_FORM_TO_MODEL[value]) candidates.push(EV_FORM_TO_MODEL[value]);
-  return candidates;
+  return [value];
 }
 
 function normalizeFeature(value: string): string {

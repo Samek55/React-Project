@@ -17,6 +17,10 @@ import {
 } from "./form-controls";
 import { FormLegalConsent, LEGAL_CONSENT_ERROR } from "./FormLegalConsent";
 import { emailValidationError } from "@/lib/form-validation";
+import {
+  INTERESTED_EV_BRAND_OPTIONS,
+  SELL_FORM_EV_BRAND,
+} from "@/lib/ev-brand-options";
 
 const MAX_PHOTOS = 5;
 
@@ -63,17 +67,6 @@ const COLORS = [
   "Red",
   "Blue",
   "Green",
-  "Other",
-];
-
-const EV_BRANDS = [
-  "BYD",
-  "Tesla",
-  "Nissan",
-  "Hyundai",
-  "MG",
-  "Tata",
-  "Mahindra",
   "Other",
 ];
 
@@ -371,7 +364,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
       return;
     }
 
-    const evBrandValue = isSellForm ? "Other / undecided" : evBrand;
+    const evBrandValue = isSellForm ? SELL_FORM_EV_BRAND : evBrand;
     const financeValue = isSellForm ? "No" : finance;
     const accidentsValue = isSellForm ? "No" : accidents;
 
@@ -806,7 +799,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
           id={`${formId}-ev`}
           label="Interested EV Brand"
           required
-          options={EV_BRANDS}
+          options={[...INTERESTED_EV_BRAND_OPTIONS]}
           value={evBrand}
           onChange={setEvBrand}
         />
