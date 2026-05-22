@@ -9,6 +9,8 @@ import {
 } from "react";
 import {
   BORDER,
+  FORM_FIELD_FULL_CLASS,
+  FORM_GRID_CLASS,
   PillSelect,
   ResetIcon,
   TAG_BG,
@@ -436,13 +438,11 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     }
   };
 
-  const fieldGap = "flex flex-col gap-6";
-
   return (
     <form
       id={formId}
       onSubmit={onSubmit}
-      className={fieldGap}
+      className={FORM_GRID_CLASS}
       noValidate
     >
       <div className="flex flex-col gap-1.5">
@@ -617,7 +617,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-1.5">
+      <div className={`flex flex-col gap-1.5 ${FORM_FIELD_FULL_CLASS}`}>
         <span className="text-[13px] text-black">Upload Vehicle Document</span>
         <label
           className="flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-white px-4 py-6 text-center"
@@ -653,7 +653,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
         <FilePreviewGrid files={docFiles} onRemove={removeDocFile} />
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className={`flex flex-col gap-1.5 ${FORM_FIELD_FULL_CLASS}`}>
         <span className="text-[13px] text-black">Upload Vehicle Photo</span>
         <label
           className="flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-white px-4 py-6 text-center"
@@ -727,7 +727,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
         onChange={setFuelType}
       />
 
-      <div className="flex flex-col gap-1.5">
+      <div className={`flex flex-col gap-1.5 ${FORM_FIELD_FULL_CLASS}`}>
         <span className="text-[13px] text-black">Features</span>
         <div ref={featuresPickerRef} className="relative">
           <div
@@ -816,7 +816,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
         />
       ) : null}
 
-      <div className="flex flex-col gap-1.5">
+      <div className={`flex flex-col gap-1.5 ${FORM_FIELD_FULL_CLASS}`}>
         <label htmlFor={`${formId}-notes`} className="text-[13px] text-black">
           Notes
         </label>
@@ -833,7 +833,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
       {submitError ? (
         <p
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-800"
+          className={`rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-800 ${FORM_FIELD_FULL_CLASS}`}
         >
           {submitError}
         </p>
@@ -841,7 +841,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
       {submitSuccess ? (
         <p
           role="status"
-          className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-[13px] text-green-800"
+          className={`rounded-md border border-green-200 bg-green-50 px-3 py-2 text-[13px] text-green-800 ${FORM_FIELD_FULL_CLASS}`}
         >
           {submitSuccess}
         </p>
@@ -851,9 +851,12 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
         id={formId}
         checked={agreedToLegal}
         onCheckedChange={setAgreedToLegal}
+        className={FORM_FIELD_FULL_CLASS}
       />
 
-      <div className="flex items-center justify-between pt-2">
+      <div
+        className={`flex items-center justify-between pt-2 ${FORM_FIELD_FULL_CLASS}`}
+      >
         <button
           type="button"
           onClick={clear}

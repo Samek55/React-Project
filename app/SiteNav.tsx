@@ -136,7 +136,7 @@ export function SiteNav() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-white px-[18px] pb-3 pt-[max(8px,env(safe-area-inset-top,0px))] max-[440px]:px-2.5">
-        <div className="mx-auto grid min-h-16 w-full max-w-[564px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-[7px] gap-y-0 rounded-[18px] border border-slate-200 bg-white px-[7px] py-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.18)] max-[440px]:gap-x-1 max-[440px]:px-1">
+        <div className="mx-auto grid min-h-16 w-full max-w-[564px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-[7px] gap-y-0 rounded-[18px] border border-slate-200 bg-white px-[7px] py-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.18)] max-[440px]:gap-x-1 max-[440px]:px-1 lg:max-w-6xl">
           <Link
             href="/"
             className="flex min-w-0 items-center gap-2 pr-1 transition-opacity hover:opacity-90 max-[440px]:gap-1.5 max-[440px]:pr-0"
@@ -189,7 +189,7 @@ export function SiteNav() {
             aria-label="Close menu"
             onClick={closeDrawer}
           />
-          <div className="relative z-[101] w-full max-w-[564px] md:flex md:justify-end md:px-[18px]">
+          <div className="relative z-[101] w-full max-w-[564px] md:flex md:justify-end md:px-[18px] lg:max-w-6xl">
             <div
               className="relative z-[101] mt-[max(8px,calc(env(safe-area-inset-top,0px)+4px))] flex min-h-0 h-[calc(100svh-96px-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] w-[min(340px,82vw)] flex-col overflow-hidden rounded-[20px] bg-[#f1f5f9] shadow-[0_4px_24px_rgba(0,0,0,0.28)] md:mt-6 md:h-auto md:max-h-[min(720px,85vh)] md:w-[340px] md:max-w-[340px]"
             >

@@ -76,7 +76,7 @@ export default function AboutPage() {
           </p>
         </section>
 
-        <div className="flex gap-2.5">
+        <div className="grid grid-cols-3 gap-2.5">
           {stats.map((s) => (
             <div
               key={s.label}

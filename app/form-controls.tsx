@@ -6,6 +6,10 @@ export const BORDER = "#e4e4e7";
 export const TAG_BG = "#f4f4f5";
 export const TAG_TEXT = "#3f3f46";
 
+/** Responsive grid: 1 column mobile, 2 columns desktop. Pair fields; use nm-form-full for wide rows. */
+export const FORM_GRID_CLASS = "nm-form-grid";
+export const FORM_FIELD_FULL_CLASS = "nm-form-full";
+
 function ChevronDown({ className }: { className?: string }) {
   return (
     <svg

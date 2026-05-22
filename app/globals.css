@@ -29,3 +29,22 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Two-column form layout on desktop; mobile stays single column */
+.nm-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .nm-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2rem;
+    row-gap: 1.5rem;
+  }
+
+  .nm-form-grid > .nm-form-full {
+    grid-column: 1 / -1;
+  }
+}

@@ -4,6 +4,9 @@ import { SiteNav } from "./SiteNav";
 
 export const CALL_URL = "https://b.broadpress.org/nepalmotorcall";
 
+/** Mobile app width on small screens; full desktop width from lg up */
+export const SITE_MAX_WIDTH_CLASS = "max-w-[564px] lg:max-w-6xl";
+
 export type NavKey = "exchange" | "faqs" | "sell" | "about" | "dealers";
 
 type SiteShellProps = {
@@ -26,13 +29,11 @@ export function SiteShell({
   children,
 }: SiteShellProps) {
   const contentWidth =
-    variant === "form"
-      ? "max-w-xl"
-      : variant === "dealers"
-        ? "max-w-[564px]"
-        : variant === "wide"
-          ? "max-w-6xl"
-          : "max-w-3xl lg:max-w-4xl";
+    variant === "wide"
+      ? "max-w-6xl"
+      : variant === "default"
+        ? "max-w-3xl lg:max-w-4xl"
+        : SITE_MAX_WIDTH_CLASS;
 
   const contentPadding =
     variant === "dealers"

@@ -9,6 +9,7 @@ type FormLegalConsentProps = {
   id: string;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
+  className?: string;
 };
 
 const linkClass =
@@ -18,11 +19,12 @@ export function FormLegalConsent({
   id,
   checked,
   onCheckedChange,
+  className = "",
 }: FormLegalConsentProps) {
   const checkboxId = `${id}-legal-consent`;
 
   return (
-    <div className="flex items-start gap-2.5">
+    <div className={`flex items-start gap-2.5 ${className}`.trim()}>
       <input
         id={checkboxId}
         type="checkbox"

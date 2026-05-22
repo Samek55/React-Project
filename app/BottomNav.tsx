@@ -38,7 +38,7 @@ export function BottomNav({ activeNav }: BottomNavProps) {
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom,0px)]"
       aria-hidden={false}
     >
-      <div className="mx-auto flex w-full max-w-[564px] justify-center px-[10px] pt-1.5 pb-2 max-[400px]:px-1.5 sm:px-3">
+      <div className="mx-auto flex w-full max-w-[564px] justify-center px-[10px] pt-1.5 pb-2 max-[400px]:px-1.5 sm:px-3 lg:max-w-6xl">
         <nav
           className="flex w-full min-h-16 items-stretch justify-between rounded-[18px] border border-slate-200 bg-white px-1.5 py-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.18)]"
           aria-label="Bottom navigation"
