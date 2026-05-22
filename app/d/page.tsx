@@ -8,7 +8,8 @@ export const metadata: Metadata = {
     "Buy, sell, and exchange used cars across Nepal with the NEPAL Motor app.",
 };
 
-const PLAY_STORE_URL = "#";
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.pracas.nepalmotor&pcampaignid=web_share";
 const APP_STORE_URL = "#";
 
 const storeButtonClass =
