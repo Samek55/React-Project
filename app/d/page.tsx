@@ -12,56 +12,43 @@ const PLAY_STORE_URL = "#";
 const APP_STORE_URL = "#";
 
 const storeButtonClass =
-  "flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-white/95 shadow-[0_8px_24px_rgba(7,89,133,0.18)] ring-1 ring-sky-100/80 backdrop-blur-sm transition-[transform,box-shadow] hover:scale-[1.04] hover:shadow-[0_12px_28px_rgba(7,89,133,0.22)] active:scale-[0.98]";
+  "flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-white shadow-[0_4px_14px_rgba(15,23,42,0.1)] ring-1 ring-slate-200/90 transition-[transform,box-shadow] hover:scale-[1.04] hover:shadow-[0_8px_20px_rgba(15,23,42,0.12)] active:scale-[0.98]";
 
 export default function DownloadAppPage() {
   return (
     <SiteShell title="Download App" compact>
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-1 pb-1">
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-sky-50/90 via-white to-sky-50/40"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute top-[12%] left-1/2 h-56 w-[min(100%,280px)] -translate-x-1/2 rounded-full bg-sky-200/35 blur-3xl"
-          aria-hidden
-        />
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 bg-white px-2 pb-2">
+        <div className="relative w-full max-w-[min(96vw,420px)] flex-1 min-h-0 max-h-[min(72dvh,620px)]">
+          <Image
+            src="/app-download/phone-preview.png?v=3"
+            alt=""
+            fill
+            priority
+            unoptimized
+            sizes="(max-width: 640px) 96vw, 420px"
+            className="object-contain object-center"
+          />
+        </div>
 
-        <div className="relative z-10 flex min-h-0 w-full max-w-[min(88vw,300px)] flex-1 flex-col items-center justify-center gap-5 py-2">
-          <div className="relative w-full flex-1 min-h-0 max-h-[min(62dvh,520px)]">
-            <div className="absolute inset-2 rounded-[28px] bg-slate-900/[0.06] blur-md" />
-            <div className="relative h-full overflow-hidden rounded-[26px] shadow-[0_20px_48px_-16px_rgba(7,89,133,0.4)] ring-1 ring-sky-200/80">
-              <Image
-                src="/app-download/phone-preview.png"
-                alt=""
-                fill
-                priority
-                sizes="(max-width: 640px) 88vw, 300px"
-                className="object-contain object-top"
-              />
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center justify-center gap-3 pb-1">
-            <a
-              href={PLAY_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Get it on Google Play"
-              className={storeButtonClass}
-            >
-              <PlayStoreIcon className="h-7 w-7" />
-            </a>
-            <a
-              href={APP_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Download on the App Store"
-              className={storeButtonClass}
-            >
-              <AppStoreIcon className="h-7 w-7 text-slate-900" />
-            </a>
-          </div>
+        <div className="flex shrink-0 items-center justify-center gap-3 pb-1">
+          <a
+            href={PLAY_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Get it on Google Play"
+            className={storeButtonClass}
+          >
+            <PlayStoreIcon className="h-7 w-7" />
+          </a>
+          <a
+            href={APP_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Download on the App Store"
+            className={storeButtonClass}
+          >
+            <AppStoreIcon className="h-7 w-7 text-slate-900" />
+          </a>
         </div>
       </div>
     </SiteShell>
