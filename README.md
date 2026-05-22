@@ -9,8 +9,8 @@ The project supports Expo web previews during development and includes a native 
 - **App name:** `NEPAL Motor`
 - **Android package:** `com.pracas.nepalmotor`
 - **Expo version:** `1.0.0`
-- **Android version:** `1.0.37`
-- **Android version code:** `37`
+- **Android version:** `1.0.45`
+- **Android version code:** `45`
 - **Primary platform:** Android
 - **Development preview:** Expo web
 

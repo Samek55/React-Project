@@ -94,11 +94,12 @@ const alphabetOnly = (value) => value.replace(/[^A-Za-z ]/g, "");
 const alphabetPattern = /^[A-Za-z ]+$/;
 const navigationItems = [
   { key: "exchange", label: "Exchange", drawerLabel: "Exchange to EV", icon: "swap-horizontal-outline", svgIcon: "exchange" },
-  { key: "faqs", label: "FAQs", drawerLabel: "FAQs", icon: "help-circle-outline", svgIcon: "graphql" },
+  { key: "buy", label: "Buy Car", drawerLabel: "Buy Used Car", icon: "key-outline" },
   { key: "sell", label: "Sell", drawerLabel: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide" },
-  { key: "about", label: "About", drawerLabel: "About NEPAL Motor", icon: "information-circle-outline", svgIcon: "steering" },
+  { key: "testdrive", label: "Test Drive", drawerLabel: "Free Test Drive", icon: "car-sport-outline" },
   { key: "branches", label: "Dealers", drawerLabel: "Dealers", icon: "location-outline", svgIcon: "locationPin" },
-  { key: "buy", label: "Buy", drawerLabel: "Buy Used Car", icon: "key-outline", footer: false },
+  { key: "faqs", label: "FAQs", drawerLabel: "FAQs", icon: "help-circle-outline", svgIcon: "graphql", footer: false },
+  { key: "about", label: "About", drawerLabel: "About NEPAL Motor", icon: "information-circle-outline", svgIcon: "steering", footer: false },
 ];
 const footerNavItems = navigationItems.filter((item) => item.footer !== false);
 const onboardingStorageKey = "nepalMotorOnboardingComplete";
@@ -648,8 +649,8 @@ function FooterNavigation({ activeTab, onChange }) {
   };
 
   return (
-    <View style={[styles.footerNavShell, { bottom: Math.max(insets.bottom, 8) }]}>
-      <View style={styles.footerNav}>
+    <View style={styles.footerNavShell}>
+      <View style={[styles.footerNav, { paddingBottom: Math.max(insets.bottom, 6) }]}>
         {footerNavItems.map((item) => {
           const active = activeTab === item.key;
           const iconColor = active ? "#075985" : "#64748b";
@@ -2018,17 +2019,17 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight 
   const primaryItems = [
     { label: "Home", icon: "home-outline", navKey: "exchange" },
     { label: "Exchange to EV", icon: "swap-horizontal-outline", svgIcon: "exchange", navKey: "exchange" },
-    { label: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide", navKey: "sell" },
     { label: "Buy Used Car", icon: "key-outline", navKey: "buy" },
-    { label: "Contact", icon: "call-outline", action: callSupport },
+    { label: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide", navKey: "sell" },
+    { label: "Free Test Drive", icon: "car-sport-outline", navKey: "testdrive" },
   ];
 
   const secondaryItems = [
     { label: "About Us", icon: "information-circle-outline", navKey: "about" },
-    { label: "Free Test Drive", icon: "car-sport-outline", navKey: "testdrive" },
     { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
     { label: "FAQs", icon: "help-circle-outline", navKey: "faqs" },
     { label: "Glossary", icon: "book-outline", navKey: "glossary" },
+    { label: "Contact", icon: "call-outline", action: callSupport },
   ];
 
   const handlePress = (item) => {
@@ -3343,19 +3344,17 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 18,
     alignItems: "center",
     zIndex: 10
   },
   navCard: {
     width: "100%",
-    maxWidth: 564,
     minHeight: 64,
     paddingHorizontal: 7,
     paddingVertical: 6,
     borderWidth: 1,
     borderColor: "#e2e8f0",
-    borderRadius: 18,
+    borderRadius: 0,
     backgroundColor: "#ffffff",
     flexDirection: "row",
     alignItems: "center",
@@ -4292,20 +4291,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 8,
-    paddingHorizontal: 18,
+    bottom: 0,
     alignItems: "center"
   },
   footerNav: {
     width: "100%",
-    maxWidth: 564,
     minHeight: 64,
     paddingHorizontal: 7,
     paddingTop: 6,
     paddingBottom: 6,
     borderWidth: 1,
     borderColor: "#e2e8f0",
-    borderRadius: 18,
+    borderRadius: 0,
     backgroundColor: "#ffffff",
     flexDirection: "row",
     justifyContent: "space-between",
