@@ -13,6 +13,8 @@ export type Branch = {
   location: string;
   contact: string;
   phone: string;
+  /** Airtable record id when loaded from the Dealers table */
+  id?: string;
 };
 
 export const faqSections: FaqSection[] = [
@@ -128,6 +130,17 @@ export const faqSections: FaqSection[] = [
     ],
   },
 ];
+
+/** Cities listed on the dealers page filter (includes branches and future locations). */
+export const dealerFilterCities = [
+  "Itahari",
+  "Kathmandu",
+  "Pokhara",
+  "Lalitpur",
+  "Bharatpur",
+  "Biratnagar",
+  "Other",
+] as const;
 
 export const branches: Branch[] = [
   {

@@ -2,17 +2,11 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Branch } from "@/lib/site-content";
+import { dealerFilterCities } from "@/lib/site-content";
 
-function dealerCities(branches: Branch[]): string[] {
-  const cities = [...new Set(branches.map((b) => b.location))];
-  cities.sort((a, b) => a.localeCompare(b));
-  const ktm = cities.indexOf("Kathmandu");
-  if (ktm > 0) {
-    cities.splice(ktm, 1);
-    cities.unshift("Kathmandu");
-  }
-  return cities;
-}
+const ALL_CITIES = "All";
+
+const cityOptions = [ALL_CITIES, ...dealerFilterCities];
 
 function ChevronDown({ className }: { className?: string }) {
   return (
@@ -82,15 +76,14 @@ type DealersClientProps = {
 
 export function DealersClient({ branches }: DealersClientProps) {
   const filterId = useId();
-  const cities = useMemo(() => dealerCities(branches), [branches]);
-  const [city, setCity] = useState(() => cities[0] ?? "");
+  const [city, setCity] = useState("Kathmandu");
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const filtered = useMemo(
-    () => branches.filter((b) => b.location === city),
-    [branches, city],
-  );
+  const filtered = useMemo(() => {
+    if (city === ALL_CITIES) return branches;
+    return branches.filter((b) => b.location === city);
+  }, [branches, city]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -127,7 +120,7 @@ export function DealersClient({ branches }: DealersClientProps) {
               aria-label="City"
               className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
             >
-              {cities.map((opt) => (
+              {cityOptions.map((opt) => (
                 <li key={opt} role="option" aria-selected={city === opt}>
                   <button
                     type="button"
@@ -154,7 +147,7 @@ export function DealersClient({ branches }: DealersClientProps) {
         ) : (
           filtered.map((branch) => (
             <article
-              key={branch.phone}
+              key={branch.id ?? branch.phone}
               className="flex gap-3.5 rounded-xl border border-slate-200 bg-white p-4"
             >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-sky-50">

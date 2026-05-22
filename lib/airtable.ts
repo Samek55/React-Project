@@ -674,6 +674,47 @@ export async function createRecordInTable(
   return id;
 }
 
+export type AirtableRecordRow = {
+  id: string;
+  fields: Record<string, unknown>;
+};
+
+/** List all records in a table (paginated). Requires data.records:read. */
+export async function listRecordsInTable(
+  tableNameOrId: string,
+  options?: { filterByFormula?: string },
+): Promise<AirtableRecordRow[]> {
+  const rows: AirtableRecordRow[] = [];
+  let offset: string | undefined;
+
+  do {
+    const url = new URL(
+      `${AIRTABLE_API}/${baseId()}/${encodeURIComponent(tableNameOrId)}`,
+    );
+    url.searchParams.set("pageSize", "100");
+    if (options?.filterByFormula) {
+      url.searchParams.set("filterByFormula", options.filterByFormula);
+    }
+    if (offset) url.searchParams.set("offset", offset);
+
+    const res = await fetch(url.toString(), { headers: authHeaders() });
+    const data = (await res.json()) as {
+      records?: AirtableRecordRow[];
+      offset?: string;
+      error?: { message: string };
+    };
+
+    if (!res.ok) {
+      throw new Error(data.error?.message ?? `Airtable error (${res.status})`);
+    }
+
+    rows.push(...(data.records ?? []));
+    offset = data.offset;
+  } while (offset);
+
+  return rows;
+}
+
 /**
  * Upload a file directly to an Airtable attachment field (base64 body).
  * Prefer field id when available; falls back to the field display name.

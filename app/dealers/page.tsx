@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SiteShell } from "../SiteShell";
-import { branches } from "@/lib/site-content";
+import { fetchActiveDealers } from "@/lib/fetch-dealers";
 import { DealersClient } from "./DealersClient";
 
 export const metadata: Metadata = {
@@ -9,7 +9,11 @@ export const metadata: Metadata = {
     "Find NEPAL Motor dealer locations and contacts across Nepal.",
 };
 
-export default function DealersPage() {
+export const revalidate = 60;
+
+export default async function DealersPage() {
+  const branches = await fetchActiveDealers();
+
   return (
     <SiteShell title="Dealers" activeNav="dealers" variant="dealers">
       <DealersClient branches={branches} />
