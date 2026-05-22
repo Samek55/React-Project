@@ -24,6 +24,7 @@ import {
   readSubmissionFormData,
   reconcileFinanceAndNotes,
 } from "@/lib/form-payload-parse";
+import { emailValidationError } from "@/lib/form-validation";
 
 function validationError(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
@@ -69,7 +70,7 @@ export async function parseListingPayload(
 
   return {
     fullName,
-    email: String(form.get("email") ?? ""),
+    email: String(form.get("email") ?? "").trim(),
     phone,
     city,
     year,
@@ -111,6 +112,9 @@ export async function handleVehicleListingSubmission(
   if (!payload) {
     return validationError("Please fill in all required fields.");
   }
+
+  const emailErr = emailValidationError(payload.email);
+  if (emailErr) return validationError(emailErr);
 
   const { documents: docFiles, photos: photoFiles } =
     await parseAttachmentsFromForm(form);

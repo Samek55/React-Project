@@ -9,6 +9,7 @@ import {
   getAirtableEnv,
 } from "@/lib/airtable-env";
 import { publishFilesForAirtable } from "@/lib/attachment-staging";
+import { emailValidationError } from "@/lib/form-validation";
 
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -506,6 +507,9 @@ export async function handleBecomeADealerSubmission(
   if (!/^\d{10}$/.test(phone)) {
     return validationError("Enter a valid 10-digit phone number.");
   }
+
+  const emailErr = emailValidationError(email);
+  if (emailErr) return validationError(emailErr);
 
   if (photos.length > 5) {
     return validationError("You can upload at most 5 photos.");

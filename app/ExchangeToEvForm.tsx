@@ -16,6 +16,7 @@ import {
   textInputClass,
 } from "./form-controls";
 import { FormLegalConsent, LEGAL_CONSENT_ERROR } from "./FormLegalConsent";
+import { emailValidationError } from "@/lib/form-validation";
 
 const MAX_PHOTOS = 5;
 
@@ -243,6 +244,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
   const [agreedToLegal, setAgreedToLegal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [yearError, setYearError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
@@ -274,6 +276,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     setNotes("");
     setAgreedToLegal(false);
     setYearError(null);
+    setEmailError(null);
     setSubmitError(null);
     setSubmitSuccess(null);
     if (docInputRef.current) docInputRef.current.value = "";
@@ -353,6 +356,13 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     if (yearValidation) {
       setYearError(yearValidation);
       setSubmitError(yearValidation);
+      return;
+    }
+
+    const emailErr = emailValidationError(email);
+    if (emailErr) {
+      setEmailError(emailErr);
+      setSubmitError(emailErr);
       return;
     }
 
@@ -466,9 +476,20 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
           className={textInputClass()}
           style={{ borderColor: BORDER }}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setEmail(v);
+            setEmailError(emailValidationError(v));
+          }}
           autoComplete="email"
+          aria-invalid={emailError ? true : undefined}
+          aria-describedby={emailError ? `${formId}-email-error` : undefined}
         />
+        {emailError ? (
+          <p id={`${formId}-email-error`} className="text-[12px] text-red-600">
+            {emailError}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-1.5">

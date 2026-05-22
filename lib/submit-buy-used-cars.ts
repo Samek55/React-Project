@@ -7,6 +7,7 @@ import {
   formatAirtableEnvError,
   getAirtableEnv,
 } from "@/lib/airtable-env";
+import { emailValidationError } from "@/lib/form-validation";
 
 /**
  * Buy used car submissions land in the same Airtable base as the rest of the site
@@ -245,6 +246,9 @@ export async function handleBuyUsedCarsSubmission(
   if (!/^\d{10}$/.test(phone)) {
     return validationError("Enter a valid 10-digit phone number.");
   }
+
+  const emailErr = emailValidationError(email);
+  if (emailErr) return validationError(emailErr);
 
   if (!/^[A-Za-z ]+$/.test(vehicleModel)) {
     return validationError("Vehicle Model can only contain alphabets.");

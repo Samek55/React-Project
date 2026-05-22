@@ -7,6 +7,7 @@ import {
   formatAirtableEnvError,
   getAirtableEnv,
 } from "@/lib/airtable-env";
+import { emailValidationError } from "@/lib/form-validation";
 
 /**
  * Test drive rows use **AIRTABLE_BASE_ID** (the `app…` in the base URL).
@@ -243,6 +244,9 @@ export async function handleTestDriveSubmission(
   if (!/^\d{10}$/.test(phone)) {
     return validationError("Enter a valid 10-digit phone number.");
   }
+
+  const emailErr = emailValidationError(email);
+  if (emailErr) return validationError(emailErr);
 
   if (!/^[A-Za-z ]+$/.test(vehicleModel)) {
     return validationError("Vehicle Model can only contain alphabets.");

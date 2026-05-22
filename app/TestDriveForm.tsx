@@ -16,6 +16,7 @@ import {
   textInputClass,
 } from "./form-controls";
 import { FormLegalConsent, LEGAL_CONSENT_ERROR } from "./FormLegalConsent";
+import { emailValidationError } from "@/lib/form-validation";
 
 const CITIES = [
   "Itahari",
@@ -108,6 +109,7 @@ export function TestDriveForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const featuresPickerRef = useRef<HTMLDivElement>(null);
 
@@ -130,6 +132,7 @@ export function TestDriveForm() {
     setSubmitError(null);
     setSubmitSuccess(null);
     setModelError(null);
+    setEmailError(null);
   }, []);
 
   useEffect(() => {
@@ -168,6 +171,13 @@ export function TestDriveForm() {
     if (!ALPHABET_ONLY.test(vehicleModel.trim())) {
       setModelError("Vehicle Model can only contain alphabets");
       setSubmitError("Vehicle Model can only contain alphabets.");
+      return;
+    }
+
+    const emailErr = emailValidationError(email);
+    if (emailErr) {
+      setEmailError(emailErr);
+      setSubmitError(emailErr);
       return;
     }
 
@@ -245,9 +255,20 @@ export function TestDriveForm() {
           className={textInputClass()}
           style={{ borderColor: BORDER }}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setEmail(v);
+            setEmailError(emailValidationError(v));
+          }}
           autoComplete="email"
+          aria-invalid={emailError ? true : undefined}
+          aria-describedby={emailError ? `${formId}-email-error` : undefined}
         />
+        {emailError ? (
+          <p id={`${formId}-email-error`} className="text-[12px] text-red-600">
+            {emailError}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-1.5">
