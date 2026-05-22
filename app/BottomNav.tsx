@@ -11,7 +11,7 @@ const bottomNavItems: {
   href: string;
   icon: "exchange" | "faqs" | "sell" | "about" | "dealers";
 }[] = [
-  { key: "exchange", label: "Exchange", href: "/exchange", icon: "exchange" },
+  { key: "exchange", label: "Exchange", href: "/", icon: "exchange" },
   { key: "faqs", label: "FAQs", href: "/faqs", icon: "faqs" },
   { key: "sell", label: "Sell", href: "/sell", icon: "sell" },
   { key: "about", label: "About", href: "/about", icon: "about" },
