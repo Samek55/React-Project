@@ -97,7 +97,7 @@ const navigationItems = [
   { key: "buy", label: "Buy", drawerLabel: "Buy Used Car", icon: "key-outline" },
   { key: "sell", label: "Sell", drawerLabel: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide" },
   { key: "testdrive", label: "Test Drive", drawerLabel: "Free Test Drive", icon: "car-sport-outline" },
-  { key: "branches", label: "Dealers", drawerLabel: "Dealers", icon: "location-outline", svgIcon: "locationPin" },
+  { key: "branches", label: "Dealers", drawerLabel: "Dealers", icon: "business-outline" },
   { key: "faqs", label: "FAQs", drawerLabel: "FAQs", icon: "help-circle-outline", svgIcon: "graphql", footer: false },
   { key: "about", label: "About", drawerLabel: "About NEPAL Motor", icon: "information-circle-outline", svgIcon: "steering", footer: false },
 ];
@@ -231,26 +231,6 @@ const faqSectionData = [
 const faqSections = [
   { title: "All FAQs", items: faqSectionData.flatMap((s) => s.items) },
   ...faqSectionData
-];
-const branches = [
-  {
-    name: "Dongol Automobiles",
-    location: "Itahari",
-    contact: "Suman Dongol",
-    phone: "9852024365"
-  },
-  {
-    name: "Auto Palace",
-    location: "Biratnagar",
-    contact: "Raju Khatri",
-    phone: "9852031716"
-  },
-  {
-    name: "Santosh DYB",
-    location: "Kathmandu",
-    contact: "Kafindra Bhattarai",
-    phone: "9852041927"
-  }
 ];
 
 const emptyForm = {
@@ -775,101 +755,6 @@ function FAQsPage() {
   );
 }
 
-function BranchesPage() {
-  const [selectedCity, setSelectedCity] = React.useState("All");
-  const [dropdownOpen, setDropdownOpen] = React.useState(false);
-  const [airtableDealers, setAirtableDealers] = React.useState([]);
-
-  React.useEffect(() => {
-    if (!AIRTABLE_TOKEN) return undefined;
-
-    const fetchDealers = async () => {
-      try {
-        const formula = encodeURIComponent('{Status}="Yes"');
-        const res = await fetch(
-          `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${formula}`,
-          { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } }
-        );
-        const data = await res.json();
-        if (data.records) {
-          setAirtableDealers(data.records.map((r) => ({
-            id: r.id,
-            name: r.fields["Company Name"] || "",
-            location: r.fields["City"] || "",
-            contact: r.fields["Full Name"] || "",
-            phone: String(r.fields["Phone"] || "")
-          })));
-        }
-      } catch {}
-    };
-    fetchDealers();
-    const interval = setInterval(fetchDealers, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const allDealers = [...branches, ...airtableDealers];
-  const cities = ["All", ...Array.from(new Set(allDealers.map((b) => b.location).filter(Boolean)))];
-  const filtered = selectedCity === "All" ? allDealers : allDealers.filter((b) => b.location === selectedCity);
-
-  return (
-    <View>
-      <Text style={styles.title}>Dealers</Text>
-
-      <View style={styles.cityDropdownWrap}>
-        <Text style={styles.cityDropdownLabel}>Filter by City</Text>
-        <Pressable
-          style={styles.cityDropdownBtn}
-          onPress={() => setDropdownOpen((o) => !o)}
-        >
-          <Text style={styles.cityDropdownBtnText}>{selectedCity}</Text>
-          <Ionicons name={dropdownOpen ? "chevron-up-outline" : "chevron-down-outline"} size={18} color="#075985" />
-        </Pressable>
-        {dropdownOpen && (
-          <View style={styles.cityDropdownList}>
-            {cities.map((city) => (
-              <Pressable
-                key={city}
-                style={[styles.cityDropdownOption, selectedCity === city && styles.cityDropdownOptionActive]}
-                onPress={() => { setSelectedCity(city); setDropdownOpen(false); }}
-              >
-                <Text style={[styles.cityDropdownOptionText, selectedCity === city && styles.cityDropdownOptionTextActive]}>
-                  {city}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
-
-      <View style={styles.branchList}>
-        {filtered.map((branch) => (
-          <View key={branch.id || branch.phone} style={styles.branchCard}>
-            <View style={styles.branchIcon}>
-              <Ionicons name="location-outline" size={24} color="#075985" />
-            </View>
-            <View style={styles.branchContent}>
-              <Text style={styles.branchName}>{branch.name}</Text>
-              <Text style={styles.branchLocation}>{branch.location}</Text>
-              <Text style={styles.branchContact}>{branch.contact}</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Call ${branch.contact}`}
-                onPress={() => Linking.openURL(`tel:${branch.phone}`)}
-                style={({ hovered }) => [styles.branchPhone, hovered && styles.branchPhoneHover]}
-              >
-                <Ionicons name="call-outline" size={16} color="#075985" />
-                <Text style={styles.branchPhoneText}>{branch.phone}</Text>
-              </Pressable>
-            </View>
-          </View>
-        ))}
-        {filtered.length === 0 && (
-          <Text style={styles.cityDropdownEmpty}>No dealers found in {selectedCity}.</Text>
-        )}
-      </View>
-    </View>
-  );
-}
 
 function AboutPage() {
   const stats = [
@@ -2555,7 +2440,7 @@ export default function App() {
         {activeFooterTab === "faqs" ? (
           <FAQsPage />
         ) : activeFooterTab === "branches" ? (
-          <BranchesPage />
+          <DealerPage onNavigate={changeFooterTab} />
         ) : activeFooterTab === "about" ? (
           <AboutPage />
         ) : activeFooterTab === "dealer" ? (
@@ -3930,138 +3815,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#e0f2fe"
   },
-  branchList: {
-    gap: 12
-  },
-  branchCard: {
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
-    padding: 14,
-    flexDirection: "row",
-    gap: 12,
-    shadowColor: "#000000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1
-  },
-  branchIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 8,
-    backgroundColor: "#e5f3ff",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  branchContent: {
-    flex: 1,
-    minWidth: 0
-  },
-  branchName: {
-    color: "#020617",
-    fontSize: 17,
-    fontWeight: "800",
-    marginBottom: 3
-  },
-  branchLocation: {
-    color: "#075985",
-    fontSize: 14,
-    fontWeight: "700",
-    marginBottom: 8
-  },
-  branchContact: {
-    color: "#334155",
-    fontSize: 14,
-    marginBottom: 10
-  },
-  branchPhone: {
-    alignSelf: "flex-start",
-    minHeight: 34,
-    borderRadius: 6,
-    backgroundColor: "#e5f3ff",
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6
-  },
-  branchPhoneHover: {
-    backgroundColor: "#dbeafe"
-  },
-  branchPhoneText: {
-    color: "#075985",
-    fontSize: 14,
-    fontWeight: "800"
-  },
-  cityDropdownWrap: {
-    marginBottom: 16,
-    zIndex: 10
-  },
-  cityDropdownLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#64748b",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 0.5
-  },
-  cityDropdownBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    backgroundColor: "#ffffff"
-  },
-  cityDropdownBtnText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#0f172a"
-  },
-  cityDropdownList: {
-    position: "absolute",
-    top: 72,
-    left: 0,
-    right: 0,
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#cbd5e1",
-    borderRadius: 10,
-    overflow: "hidden",
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 }
-  },
-  cityDropdownOption: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9"
-  },
-  cityDropdownOptionActive: {
-    backgroundColor: "#e5f3ff"
-  },
-  cityDropdownOptionText: {
-    fontSize: 15,
-    color: "#334155",
-    fontWeight: "500"
-  },
-  cityDropdownOptionTextActive: {
-    color: "#075985",
-    fontWeight: "700"
-  },
-  cityDropdownEmpty: {
-    textAlign: "center",
-    color: "#94a3b8",
-    fontSize: 15,
-    paddingVertical: 24
-  },
+
   aboutPage: {
     marginTop: -16,
     paddingBottom: 16
