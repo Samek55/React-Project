@@ -2022,10 +2022,10 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight 
     { label: "Buy Used Car", icon: "key-outline", navKey: "buy" },
     { label: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide", navKey: "sell" },
     { label: "Free Test Drive", icon: "car-sport-outline", navKey: "testdrive" },
+    { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
   ];
 
   const secondaryItems = [
-    { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
     { label: "About Us", icon: "information-circle-outline", navKey: "about" },
     { label: "FAQs", icon: "help-circle-outline", navKey: "faqs" },
     { label: "Glossary", icon: "book-outline", navKey: "glossary" },
@@ -2069,7 +2069,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight 
         <View style={styles.drawerDivider} />
 
         <View style={styles.drawerBody}>
-          <View style={[styles.drawerSection, { flex: 1, justifyContent: "space-evenly" }]}>
+          <View style={[styles.drawerSection, { flex: 6, justifyContent: "space-evenly" }]}>
             {primaryItems.map((item, i) => {
               const active = item.navKey && activeTab === item.navKey && item.label !== "Home";
               return (
@@ -2099,7 +2099,7 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight 
 
           <View style={styles.drawerSectionDivider} />
 
-          <View style={[styles.drawerSection, { flex: 1, justifyContent: "space-evenly" }]}>
+          <View style={[styles.drawerSection, { flex: 4, justifyContent: "space-evenly" }]}>
             {secondaryItems.map((item, i) => {
               const active = item.navKey && activeTab === item.navKey;
               return (
@@ -3185,21 +3185,20 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#d1d5db",
     marginHorizontal: 14,
-    marginTop: 4,
-    marginBottom: 4
+    marginVertical: 2
   },
   drawerBody: {
     flex: 1,
-    flexDirection: "column"
+    flexDirection: "column",
+    paddingVertical: 2
   },
   drawerSection: {
-    paddingHorizontal: 8,
-    paddingVertical: 0
+    paddingHorizontal: 8
   },
   drawerItem: {
     borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 4,
     flexDirection: "row",
     alignItems: "center",
     gap: 12
