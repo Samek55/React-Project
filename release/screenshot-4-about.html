@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Screenshot 4 – About NEPAL Motor</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background: linear-gradient(160deg, #0a3554 0%, #075985 45%, #0369a1 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow:hidden; position:relative;
+  }
+  body::before { content:''; position:absolute; top:-100px; left:-100px; width:600px; height:600px; border-radius:50%; background:rgba(255,255,255,0.04); }
+
+  .wrap { display:flex; flex-direction:column; align-items:center; gap:48px; z-index:1; }
+  .tagline { color:white; text-align:center; }
+  .tagline h2 { font-size:52px; font-weight:900; letter-spacing:-1px; }
+  .tagline p { font-size:28px; opacity:0.75; margin-top:12px; font-weight:500; }
+
+  .phone { width:560px; background:#111318; border-radius:80px; padding:18px; box-shadow:0 0 0 3px #2b2d31,0 0 0 7px #111318,0 80px 160px rgba(0,0,0,0.6); position:relative; }
+  .dynamic-island { position:absolute; top:18px; left:50%; transform:translateX(-50%); width:160px; height:44px; background:#111318; border-radius:30px; z-index:10; }
+  .screen { background:#f8fafc; border-radius:66px; overflow:hidden; height:1120px; display:flex; flex-direction:column; }
+
+  .status { height:70px; background:white; display:flex; align-items:flex-end; justify-content:space-between; padding:0 32px 10px; flex-shrink:0; }
+  .status-time { font-size:16px; font-weight:800; color:#0f172a; }
+  .status-bar-rect { width:32px; height:16px; border:2px solid #0f172a; border-radius:3px; position:relative; }
+  .status-bar-rect::after { content:''; position:absolute; right:-5px; top:50%; transform:translateY(-50%); width:3px; height:8px; background:#0f172a; border-radius:0 2px 2px 0; }
+  .status-bar-fill { width:70%; height:100%; background:#0f172a; border-radius:1px; }
+
+  .nav { background:white; padding:0 20px 14px; flex-shrink:0; }
+  .nav-card { background:white; border:1px solid #e2e8f0; border-radius:20px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .logo { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#075985,#0ea5e9); display:flex; align-items:center; justify-content:center; color:white; font-weight:900; font-size:14px; }
+  .brand-text .name { font-size:17px; font-weight:900; color:#075985; }
+  .brand-text .sub { font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.5px; }
+  .hicons { display:flex; gap:8px; }
+  .hicon { width:44px; height:44px; border-radius:13px; background:#f1f5f9; }
+
+  .body { flex:1; padding:20px; display:flex; flex-direction:column; gap:14px; overflow:hidden; }
+  .page-title { font-size:28px; font-weight:900; color:#020617; }
+
+  .hero-banner {
+    background: linear-gradient(135deg,#075985,#0ea5e9);
+    border-radius:16px; padding:20px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .hero-title { font-size:20px; font-weight:900; color:white; }
+  .hero-sub { font-size:13px; color:rgba(255,255,255,0.8); font-weight:500; }
+
+  .stats-row { display:flex; gap:10px; }
+  .stat { flex:1; background:white; border:1px solid #e2e8f0; border-radius:14px; padding:12px; text-align:center; }
+  .stat-val { font-size:22px; font-weight:900; color:#075985; }
+  .stat-label { font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
+
+  .service-card { background:white; border:1px solid #e2e8f0; border-radius:14px; padding:12px 14px; display:flex; gap:12px; align-items:center; }
+  .s-icon { width:40px; height:40px; border-radius:12px; background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .s-title { font-size:15px; font-weight:800; color:#0f172a; }
+  .s-desc { font-size:12px; color:#64748b; margin-top:2px; }
+
+  .footer { background:white; border-top:1px solid #f1f5f9; padding:10px 10px 16px; display:flex; justify-content:space-around; flex-shrink:0; }
+  .fi { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .fi-dot { width:28px; height:28px; border-radius:8px; background:#f1f5f9; }
+  .fi-dot.active { background:#075985; }
+  .fi-label { font-size:10px; font-weight:700; color:#94a3b8; }
+  .fi-label.active { color:#075985; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tagline">
+    <h2>About NEPAL Motor</h2>
+    <p>Nepal's trusted vehicle platform</p>
+  </div>
+
+  <div class="phone">
+    <div class="dynamic-island"></div>
+    <div class="screen">
+      <div class="status">
+        <span class="status-time">9:41</span>
+        <div class="status-bar-rect"><div class="status-bar-fill"></div></div>
+      </div>
+      <div class="nav">
+        <div class="nav-card">
+          <div class="brand">
+            <div class="logo">NM</div>
+            <div class="brand-text">
+              <div class="name">NEPAL Motor</div>
+              <div class="sub">VEHICLE PLATFORM</div>
+            </div>
+          </div>
+          <div class="hicons"><div class="hicon"></div><div class="hicon"></div></div>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="page-title">About NEPAL Motor</div>
+
+        <div class="hero-banner">
+          <div class="hero-title">Your Vehicle Partner in Nepal</div>
+          <div class="hero-sub">Connecting buyers, sellers & EV enthusiasts since day one.</div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat"><div class="stat-val">3+</div><div class="stat-label">Branches</div></div>
+          <div class="stat"><div class="stat-val">100%</div><div class="stat-label">Verified</div></div>
+          <div class="stat"><div class="stat-val">24/7</div><div class="stat-label">Support</div></div>
+        </div>
+
+        <div class="service-card">
+          <div class="s-icon">🔄</div>
+          <div><div class="s-title">Exchange to EV</div><div class="s-desc">Trade your petrol car for a modern electric vehicle</div></div>
+        </div>
+        <div class="service-card">
+          <div class="s-icon">💰</div>
+          <div><div class="s-title">Sell Your Car</div><div class="s-desc">Genuine valuation with verified vehicle details</div></div>
+        </div>
+        <div class="service-card">
+          <div class="s-icon">🔑</div>
+          <div><div class="s-title">Buy Used Car</div><div class="s-desc">Browse trusted listings with expert support</div></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="fi"><div class="fi-dot"></div><div class="fi-label">Exchange</div></div>
+        <div class="fi"><div class="fi-dot"></div><div class="fi-label">Dealers</div></div>
+        <div class="fi"><div class="fi-dot"></div><div class="fi-label">Test Drive</div></div>
+        <div class="fi"><div class="fi-dot"></div><div class="fi-label">FAQs</div></div>
+        <div class="fi"><div class="fi-dot active"></div><div class="fi-label active">About</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

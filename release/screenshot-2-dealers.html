@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Screenshot 2 – Dealers</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background: linear-gradient(160deg, #0a3554 0%, #075985 50%, #0284c7 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow:hidden; position:relative;
+  }
+  body::before { content:''; position:absolute; top:-200px; right:-200px; width:800px; height:800px; border-radius:50%; background:rgba(255,255,255,0.04); }
+
+  .wrap { display:flex; flex-direction:column; align-items:center; gap:48px; z-index:1; }
+  .tagline { color:white; text-align:center; }
+  .tagline h2 { font-size:52px; font-weight:900; letter-spacing:-1px; }
+  .tagline p { font-size:28px; opacity:0.75; margin-top:12px; font-weight:500; }
+
+  .phone { width:560px; background:#111318; border-radius:80px; padding:18px; box-shadow:0 0 0 3px #2b2d31,0 0 0 7px #111318,0 80px 160px rgba(0,0,0,0.6); position:relative; }
+  .dynamic-island { position:absolute; top:18px; left:50%; transform:translateX(-50%); width:160px; height:44px; background:#111318; border-radius:30px; z-index:10; }
+  .screen { background:#f8fafc; border-radius:66px; overflow:hidden; height:1120px; display:flex; flex-direction:column; }
+
+  .status { height:70px; background:white; display:flex; align-items:flex-end; justify-content:space-between; padding:0 32px 10px; flex-shrink:0; }
+  .status-time { font-size:16px; font-weight:800; color:#0f172a; }
+  .status-bar-rect { width:32px; height:16px; border:2px solid #0f172a; border-radius:3px; position:relative; }
+  .status-bar-rect::after { content:''; position:absolute; right:-5px; top:50%; transform:translateY(-50%); width:3px; height:8px; background:#0f172a; border-radius:0 2px 2px 0; }
+  .status-bar-fill { width:70%; height:100%; background:#0f172a; border-radius:1px; }
+
+  .nav { background:white; padding:0 20px 14px; flex-shrink:0; }
+  .nav-card { background:white; border:1px solid #e2e8f0; border-radius:20px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .logo { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#075985,#0ea5e9); display:flex; align-items:center; justify-content:center; color:white; font-weight:900; font-size:14px; }
+  .brand-text .name { font-size:17px; font-weight:900; color:#075985; }
+  .brand-text .sub { font-size:10px; color:#64748b; font-weight:600; letter-spacing:0.5px; }
+  .hicons { display:flex; gap:8px; }
+  .hicon { width:44px; height:44px; border-radius:13px; background:#f1f5f9; }
+
+  .body { flex:1; padding:20px; display:flex; flex-direction:column; gap:14px; overflow:hidden; }
+  .page-title { font-size:28px; font-weight:900; color:#020617; }
+
+  .filter-row { background:white; border:1px solid #e2e8f0; border-radius:14px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .filter-label { font-size:13px; font-weight:700; color:#64748b; }
+  .filter-val { font-size:15px; font-weight:800; color:#075985; }
+
+  .card { background:white; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; gap:14px; align-items:flex-start; box-shadow:0 2px 8px rgba(7,89,133,0.06); }
+  .card-icon { width:48px; height:48px; border-radius:14px; background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .card-info { flex:1; }
+  .card-name { font-size:18px; font-weight:900; color:#0f172a; }
+  .card-loc { font-size:14px; color:#64748b; margin-top:3px; }
+  .card-contact { font-size:13px; color:#94a3b8; margin-top:2px; }
+  .card-phone { display:inline-flex; align-items:center; gap:6px; margin-top:8px; background:#eff6ff; border-radius:8px; padding:6px 12px; }
+  .phone-icon { font-size:13px; }
+  .phone-num { font-size:14px; font-weight:800; color:#075985; }
+
+  .live-badge { display:inline-flex; align-items:center; gap:6px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:999px; padding:5px 14px; align-self:flex-start; }
+  .live-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; }
+  .live-text { font-size:12px; font-weight:700; color:#16a34a; }
+
+  .footer { background:white; border-top:1px solid #f1f5f9; padding:10px 10px 16px; display:flex; justify-content:space-around; flex-shrink:0; }
+  .fi { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .fi-dot { width:28px; height:28px; border-radius:8px; background:#f1f5f9; }
+  .fi-dot.active { background:#075985; }
+  .fi-label { font-size:10px; font-weight:700; color:#94a3b8; }
+  .fi-label.active { color:#075985; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tagline">
+    <h2>Verified Dealers</h2>
+    <p>Find trusted dealers near you</p>
+  </div>
+
+  <div class="phone">
+    <div class="dynamic-island"></div>
+    <div class="screen">
+      <div class="status">
+        <span class="status-time">9:41</span>
+        <div class="status-bar-rect"><div class="status-bar-fill"></div></div>
+      </div>
+      <div class="nav">
+        <div class="nav-card">
+          <div class="brand">
+            <div class="logo">NM</div>
+            <div class="brand-text">
+              <div class="name">NEPAL Motor</div>
+              <div class="sub">VEHICLE PLATFORM</div>
+            </div>
+          </div>
+          <div class="hicons"><div class="hicon"></div><div class="hicon"></div></div>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="page-title">Dealers</div>
+        <div class="live-badge"><div class="live-dot"></div><div class="live-text">Live — updates automatically</div></div>
+
+        <div class="filter-row">
+          <div class="filter-label">Filter by City</div>
+          <div class="filter-val">All ▾</div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">📍</div>
+          <div class="card-info">
+            <div class="card-name">Dongol Automobiles</div>
+            <div class="card-loc">Itahari</div>
+            <div class="card-contact">Suman Dongol</div>
+            <div class="card-phone"><span class="phone-icon">📞</span><span class="phone-num">985-202-4365</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">📍</div>
+          <div class="card-info">
+            <div class="card-name">Auto Palace</div>
+            <div class="card-loc">Biratnagar</div>
+            <div class="card-contact">Raju Khatri</div>
+            <div class="card-phone"><span class="phone-icon">📞</span><span class="phone-num">985-203-1716</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">📍</div>
+          <div class="card-info">
+            <div class="card-name">Santosh DYB</div>
+            <div class="card-loc">Kathmandu</div>
+            <div class="card-contact">Kafindra Bhattarai</div>
+            <div class="card-phone"><span class="phone-icon">📞</span><span class="phone-num">985-204-1927</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="fi"><div class="fi-dot"></div><div class="fi-label">Exchange</div></div>
+        <div class="fi"><div class="fi-dot active"></div><div class="fi-label active">Dealers</div></div>
+        <div class="fi"><div class="fi-dot"></div><div class="fi-label">Test Drive</div></div>
+        <div class="fi"><div class="fi-dot"></div><div class="fi-label">FAQs</div></div>
+        <div class="fi"><div class="fi-dot"></div><div class="fi-label">About</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
