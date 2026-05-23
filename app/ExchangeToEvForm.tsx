@@ -251,7 +251,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
     setFullName("");
     setEmail("");
     setPhone("");
-    setCity("");
+    setCity("Kathmandu");
     setYear("");
     setVehicleType("");
     setModel("");
@@ -297,6 +297,13 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
         photoInputRef.current.value = "";
       return next;
     });
+  }, []);
+
+  const addDocFiles = useCallback((incoming: FileList | File[]) => {
+    const list = Array.from(incoming);
+    if (list.length === 0) return;
+    setDocFiles((prev) => [...prev, ...list]);
+    if (docInputRef.current) docInputRef.current.value = "";
   }, []);
 
   const addPhotoFiles = useCallback((incoming: FileList | File[]) => {
@@ -634,8 +641,7 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
           onDrop={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            const list = e.dataTransfer.files;
-            if (list?.length) setDocFiles(Array.from(list));
+            if (e.dataTransfer.files?.length) addDocFiles(e.dataTransfer.files);
           }}
         >
           <CloudIcon className="text-zinc-400" />
@@ -650,9 +656,9 @@ export function ExchangeToEvForm({ variant = "exchange" }: ExchangeToEvFormProps
             type="file"
             className="sr-only"
             multiple
-            onChange={(e) =>
-              setDocFiles(e.target.files ? Array.from(e.target.files) : [])
-            }
+            onChange={(e) => {
+              if (e.target.files?.length) addDocFiles(e.target.files);
+            }}
           />
         </label>
         <FilePreviewGrid files={docFiles} onRemove={removeDocFile} />
