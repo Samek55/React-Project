@@ -94,7 +94,7 @@ const alphabetOnly = (value) => value.replace(/[^A-Za-z ]/g, "");
 const alphabetPattern = /^[A-Za-z ]+$/;
 const navigationItems = [
   { key: "exchange", label: "Exchange", drawerLabel: "Exchange to EV", icon: "swap-horizontal-outline", svgIcon: "exchange" },
-  { key: "buy", label: "Buy Car", drawerLabel: "Buy Used Car", icon: "key-outline" },
+  { key: "buy", label: "Buy", drawerLabel: "Buy Used Car", icon: "key-outline" },
   { key: "sell", label: "Sell", drawerLabel: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide" },
   { key: "testdrive", label: "Test Drive", drawerLabel: "Free Test Drive", icon: "car-sport-outline" },
   { key: "branches", label: "Dealers", drawerLabel: "Dealers", icon: "location-outline", svgIcon: "locationPin" },
@@ -2025,8 +2025,8 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight 
   ];
 
   const secondaryItems = [
-    { label: "About Us", icon: "information-circle-outline", navKey: "about" },
     { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
+    { label: "About Us", icon: "information-circle-outline", navKey: "about" },
     { label: "FAQs", icon: "help-circle-outline", navKey: "faqs" },
     { label: "Glossary", icon: "book-outline", navKey: "glossary" },
     { label: "Contact", icon: "call-outline", action: callSupport },
@@ -2149,7 +2149,7 @@ function Header({ onOpenDrawer, onLayout }) {
   const statusBarHeight = StatusBar.currentHeight || 24;
 
   return (
-    <View onLayout={onLayout} style={[styles.header, { paddingTop: statusBarHeight + 6 }]}>
+    <View onLayout={onLayout} style={[styles.header, { paddingTop: statusBarHeight }]}>
       <View style={styles.navCard}>
         <View style={styles.brand}>
           <Image source={nepalFlagLogo} style={styles.logo} />
@@ -3352,7 +3352,9 @@ const styles = StyleSheet.create({
     minHeight: 64,
     paddingHorizontal: 7,
     paddingVertical: 6,
-    borderWidth: 1,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
     borderColor: "#e2e8f0",
     borderRadius: 0,
     backgroundColor: "#ffffff",
@@ -3360,11 +3362,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 7,
-    shadowColor: "#000000",
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12
   },
   headerActions: {
     flexDirection: "row",
@@ -3386,7 +3383,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingRight: 4
+    paddingRight: 4,
+    paddingLeft: 6
   },
   logo: {
     width: 50,
@@ -4300,17 +4298,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingTop: 6,
     paddingBottom: 6,
-    borderWidth: 1,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
     borderColor: "#e2e8f0",
     borderRadius: 0,
     backgroundColor: "#ffffff",
     flexDirection: "row",
     justifyContent: "space-between",
-    shadowColor: "#000000",
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12
   },
   footerNavItem: {
     flex: 1,
