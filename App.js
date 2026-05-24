@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { AIRTABLE_TOKEN } from "@env";
 import {
   Animated,
   Image,
@@ -32,8 +31,6 @@ const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
 const dealerEndpoint = "https://www.nepalmotor.com/api/become-a-dealer";
-const AIRTABLE_BASE = "appVSOoJqoGXs4tAZ";
-const AIRTABLE_TABLE = "tblp2d6royVCxsWYY";
 
 const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
@@ -2340,8 +2337,9 @@ export default function App() {
 
     if (!isBuyForm) {
       const year = Number(form.year);
-      if (form.year && (year < 1981 || year > 2026)) {
-        newErrors.year = "Year must be between 1981 and 2026";
+      const currentYear = new Date().getFullYear();
+      if (form.year && (year < 1981 || year > currentYear)) {
+        newErrors.year = `Year must be between 1981 and ${currentYear}`;
       }
     }
 
@@ -2523,8 +2521,8 @@ export default function App() {
               setErrors((current) => ({
                 ...current,
                 year:
-                  onlyNumbers.length === 4 && (year < 1981 || year > 2026)
-                    ? "Year must be between 1981 and 2026"
+                  onlyNumbers.length === 4 && (year < 1981 || year > new Date().getFullYear())
+                    ? `Year must be between 1981 and ${new Date().getFullYear()}`
                     : ""
               }));
             }}
