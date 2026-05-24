@@ -65,6 +65,14 @@ const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submis
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
 const dealerEndpoint = "https://www.nepalmotor.com/api/become-a-dealer";
 
+// ── OTP verification endpoints (Sparrow SMS, backend to implement) ──────────
+// POST /api/send-otp    body: { phone }         → { success, message }
+// POST /api/verify-otp  body: { phone, otp }    → { success, valid, message }
+const sendOtpEndpoint = "https://www.nepalmotor.com/api/send-otp";
+const verifyOtpEndpoint = "https://www.nepalmotor.com/api/verify-otp";
+const OTP_LENGTH = 6;          // Digits in the OTP code
+const OTP_RESEND_COOLDOWN = 30; // Seconds before the user can resend
+
 // ─── 3. DROPDOWN OPTION LISTS ────────────────────────────────────────────────
 // These arrays populate SelectField dropdowns across all forms.
 
@@ -1431,9 +1439,10 @@ function OnboardingScreen({ onDone }) {
  * Collects full name, company name, city, phone, and optional showroom
  * photos, then POSTs to the dealer endpoint. Requires policy agreement.
  *
- * @param {function} onNavigate - Called with a policyKey to open legal pages
+ * @param {function} onNavigate    - Called with a policyKey to open legal pages
+ * @param {function} onRequestOTP  - Called with (phone, callback) to trigger OTP verification
  */
-function DealerPage({ onNavigate }) {
+function DealerPage({ onNavigate, onRequestOTP }) {
   const [form, setForm] = useState({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -1471,27 +1480,34 @@ function DealerPage({ onNavigate }) {
     if (!termsAgreed) newErrors.termsAgreed = "You must agree to the Terms of Service, Privacy Policy, Refund Policy, and Disclaimer";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
-    setSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append("fullName", form.fullName.trim());
-      formData.append("companyName", form.companyName.trim());
-      formData.append("city", form.city);
-      formData.append("phone", form.phone.trim());
-      formData.append("requestType", "Become a Dealer");
-      form.photo.forEach((f) => appendUpload(formData, "photos", f));
-      await fetch(dealerEndpoint, { method: "POST", body: formData });
-      setMessage("Your dealer application has been submitted!");
-      setMessageType("success");
-      setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
-      setTermsAgreed(false);
-      setErrors({});
-    } catch {
-      setMessage("Submission failed. Please try again.");
-      setMessageType("error");
-    } finally {
-      setSubmitting(false);
-    }
+    // Capture form snapshot now so the callback has stable data even if
+    // the user navigates away while waiting for OTP.
+    const submittedForm = { ...form };
+
+    // Gate the actual API call behind OTP verification
+    await onRequestOTP(submittedForm.phone, async () => {
+      setSubmitting(true);
+      try {
+        const formData = new FormData();
+        formData.append("fullName", submittedForm.fullName.trim());
+        formData.append("companyName", submittedForm.companyName.trim());
+        formData.append("city", submittedForm.city);
+        formData.append("phone", submittedForm.phone.trim());
+        formData.append("requestType", "Become a Dealer");
+        submittedForm.photo.forEach((f) => appendUpload(formData, "photos", f));
+        await fetch(dealerEndpoint, { method: "POST", body: formData });
+        setMessage("Your dealer application has been submitted!");
+        setMessageType("success");
+        setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
+        setTermsAgreed(false);
+        setErrors({});
+      } catch {
+        setMessage("Submission failed. Please try again.");
+        setMessageType("error");
+      } finally {
+        setSubmitting(false);
+      }
+    });
   };
 
   return (
@@ -1577,9 +1593,10 @@ function DealerPage({ onNavigate }) {
  * Submits as JSON (not multipart) to the test-drive endpoint.
  * Includes a multi-select feature picker for desired vehicle features.
  *
- * @param {function} onNavigate - Called with a policyKey to open legal pages
+ * @param {function} onNavigate    - Called with a policyKey to open legal pages
+ * @param {function} onRequestOTP  - Called with (phone, callback) to trigger OTP verification
  */
-function TestDrivePage({ onNavigate }) {
+function TestDrivePage({ onNavigate, onRequestOTP }) {
   const [form, setForm] = useState({
     fullName: "", email: "", phone: "", city: "Kathmandu",
     vehicleType: "Hatchback", model: "", brand: "", color: "",
@@ -1628,39 +1645,46 @@ function TestDrivePage({ onNavigate }) {
     if (!termsAgreed) newErrors.termsAgreed = "You must agree to the Terms of Service, Privacy Policy, Refund Policy, and Disclaimer";
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
-    setSubmitting(true);
-    try {
-      await fetch("https://nepalmotor.com/api/test-drive", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: form.fullName.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim(),
-          city: form.city,
-          vehicle: `${form.brand.trim()} ${form.model.trim()}`,
-          vehicleType: form.vehicleType,
-          vehicleBrand: form.brand.trim(),
-          vehicleModel: form.model.trim(),
-          vehicleColor: form.color,
-          transmission: form.transmission,
-          fuelType: form.fuelType,
-          features: form.features,
-          finance: form.finance,
-          notes: form.notes.trim(),
-        }),
-      });
-      setMessage("Your test drive request has been submitted!");
-      setMessageType("success");
-      setForm(emptyTestDrive);
-      setTermsAgreed(false);
-      setErrors({});
-    } catch {
-      setMessage("Submission failed. Please try again.");
-      setMessageType("error");
-    } finally {
-      setSubmitting(false);
-    }
+    // Capture form snapshot now so the callback has stable data even if
+    // the user navigates away while waiting for OTP.
+    const submittedForm = { ...form };
+
+    // Gate the actual API call behind OTP verification
+    await onRequestOTP(submittedForm.phone, async () => {
+      setSubmitting(true);
+      try {
+        await fetch("https://nepalmotor.com/api/test-drive", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: submittedForm.fullName.trim(),
+            email: submittedForm.email.trim(),
+            phone: submittedForm.phone.trim(),
+            city: submittedForm.city,
+            vehicle: `${submittedForm.brand.trim()} ${submittedForm.model.trim()}`,
+            vehicleType: submittedForm.vehicleType,
+            vehicleBrand: submittedForm.brand.trim(),
+            vehicleModel: submittedForm.model.trim(),
+            vehicleColor: submittedForm.color,
+            transmission: submittedForm.transmission,
+            fuelType: submittedForm.fuelType,
+            features: submittedForm.features,
+            finance: submittedForm.finance,
+            notes: submittedForm.notes.trim(),
+          }),
+        });
+        setMessage("Your test drive request has been submitted!");
+        setMessageType("success");
+        setForm(emptyTestDrive);
+        setTermsAgreed(false);
+        setErrors({});
+      } catch {
+        setMessage("Submission failed. Please try again.");
+        setMessageType("error");
+      } finally {
+        setSubmitting(false);
+      }
+    });
   };
 
   return (
@@ -1783,7 +1807,172 @@ function TestDrivePage({ onNavigate }) {
   );
 }
 
-// ─── 14. GLOSSARY DATA ────────────────────────────────────────────────────────
+// ─── 14. OTP VERIFICATION MODAL ──────────────────────────────────────────────
+
+/**
+ * OTPModal — full-screen overlay for phone number verification.
+ *
+ * Shows after the user taps Submit on any form. An OTP is sent to their
+ * phone via Sparrow SMS. They enter the 6-digit code here; on success the
+ * actual form submission is executed by the parent via onVerify().
+ *
+ * UX details:
+ *  - 6 individual digit boxes with auto-advance and backspace-to-go-back
+ *  - Verify button auto-enabled when all 6 digits are filled
+ *  - 30-second resend cooldown with live countdown
+ *  - Phone number is masked (e.g. 98****4365) for display
+ *
+ * @param {boolean}  visible        - Whether the modal is shown
+ * @param {string}   phone          - Phone number the OTP was sent to
+ * @param {string[]} digits         - Array of 6 digit strings (controlled)
+ * @param {function} onChangeDigit  - (digit, index) → updates one digit slot
+ * @param {function} onVerify       - Called when the user taps Verify & Submit
+ * @param {function} onResend       - Called when the user taps Resend code
+ * @param {function} onCancel       - Closes the modal and resets OTP state
+ * @param {string}   loading        - "sending" | "verifying" | "" (empty = idle)
+ * @param {string}   error          - Error message to show below the digit boxes
+ * @param {number}   resendSeconds  - Countdown seconds until resend is allowed
+ */
+function OTPModal({ visible, phone, digits, onChangeDigit, onVerify, onResend, onCancel, loading, error, resendSeconds }) {
+  // Refs for each digit input so we can move focus programmatically
+  const inputRefs = useRef(Array(OTP_LENGTH).fill(null));
+
+  if (!visible) return null;
+
+  // Mask the middle digits of the phone for display: 98XXXXXX65 → 98****65
+  const maskedPhone = phone
+    ? `${phone.slice(0, 2)}****${phone.slice(-4)}`
+    : "";
+
+  const isComplete = digits.every((d) => d !== "");
+
+  /**
+   * Handles a digit being typed into one of the 6 boxes.
+   * Strips non-numeric chars, takes only the last character (handles paste),
+   * and moves focus to the next box automatically.
+   */
+  const handleDigitChange = (text, index) => {
+    const digit = text.replace(/[^0-9]/g, "").slice(-1);
+    onChangeDigit(digit, index);
+    // Auto-advance to next box when a digit is entered
+    if (digit && index < OTP_LENGTH - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  /**
+   * Handles the backspace key.
+   * If the current box is already empty, moves focus back to the previous
+   * box and clears it so the user can correct a mistake naturally.
+   */
+  const handleKeyPress = ({ nativeEvent }, index) => {
+    if (nativeEvent.key === "Backspace" && !digits[index] && index > 0) {
+      onChangeDigit("", index - 1);
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  return (
+    <View style={styles.otpOverlay}>
+      {/* Tapping the dark background cancels the modal */}
+      <Pressable style={styles.otpScrim} onPress={onCancel} />
+
+      <View style={styles.otpModal}>
+        {/* Header row */}
+        <View style={styles.otpHeader}>
+          <Text allowFontScaling={false} style={styles.otpTitle}>Verify Your Number</Text>
+          <Pressable
+            onPress={onCancel}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Close OTP verification"
+          >
+            <Ionicons name="close" size={22} color="#334155" />
+          </Pressable>
+        </View>
+
+        {/* Icon */}
+        <View style={styles.otpIconWrap}>
+          <Ionicons name="phone-portrait-outline" size={32} color="#075985" />
+        </View>
+
+        {/* Instruction text */}
+        <Text allowFontScaling={false} style={styles.otpSubtitle}>
+          A 6-digit verification code was sent to
+        </Text>
+        <Text allowFontScaling={false} style={styles.otpPhone}>+977 {maskedPhone}</Text>
+
+        {/* 6-digit input boxes */}
+        <View style={styles.otpBoxRow}>
+          {digits.map((digit, i) => (
+            <TextInput
+              key={i}
+              ref={(ref) => { inputRefs.current[i] = ref; }}
+              style={[
+                styles.otpBox,
+                digit && styles.otpBoxFilled,
+                error && styles.otpBoxError
+              ]}
+              value={digit}
+              onChangeText={(text) => handleDigitChange(text, i)}
+              onKeyPress={(e) => handleKeyPress(e, i)}
+              keyboardType="number-pad"
+              maxLength={2} // 2 so the OS shows a cursor; we slice to 1 in handler
+              selectTextOnFocus
+              allowFontScaling={false}
+              accessibilityLabel={`OTP digit ${i + 1}`}
+            />
+          ))}
+        </View>
+
+        {/* Validation error */}
+        {error ? (
+          <Text allowFontScaling={false} style={styles.otpError}>{error}</Text>
+        ) : null}
+
+        {/* Verify button — disabled until all 6 digits are filled */}
+        <Pressable
+          style={[
+            styles.otpVerifyButton,
+            (!isComplete || loading) && styles.otpVerifyButtonDisabled
+          ]}
+          onPress={onVerify}
+          disabled={!isComplete || !!loading}
+          accessibilityRole="button"
+        >
+          <Text allowFontScaling={false} style={styles.otpVerifyText}>
+            {loading === "verifying" ? "Verifying..." : "Verify & Submit"}
+          </Text>
+        </Pressable>
+
+        {/* Resend row — countdown or link */}
+        <View style={styles.otpResendRow}>
+          {resendSeconds > 0 ? (
+            <Text allowFontScaling={false} style={styles.otpResendTimer}>
+              Resend code in {resendSeconds}s
+            </Text>
+          ) : (
+            <Pressable
+              onPress={onResend}
+              disabled={!!loading}
+              accessibilityRole="button"
+            >
+              <Text allowFontScaling={false} style={styles.otpResendLink}>
+                {loading === "sending" ? "Sending..." : "Resend code"}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+
+        <Text allowFontScaling={false} style={styles.otpNote}>
+          Code expires in 10 minutes · Check your SMS messages
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+// ─── 15. GLOSSARY DATA ────────────────────────────────────────────────────────
 // A–Z automotive and EV market terminology. Each letter maps to an array of
 // { title, definition } objects rendered by GlossaryPage.
 const glossaryData = {
@@ -2156,7 +2345,7 @@ function GlossaryPage() {
   );
 }
 
-// ─── 15. DRAWER & HEADER NAVIGATION ──────────────────────────────────────────
+// ─── 16. DRAWER & HEADER NAVIGATION ──────────────────────────────────────────
 
 /**
  * DrawerNavigation — slide-in side drawer menu.
@@ -2359,7 +2548,7 @@ function Header({ onOpenDrawer, onLayout }) {
   );
 }
 
-// ─── 16. ROOT APP COMPONENT ───────────────────────────────────────────────────
+// ─── 17. ROOT APP COMPONENT ───────────────────────────────────────────────────
 
 /**
  * App — root component and application state manager.
@@ -2405,6 +2594,19 @@ export default function App() {
   const [activeFooterTab, setActiveFooterTab] = useState("exchange");
   const [previousTab, setPreviousTab] = useState(null);
   const scrollRef = useRef(null);
+
+  // ── OTP verification state ─────────────────────────────────────────────────
+  const [otpVisible, setOtpVisible] = useState(false);
+  const [otpPhone, setOtpPhone] = useState("");
+  const [otpDigits, setOtpDigits] = useState(Array(OTP_LENGTH).fill(""));
+  const [otpError, setOtpError] = useState("");
+  const [otpLoading, setOtpLoading] = useState(""); // "sending" | "verifying" | ""
+  const [otpResendSeconds, setOtpResendSeconds] = useState(0);
+  // Holds the actual form-submission function to run after OTP is verified
+  const pendingSubmitRef = useRef(null);
+  // Timer ref so the countdown interval can be cleared on unmount / resend
+  const resendTimerRef = useRef(null);
+
   const isSellForm = activeFooterTab === "sell";
   const isBuyForm = activeFooterTab === "buy";
   const isExchangeForm = activeFooterTab === "exchange";
@@ -2554,6 +2756,134 @@ export default function App() {
     }
   };
 
+  // ── OTP helper functions ───────────────────────────────────────────────────
+
+  /** Starts the 30-second resend countdown. Clears any existing timer first. */
+  const startResendCountdown = () => {
+    if (resendTimerRef.current) clearInterval(resendTimerRef.current);
+    setOtpResendSeconds(OTP_RESEND_COOLDOWN);
+    resendTimerRef.current = setInterval(() => {
+      setOtpResendSeconds((s) => {
+        if (s <= 1) {
+          clearInterval(resendTimerRef.current);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  /**
+   * Called by any form's submit handler after validation passes.
+   * Sends an OTP to the phone number and shows the verification modal.
+   * The actual form submission is stored in pendingSubmitRef and only
+   * called once the user verifies the correct code.
+   *
+   * @param {string}   phone      - The 10-digit phone from the form field
+   * @param {function} onVerified - Async function that does the real API call
+   */
+  const requestOTP = async (phone, onVerified) => {
+    pendingSubmitRef.current = onVerified;
+    setOtpPhone(phone);
+    setOtpDigits(Array(OTP_LENGTH).fill(""));
+    setOtpError("");
+    setOtpLoading("sending");
+    setOtpVisible(true);
+
+    try {
+      const resp = await fetch(sendOtpEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
+      });
+      if (!resp.ok) throw new Error("Send OTP failed");
+      startResendCountdown();
+    } catch {
+      setOtpError("Failed to send OTP. Please check your number and try again.");
+    } finally {
+      setOtpLoading("");
+    }
+  };
+
+  /** Updates a single digit slot in the OTP digit array. */
+  const handleOTPDigitChange = (digit, index) => {
+    setOtpDigits((prev) => {
+      const updated = [...prev];
+      updated[index] = digit;
+      return updated;
+    });
+    setOtpError(""); // Clear error whenever the user edits a digit
+  };
+
+  /**
+   * Called when the user taps "Verify & Submit".
+   * Sends the entered code to the verify endpoint. On success, hides the
+   * modal and calls the stored pending submission function.
+   */
+  const handleOTPVerify = async () => {
+    const code = otpDigits.join("");
+    if (code.length < OTP_LENGTH) return;
+
+    setOtpLoading("verifying");
+    setOtpError("");
+
+    try {
+      const resp = await fetch(verifyOtpEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: otpPhone, otp: code })
+      });
+      const data = await resp.json();
+
+      if (data.valid) {
+        // OTP correct — close modal, then fire the real form submission
+        if (resendTimerRef.current) clearInterval(resendTimerRef.current);
+        setOtpVisible(false);
+        setOtpLoading("");
+        await pendingSubmitRef.current?.();
+      } else {
+        // Wrong code — clear boxes and show error
+        setOtpDigits(Array(OTP_LENGTH).fill(""));
+        setOtpError(data.message || "Incorrect code. Please try again.");
+        setOtpLoading("");
+      }
+    } catch {
+      setOtpError("Verification failed. Please try again.");
+      setOtpLoading("");
+    }
+  };
+
+  /** Resends the OTP to the same phone number and resets the countdown. */
+  const handleOTPResend = async () => {
+    setOtpDigits(Array(OTP_LENGTH).fill(""));
+    setOtpError("");
+    setOtpLoading("sending");
+
+    try {
+      const resp = await fetch(sendOtpEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: otpPhone })
+      });
+      if (!resp.ok) throw new Error("Resend failed");
+      startResendCountdown();
+    } catch {
+      setOtpError("Failed to resend OTP. Please try again.");
+    } finally {
+      setOtpLoading("");
+    }
+  };
+
+  /** Cancels OTP flow — hides modal and clears state. */
+  const handleOTPCancel = () => {
+    if (resendTimerRef.current) clearInterval(resendTimerRef.current);
+    setOtpVisible(false);
+    setOtpLoading("");
+    setOtpError("");
+    setOtpDigits(Array(OTP_LENGTH).fill(""));
+    pendingSubmitRef.current = null;
+  };
+
   const pickFile = async (key) => {
     const targetFormKey = formKey;
     const existingFiles = forms[targetFormKey][key];
@@ -2688,61 +3018,70 @@ export default function App() {
       return;
     }
 
-    setSubmitting(true);
+    // Capture derived values now — the async OTP flow may take seconds
+    // and closures should not rely on state that could change between taps.
     const submittedFormKey = formKey;
     const submittedIsSellForm = isSellForm;
     const submittedIsBuyForm = isBuyForm;
-    try {
-      if (submittedIsBuyForm) {
-        await fetch("https://nepalmotor.com/api/buy-used-cars", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fullName: form.fullName.trim(),
-            email: form.email.trim(),
-            phone: form.phone.trim(),
-            city: form.city,
-            vehicleType: form.vehicleType,
-            vehicleModel: form.model.trim(),
-            vehicleBrand: form.brand.trim(),
-            vehicleColor: form.color,
-            transmission: form.transmission,
-            fuelType: form.fuelType,
-            features: form.features,
-            budget: form.budget.trim(),
-            finance: form.finance,
-            notes: form.notes.trim(),
-          }),
-        });
-      } else {
-        const apiResponse = await postVehicleSubmission(form, submittedIsSellForm, { isBuyForm: false });
-        console.log("API RESPONSE:", apiResponse);
-        console.log("attachments:", apiResponse.received?.attachments);
-        if (apiResponse.warning || apiResponse.warnings) {
-          console.warn("API warning:", apiResponse.warning || apiResponse.warnings);
-        }
-      }
+    const submittedForm = form;
 
-      setMessageType("success");
-      setMessage(
-        submittedIsBuyForm
-          ? "Thank you! Your buy used car request has been submitted."
-          : submittedIsSellForm
-          ? "Thank you! Your sell used car request has been submitted."
-          : "Thank you! Your exchange request has been submitted."
-      );
-      setForms((current) => ({
-        ...current,
-        [submittedFormKey]: emptyForm
-      }));
-      setTermsAgreed(false);
-      setErrors({});
-    } catch (error) {
-      setMessageType("error");
-      setMessage(submissionErrorMessage(error));
-    } finally {
-      setSubmitting(false);
-    }
+    // Gate the real API call behind phone-number OTP verification.
+    // requestOTP sends the code via Sparrow SMS, shows the modal, and calls
+    // the callback only after the user enters the correct 6-digit code.
+    await requestOTP(submittedForm.phone, async () => {
+      setSubmitting(true);
+      try {
+        if (submittedIsBuyForm) {
+          await fetch("https://nepalmotor.com/api/buy-used-cars", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fullName: submittedForm.fullName.trim(),
+              email: submittedForm.email.trim(),
+              phone: submittedForm.phone.trim(),
+              city: submittedForm.city,
+              vehicleType: submittedForm.vehicleType,
+              vehicleModel: submittedForm.model.trim(),
+              vehicleBrand: submittedForm.brand.trim(),
+              vehicleColor: submittedForm.color,
+              transmission: submittedForm.transmission,
+              fuelType: submittedForm.fuelType,
+              features: submittedForm.features,
+              budget: submittedForm.budget.trim(),
+              finance: submittedForm.finance,
+              notes: submittedForm.notes.trim(),
+            }),
+          });
+        } else {
+          const apiResponse = await postVehicleSubmission(submittedForm, submittedIsSellForm, { isBuyForm: false });
+          console.log("API RESPONSE:", apiResponse);
+          console.log("attachments:", apiResponse.received?.attachments);
+          if (apiResponse.warning || apiResponse.warnings) {
+            console.warn("API warning:", apiResponse.warning || apiResponse.warnings);
+          }
+        }
+
+        setMessageType("success");
+        setMessage(
+          submittedIsBuyForm
+            ? "Thank you! Your buy used car request has been submitted."
+            : submittedIsSellForm
+            ? "Thank you! Your sell used car request has been submitted."
+            : "Thank you! Your exchange request has been submitted."
+        );
+        setForms((current) => ({
+          ...current,
+          [submittedFormKey]: emptyForm
+        }));
+        setTermsAgreed(false);
+        setErrors({});
+      } catch (error) {
+        setMessageType("error");
+        setMessage(submissionErrorMessage(error));
+      } finally {
+        setSubmitting(false);
+      }
+    });
   };
 
   if (appPhase === "loading") {
@@ -2771,13 +3110,13 @@ export default function App() {
         {activeFooterTab === "faqs" ? (
           <FAQsPage />
         ) : activeFooterTab === "branches" ? (
-          <DealerPage onNavigate={changeFooterTab} />
+          <DealerPage onNavigate={changeFooterTab} onRequestOTP={requestOTP} />
         ) : activeFooterTab === "about" ? (
           <AboutPage />
         ) : activeFooterTab === "dealer" ? (
-          <DealerPage onNavigate={changeFooterTab} />
+          <DealerPage onNavigate={changeFooterTab} onRequestOTP={requestOTP} />
         ) : activeFooterTab === "testdrive" ? (
-          <TestDrivePage onNavigate={changeFooterTab} />
+          <TestDrivePage onNavigate={changeFooterTab} onRequestOTP={requestOTP} />
         ) : activeFooterTab === "glossary" ? (
           <GlossaryPage />
         ) : activeFooterTab === "terms" ? (
@@ -3136,12 +3475,26 @@ export default function App() {
         onSelect={changeFooterTab}
         headerHeight={headerHeight}
       />
+
+      {/* OTP verification modal — rendered above the drawer so it is always on top */}
+      <OTPModal
+        visible={otpVisible}
+        phone={otpPhone}
+        digits={otpDigits}
+        onChangeDigit={handleOTPDigitChange}
+        onVerify={handleOTPVerify}
+        onResend={handleOTPResend}
+        onCancel={handleOTPCancel}
+        loading={otpLoading}
+        error={otpError}
+        resendSeconds={otpResendSeconds}
+      />
     </SafeAreaView>
     </SafeAreaProvider>
   );
 }
 
-// ─── 17. STYLESHEET ───────────────────────────────────────────────────────────
+// ─── 18. STYLESHEET ───────────────────────────────────────────────────────────
 // All component styles defined in a single StyleSheet for performance.
 // Naming convention: componentName + Element (e.g. footerNav, footerNavItem)
 const styles = StyleSheet.create({
@@ -4610,4 +4963,158 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     fontWeight: "600"
   },
+
+  // ── OTP modal styles ─────────────────────────────────────────────────────────
+
+  /** Full-screen overlay that positions the modal card over the dark scrim */
+  otpOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999
+  },
+  /** Semi-transparent dark background — tapping it cancels the modal */
+  otpScrim: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.55)"
+  },
+  /** White card that contains all modal content */
+  otpModal: {
+    width: "90%",
+    maxWidth: 360,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+    paddingTop: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10
+  },
+  /** Top row: title on the left, close icon on the right */
+  otpHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16
+  },
+  otpTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#020617"
+  },
+  /** Circular icon badge centred below the header */
+  otpIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#e0f2fe",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginBottom: 14
+  },
+  otpSubtitle: {
+    fontSize: 14,
+    color: "#475569",
+    textAlign: "center",
+    fontWeight: "600"
+  },
+  /** Masked phone number displayed prominently below the subtitle */
+  otpPhone: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#020617",
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 20,
+    letterSpacing: 1
+  },
+  /** Row containing the 6 digit input boxes */
+  otpBoxRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 12
+  },
+  /** Individual digit input box */
+  otpBox: {
+    width: 44,
+    height: 52,
+    borderWidth: 1.5,
+    borderColor: "#cbd5e1",
+    borderRadius: 10,
+    textAlign: "center",
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#020617",
+    backgroundColor: "#f8fafc"
+  },
+  /** Box filled with a digit — highlighted border */
+  otpBoxFilled: {
+    borderColor: "#075985",
+    backgroundColor: "#eff6ff"
+  },
+  /** Box highlighted red when there is a verification error */
+  otpBoxError: {
+    borderColor: "#ef4444",
+    backgroundColor: "#fef2f2"
+  },
+  /** Inline error message shown below the digit boxes */
+  otpError: {
+    color: "#ef4444",
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 10
+  },
+  /** Primary CTA — full-width Verify & Submit button */
+  otpVerifyButton: {
+    backgroundColor: "#075985",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 14
+  },
+  otpVerifyButtonDisabled: {
+    backgroundColor: "#93c5fd"
+  },
+  otpVerifyText: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "800"
+  },
+  /** Row that holds either the countdown timer or the Resend link */
+  otpResendRow: {
+    alignItems: "center",
+    marginBottom: 10
+  },
+  otpResendTimer: {
+    color: "#64748b",
+    fontSize: 13,
+    fontWeight: "600"
+  },
+  otpResendLink: {
+    color: "#075985",
+    fontSize: 13,
+    fontWeight: "700",
+    textDecorationLine: "underline"
+  },
+  /** Small helper text at the bottom of the card */
+  otpNote: {
+    color: "#94a3b8",
+    fontSize: 11,
+    fontWeight: "600",
+    textAlign: "center"
+  }
 });
