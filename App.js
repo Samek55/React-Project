@@ -1,3 +1,29 @@
+/**
+ * App.js — NEPAL Motor
+ *
+ * Main React Native application for the NEPAL Motor platform.
+ * Handles vehicle exchange, buy, sell, test-drive, and dealer
+ * inquiry forms with full validation, file upload, and API submission.
+ *
+ * Platform:  Android (primary) · Expo Web (development preview)
+ * SDK:       Expo 51 · React Native 0.74 · React 18
+ * Package:   com.pracas.nepalmotor
+ * Version:   1.0.45
+ *
+ * Structure:
+ *   1. Imports
+ *   2. Assets, API endpoints & constants
+ *   3. Dropdown option lists
+ *   4. Legal policies content
+ *   5. Form helpers & API submission
+ *   6. Reusable UI components
+ *   7. SVG icons & navigation bar
+ *   8. Page components (FAQ, About, Onboarding, etc.)
+ *   9. Drawer & Header navigation
+ *  10. Root App component & StyleSheet
+ */
+
+// ─── 1. IMPORTS ─────────────────────────────────────────────────────────────
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -22,15 +48,25 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle, Ellipse, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 
+// ─── 2. ASSETS, API ENDPOINTS & CONSTANTS ───────────────────────────────────
+
+// Static image assets bundled with the app
 const nepalFlagLogo = require("./assets/nepal-flag-logo.jpeg");
 const exchangeImage = require("./assets/car-exchange.png");
 const sellImage = require("./assets/sell-used-car.png");
 const buyImage = require("./assets/buy-used-car.png");
+// Business contact number (used for call buttons throughout the app)
 const phoneNumber = "+9779852024365";
+
+// API endpoints — postVehicleSubmission tries all three in order so that
+// a CDN or www redirect issue never silently drops a form submission.
 const vehicleListingsEndpoint = "https://www.nepalmotor.com/api/vehicle-listings";
 const vehicleSubmissionEndpoint = "https://www.nepalmotor.com/api/vehicle-submission";
 const vehicleSubmissionEndpointFallback = "https://nepalmotor.com/api/vehicle-submission";
 const dealerEndpoint = "https://www.nepalmotor.com/api/become-a-dealer";
+
+// ─── 3. DROPDOWN OPTION LISTS ────────────────────────────────────────────────
+// These arrays populate SelectField dropdowns across all forms.
 
 const colors = ["White", "Black", "Silver", "Gray", "Red", "Blue", "Green", "Other"];
 const cities = [
@@ -50,6 +86,10 @@ const accidents = ["None", "Minor", "Major", "Prefer not to say"];
 const fuelTypes = ["Petrol", "Diesel", "Hybrid", "CNG", "LPG", "EV", "Other"];
 const fuelTypesWithEV = ["Petrol", "Diesel", "EV", "Hybrid", "CNG", "LPG", "Other"];
 
+// ─── 4. LEGAL POLICIES CONTENT ───────────────────────────────────────────────
+// Full text for Terms, Privacy, Refund, and Disclaimer pages.
+// Rendered by PolicyPage component using the policyKey prop.
+
 const policiesContent = {
   terms: {
     title: "Terms of Service",
@@ -68,6 +108,9 @@ const policiesContent = {
     content: "The information on the NEPAL Motor website and forms is provided for general guidance only.\n\n1. No Professional Advice\nContent on our website does not constitute legal, tax, financial, or mechanical advice. You should obtain independent professional advice before making vehicle purchase, sale, finance, or registration decisions.\n\n2. Accuracy of Information\nWhile we strive to keep information current and accurate, we make no warranties regarding descriptions, prices, availability, images, or specifications. Vehicle details are confirmed only after inspection and document verification.\n\n3. Valuations and Estimates\nOnline or verbal valuations, market ranges, and budget guidance are estimates only. Final offers may vary based on the vehicle's condition, accident history, service records, market demand, and regulatory factors.\n\n4. Third-Party Content and Links\nOur website may reference or link to external businesses, platforms, or resources. NEPAL Motor does not control and is not responsible for third-party content, products, or policies.\n\n5. Limitation of Liability\nNEPAL Motor is not liable for any loss or damage arising from reliance on information provided on our website or forms, technical interruptions, delays, or actions taken before a signed agreement is in place.\n\n6. User Submissions\nYou are responsible for the accuracy of information and documents you submit. NEPAL Motor may decline to process submissions that are incomplete, inconsistent, or otherwise problematic.\n\n7. Changes\nThis Disclaimer may be updated without prior notice. Continued use of our website following any update constitutes your acceptance of the revised Disclaimer."
   }
 };
+// ─── 5. VEHICLE FEATURES LIST ────────────────────────────────────────────────
+// Selectable vehicle features shown in the multi-select feature picker.
+
 const features = [
   "Basic",
   "A/C",
@@ -87,8 +130,16 @@ const features = [
   "Keyless Entry"
 ];
 
+// ─── 6. UTILITIES & NAVIGATION CONFIG ────────────────────────────────────────
+
+// Strips non-alphabet characters from a string (used for model/name fields)
 const alphabetOnly = (value) => value.replace(/[^A-Za-z ]/g, "");
+
+// Regex to validate that a string contains only letters and spaces
 const alphabetPattern = /^[A-Za-z ]+$/;
+
+// Footer navigation items — `footer: false` hides the item from the bottom bar
+// but keeps it accessible via the drawer. Each item maps a key to a page.
 const navigationItems = [
   { key: "exchange", label: "Exchange", drawerLabel: "Exchange to EV", icon: "swap-horizontal-outline", svgIcon: "exchange" },
   { key: "buy", label: "Buy", drawerLabel: "Buy Used Car", icon: "key-outline" },
@@ -98,8 +149,14 @@ const navigationItems = [
   { key: "faqs", label: "FAQs", drawerLabel: "FAQs", icon: "help-circle-outline", svgIcon: "graphql", footer: false },
   { key: "about", label: "About", drawerLabel: "About NEPAL Motor", icon: "information-circle-outline", svgIcon: "steering", footer: false },
 ];
+// Items shown in the bottom footer bar (excludes FAQs and About)
 const footerNavItems = navigationItems.filter((item) => item.footer !== false);
+
+// AsyncStorage / localStorage key used to track if onboarding has been shown
 const onboardingStorageKey = "nepalMotorOnboardingComplete";
+
+// ─── 7. ONBOARDING SLIDE DATA ─────────────────────────────────────────────────
+// Three slides shown to first-time users before the main app loads.
 const onboardingSlides = [
   {
     type: "exchange",
@@ -130,6 +187,9 @@ const onboardingSlides = [
     resizeMode: "contain"
   }
 ];
+// ─── 8. FAQ DATA ──────────────────────────────────────────────────────────────
+// Grouped FAQ content displayed in the FAQsPage component.
+// Each section maps to a filter chip in the UI.
 const faqSectionData = [
   {
     title: "Car Exchange Page FAQs",
@@ -230,6 +290,9 @@ const faqSections = [
   ...faqSectionData
 ];
 
+// ─── 9. FORM STATE TEMPLATE ───────────────────────────────────────────────────
+// Default blank form values. Used to initialise and reset all three forms
+// (exchange, sell, buy). Shared structure covers all field variants.
 const emptyForm = {
   fullName: "",
   email: "",
@@ -254,6 +317,17 @@ const emptyForm = {
   sellingPrice: ""
 };
 
+// ─── 10. FORM HELPERS & API SUBMISSION ───────────────────────────────────────
+
+/**
+ * Appends a single file to a FormData object.
+ * Handles web (File object from browser) and native (URI from ImagePicker)
+ * differently because the fetch API treats them differently per platform.
+ *
+ * @param {FormData} formData  - The FormData instance being built
+ * @param {string}   fieldName - The field name the server expects (e.g. "photos")
+ * @param {object}   file      - File object with { uri, name, type, file? }
+ */
 const appendUpload = (formData, fieldName, file) => {
   if (Platform.OS === "web" && file.file) {
     formData.append(fieldName, file.file, file.name || "photo.jpg");
@@ -267,6 +341,14 @@ const appendUpload = (formData, fieldName, file) => {
   });
 };
 
+/**
+ * Appends vehicle features to FormData in multiple field formats.
+ * The server may expect features in different shapes (CSV string, JSON array,
+ * repeated array fields). All formats are sent to ensure compatibility.
+ *
+ * @param {FormData} formData      - The FormData instance being built
+ * @param {string[]} featuresValue - Array of selected feature strings
+ */
 const appendFeatureFields = (formData, featuresValue) => {
   const featuresText = featuresValue.join(", ");
 
@@ -291,6 +373,16 @@ const appendFeatureFields = (formData, featuresValue) => {
   });
 };
 
+/**
+ * Builds a FormData payload for vehicle exchange, sell, or buy submissions.
+ * Adapts field inclusion based on the form type — e.g. buy forms exclude
+ * year/km/documents, sell forms exclude EV brand and finance fields.
+ *
+ * @param {object}  form        - Current form state object
+ * @param {boolean} isSellForm  - True when submitting a Sell Used Car form
+ * @param {object}  options     - Extra overrides: { isBuyForm, evBrand }
+ * @returns {FormData}          - Ready-to-POST FormData object
+ */
 const buildVehicleSubmission = (form, isSellForm, options = {}) => {
   const formData = new FormData();
   const isBuyForm = options.isBuyForm || false;
@@ -339,6 +431,17 @@ const buildVehicleSubmission = (form, isSellForm, options = {}) => {
   return formData;
 };
 
+/**
+ * Submits the vehicle form to the API with automatic endpoint fallback.
+ * Tries vehicleListingsEndpoint → vehicleSubmissionEndpoint →
+ * vehicleSubmissionEndpointFallback in sequence. Returns the first
+ * successful JSON response or throws the last error if all fail.
+ *
+ * @param {object}  form       - Current form state object
+ * @param {boolean} isSellForm - True when submitting a Sell Used Car form
+ * @param {object}  options    - Passed through to buildVehicleSubmission
+ * @returns {Promise<object>}  - Parsed API response body
+ */
 const postVehicleSubmission = async (form, isSellForm, options = {}) => {
   const endpoints = [
     vehicleListingsEndpoint,
@@ -389,10 +492,25 @@ const postVehicleSubmission = async (form, isSellForm, options = {}) => {
   throw lastError || new Error("Network request failed");
 };
 
+/**
+ * Extracts a human-readable error message from a caught error.
+ * Falls back to a generic string if the error has no message property.
+ *
+ * @param {Error|unknown} error - The caught error value
+ * @returns {string}            - User-facing error message
+ */
 const submissionErrorMessage = (error) => {
   return error?.message || String(error) || "Submission failed. Please try again.";
 };
 
+// ─── 11. REUSABLE UI COMPONENTS ──────────────────────────────────────────────
+
+/**
+ * Label — form field label with optional red asterisk for required fields.
+ *
+ * @param {React.ReactNode} children - Label text content
+ * @param {boolean}         required - Shows a red " *" suffix when true
+ */
 function Label({ children, required }) {
   return (
     <Text allowFontScaling={false} style={styles.label}>
@@ -402,6 +520,23 @@ function Label({ children, required }) {
   );
 }
 
+/**
+ * TextField — single or multi-line text input with label, validation error,
+ * and optional helper text displayed below the input.
+ *
+ * @param {string}   label        - Field label text
+ * @param {string}   value        - Controlled input value
+ * @param {function} onChangeText - Change handler
+ * @param {boolean}  required     - Shows asterisk on label
+ * @param {boolean}  multiline    - Enables multi-line (textarea) mode
+ * @param {string}   keyboardType - React Native keyboard type string
+ * @param {string}   helper       - Optional hint text below the input
+ * @param {string}   placeholder  - Placeholder text
+ * @param {function} onFocus      - Focus event handler
+ * @param {function} onBlur       - Blur event handler
+ * @param {number}   maxLength    - Maximum character length
+ * @param {string}   error        - Validation error message to display
+ */
 function TextField({
   label,
   value,
@@ -438,6 +573,19 @@ function TextField({
   );
 }
 
+/**
+ * SelectField — tappable dropdown selector with an inline option list.
+ * Dismisses the keyboard on open and supports an onOpen callback so
+ * other pickers (e.g. feature picker) can be closed when this opens.
+ *
+ * @param {string}   label    - Field label text
+ * @param {string}   value    - Currently selected value
+ * @param {boolean}  required - Shows asterisk on label
+ * @param {string[]} options  - Array of option strings
+ * @param {function} onChange - Called with the selected option string
+ * @param {function} onOpen   - Called when the dropdown opens (optional)
+ * @param {string}   error    - Validation error message to display
+ */
 function SelectField({ label, value, required, options, onChange, onOpen, error }) {
   const [open, setOpen] = useState(false);
 
@@ -486,6 +634,18 @@ function SelectField({ label, value, required, options, onChange, onOpen, error 
   );
 }
 
+/**
+ * UploadField — file upload area showing selected file thumbnails/previews.
+ * Supports up to 5 files. Images are shown as thumbnails; other files
+ * as a "DOC" badge. Each file has an individual remove button.
+ *
+ * @param {string}   label    - Field label text
+ * @param {object[]} value    - Array of file objects { uri, name, type }
+ * @param {function} onPress  - Opens the image picker
+ * @param {function} onRemove - Called with index to remove a single file
+ * @param {function} onClear  - Removes all selected files
+ * @param {string}   error    - Validation error message to display
+ */
 function UploadField({ label, value = [], onPress, onRemove, onClear, error }) {
   return (
     <View style={styles.field}>
@@ -559,6 +719,17 @@ function UploadField({ label, value = [], onPress, onRemove, onClear, error }) {
   );
 }
 
+// ─── 12. SVG ICONS & FOOTER NAVIGATION ───────────────────────────────────────
+
+/**
+ * Renders a custom SVG navigation icon by name.
+ * Used in both the footer bar and drawer for icons not available in Ionicons.
+ *
+ * @param {string} svgIcon - Icon key: "exchange" | "carSide" | "locationPin"
+ * @param {string} color   - Fill colour string (hex or named)
+ * @param {number} size    - Width/height in dp (default 22)
+ * @returns {React.ReactNode|null}
+ */
 function renderNavSvgIcon(svgIcon, color, size = 22) {
   if (svgIcon === "exchange") {
     return (
@@ -582,6 +753,14 @@ function renderNavSvgIcon(svgIcon, color, size = 22) {
   return null;
 }
 
+/**
+ * FooterNavigation — fixed bottom tab bar showing the main navigation items.
+ * Respects safe-area bottom insets so it clears the home indicator on notched
+ * devices. Active tab is highlighted in brand blue (#075985).
+ *
+ * @param {string}   activeTab - Key of the currently active tab
+ * @param {function} onChange  - Called with the new tab key when tapped
+ */
 function FooterNavigation({ activeTab, onChange }) {
   const insets = useSafeAreaInsets();
   const renderFooterIcon = (item, color) => {
@@ -668,6 +847,13 @@ const faqChipMap = {
   "Buy": "Buy Used Car FAQs"
 };
 
+// ─── 13. PAGE COMPONENTS ──────────────────────────────────────────────────────
+
+/**
+ * FAQsPage — filterable accordion FAQ list.
+ * Chip buttons at the top filter between "All", "Exchange", "General",
+ * "Sell", and "Buy" sections. Tapping a question expands its answer.
+ */
 function FAQsPage() {
   const [openKey, setOpenKey] = useState(null);
   const [activeChip, setActiveChip] = useState("All");
@@ -753,6 +939,10 @@ function FAQsPage() {
 }
 
 
+/**
+ * AboutPage — company overview with hero logo, stats, mission statement,
+ * services offered, core values, and a direct call-to-action button.
+ */
 function AboutPage() {
   const stats = [
     { value: "3+", label: "Branches" },
@@ -860,6 +1050,13 @@ function AboutPage() {
   );
 }
 
+/**
+ * HelplineIcon — SVG icon representing a customer support / helpline agent.
+ * Used decoratively in support-related UI sections.
+ *
+ * @param {string} color - Fill colour (default dark "#111827")
+ * @param {number} size  - Width/height in dp (default 30)
+ */
 function HelplineIcon({ color = "#111827", size = 30 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 512 512">
@@ -875,6 +1072,12 @@ function HelplineIcon({ color = "#111827", size = 30 }) {
   );
 }
 
+/**
+ * SplashScreen — animated loading screen shown while the app checks
+ * AsyncStorage for the onboarding completion flag.
+ * A horizontal progress bar animates over 1.3 seconds then the root
+ * App component transitions to onboarding or the main screen.
+ */
 function SplashScreen() {
   const progress = useRef(new Animated.Value(0)).current;
 
@@ -910,6 +1113,12 @@ function SplashScreen() {
   );
 }
 
+/**
+ * BuyUsedCarPage — informational hero section for the Buy Used Car tab.
+ * Displays three feature highlight cards and a direct call button.
+ * The actual buy inquiry form is rendered below this component in the
+ * main scroll view when the "buy" tab is active.
+ */
 function BuyUsedCarPage() {
   const buyHighlights = [
     {
@@ -970,6 +1179,12 @@ function BuyUsedCarPage() {
   );
 }
 
+/**
+ * ServiceIllustration — decorative SVG car illustration for each service type.
+ * Renders a different scene depending on the `type` prop.
+ *
+ * @param {"sell"|"buy"|"exchange"} type - Which illustration to render
+ */
 function ServiceIllustration({ type }) {
   if (type === "sell") {
     return (
@@ -1037,6 +1252,16 @@ function ServiceIllustration({ type }) {
   );
 }
 
+/**
+ * TextSvg — thin wrapper around react-native-svg's Text element.
+ * Provides a shorter API for rendering bold text inside SVG illustrations.
+ *
+ * @param {number} x     - X position in the SVG coordinate space
+ * @param {number} y     - Y position in the SVG coordinate space
+ * @param {string} text  - Text string to render
+ * @param {number} size  - Font size
+ * @param {string} color - Fill colour
+ */
 function TextSvg({ x, y, text, size, color }) {
   return (
     <SvgText x={x} y={y} fill={color} fontSize={size} fontWeight="900">
@@ -1045,6 +1270,13 @@ function TextSvg({ x, y, text, size, color }) {
   );
 }
 
+/**
+ * PolicyPage — renders a legal policy document (Terms, Privacy, Refund,
+ * or Disclaimer) from the policiesContent map. Sections starting with a
+ * number are rendered with a bold heading; other paragraphs are plain text.
+ *
+ * @param {"terms"|"privacy"|"refund"|"disclaimer"} policyKey - Which policy to show
+ */
 function PolicyPage({ policyKey }) {
   const policy = policiesContent[policyKey];
   const paragraphs = policy.content.split("\n\n");
@@ -1072,6 +1304,16 @@ function PolicyPage({ policyKey }) {
   );
 }
 
+/**
+ * AgreementRow — checkbox row requiring the user to agree to all four legal
+ * policies before any form can be submitted. Policy names are tappable links
+ * that navigate to the corresponding PolicyPage.
+ *
+ * @param {boolean}  agreed     - Whether the checkbox is checked
+ * @param {function} onToggle   - Toggles the agreed state
+ * @param {string}   error      - Validation error shown when not agreed
+ * @param {function} onNavigate - Called with a policyKey to open a policy page
+ */
 function AgreementRow({ agreed, onToggle, error, onNavigate }) {
   return (
     <View style={styles.agreementWrap}>
@@ -1103,6 +1345,13 @@ function AgreementRow({ agreed, onToggle, error, onNavigate }) {
   );
 }
 
+/**
+ * OnboardingScreen — three-slide intro carousel shown to first-time users.
+ * Users can tap "Next" to advance, "Skip" to exit early, or "Get Started"
+ * on the final slide. Completion is persisted so it only shows once.
+ *
+ * @param {function} onDone - Called when the user finishes or skips onboarding
+ */
 function OnboardingScreen({ onDone }) {
   const { width, height: screenHeight } = useWindowDimensions();
   const [slideIndex, setSlideIndex] = useState(0);
@@ -1177,6 +1426,13 @@ function OnboardingScreen({ onDone }) {
   );
 }
 
+/**
+ * DealerPage — "Become a Dealer" application form.
+ * Collects full name, company name, city, phone, and optional showroom
+ * photos, then POSTs to the dealer endpoint. Requires policy agreement.
+ *
+ * @param {function} onNavigate - Called with a policyKey to open legal pages
+ */
 function DealerPage({ onNavigate }) {
   const [form, setForm] = useState({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
   const [errors, setErrors] = useState({});
@@ -1315,6 +1571,14 @@ function DealerPage({ onNavigate }) {
   );
 }
 
+/**
+ * TestDrivePage — Free Test Drive request form.
+ * Collects customer contact info and the vehicle they want to test drive.
+ * Submits as JSON (not multipart) to the test-drive endpoint.
+ * Includes a multi-select feature picker for desired vehicle features.
+ *
+ * @param {function} onNavigate - Called with a policyKey to open legal pages
+ */
 function TestDrivePage({ onNavigate }) {
   const [form, setForm] = useState({
     fullName: "", email: "", phone: "", city: "Kathmandu",
@@ -1519,6 +1783,9 @@ function TestDrivePage({ onNavigate }) {
   );
 }
 
+// ─── 14. GLOSSARY DATA ────────────────────────────────────────────────────────
+// A–Z automotive and EV market terminology. Each letter maps to an array of
+// { title, definition } objects rendered by GlossaryPage.
 const glossaryData = {
   A: [
     { title: "Accident History", definition: "A record of any collisions, damages, or incidents involving a vehicle during its lifetime." },
@@ -1834,6 +2101,11 @@ const glossaryData = {
   ]
 };
 
+/**
+ * GlossaryPage — A–Z automotive terminology reference.
+ * An alphabet grid lets users jump to any letter; the selected letter's
+ * terms are displayed as definition cards below the grid.
+ */
 function GlossaryPage() {
   const [activeLetter, setActiveLetter] = useState("A");
   const letterRows = [
@@ -1884,6 +2156,20 @@ function GlossaryPage() {
   );
 }
 
+// ─── 15. DRAWER & HEADER NAVIGATION ──────────────────────────────────────────
+
+/**
+ * DrawerNavigation — slide-in side drawer menu.
+ * Renders below the header (not from the top of screen) and sits above the
+ * footer tab bar. Divided into primary nav links and secondary/utility links.
+ * Tapping the scrim backdrop closes the drawer.
+ *
+ * @param {string}   activeTab    - Currently active tab key (for highlight)
+ * @param {boolean}  visible      - Whether the drawer is shown
+ * @param {function} onClose      - Called to close the drawer
+ * @param {function} onSelect     - Called with navKey when a link is tapped
+ * @param {number}   headerHeight - Height of the fixed header in dp (default 88)
+ */
 function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight = 88 }) {
   const { height: screenHeight } = useWindowDimensions();
   const drawerTop = headerHeight + 6;
@@ -2023,6 +2309,15 @@ function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight 
   );
 }
 
+/**
+ * Header — fixed top navigation bar with the NEPAL Motor logo/brand,
+ * a call icon, and the hamburger menu button that opens the drawer.
+ * Uses onLayout to report its rendered height to the parent App so the
+ * scroll view padding and drawer offset stay accurate across devices.
+ *
+ * @param {function} onOpenDrawer - Opens the DrawerNavigation
+ * @param {function} onLayout     - Layout event handler (reports header height)
+ */
 function Header({ onOpenDrawer, onLayout }) {
   const callNepalMotor = () => {
     Linking.openURL(`tel:${phoneNumber}`);
@@ -2064,6 +2359,32 @@ function Header({ onOpenDrawer, onLayout }) {
   );
 }
 
+// ─── 16. ROOT APP COMPONENT ───────────────────────────────────────────────────
+
+/**
+ * App — root component and application state manager.
+ *
+ * State:
+ *  - appPhase       : "loading" | "onboarding" | "main"
+ *  - drawerOpen     : controls drawer visibility
+ *  - headerHeight   : measured height of the Header for layout offsets
+ *  - forms          : { exchange, sell, buy } — each holding emptyForm shape
+ *  - activeFooterTab: currently visible page key
+ *  - previousTab    : last non-policy tab (used for hardware back button)
+ *  - errors         : field-level validation error map
+ *  - termsAgreed    : whether the user has ticked the policy agreement
+ *
+ * Lifecycle:
+ *  1. On mount → reads AsyncStorage / localStorage for onboarding flag
+ *  2. Shows SplashScreen during load, OnboardingScreen if first visit
+ *  3. Enters main app with Exchange tab active by default
+ *
+ * Form submission:
+ *  - Exchange / Sell  → multipart FormData via postVehicleSubmission
+ *  - Buy              → JSON POST to buy-used-cars endpoint
+ *  - Test Drive       → JSON POST in TestDrivePage (self-contained)
+ *  - Dealer           → multipart FormData in DealerPage (self-contained)
+ */
 export default function App() {
   const [appPhase, setAppPhase] = useState("loading");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -2138,6 +2459,7 @@ export default function App() {
     return () => subscription.remove();
   }, [activeFooterTab, previousTab]);
 
+  // Updates a single field in the active form and clears any status message
   const update = (key, value) => {
     setForms((current) => ({
       ...current,
@@ -2184,8 +2506,14 @@ export default function App() {
     setTermsAgreed(false);
   };
 
+  // Keys that correspond to legal policy pages (not main nav tabs)
   const policyPageKeys = ["terms", "privacy", "refund", "disclaimer"];
 
+  /**
+   * Changes the active tab and resets transient UI state.
+   * Tracks the previous tab when navigating into a policy page so the
+   * Android hardware back button can return to the correct form.
+   */
   const changeFooterTab = (tab) => {
     closeFeaturePicker();
     setDrawerOpen(false);
@@ -2209,6 +2537,11 @@ export default function App() {
     });
   };
 
+  /**
+   * Marks onboarding as complete in persistent storage and advances
+   * appPhase to "main". The finally block guarantees the app always
+   * transitions even if storage write fails.
+   */
   const completeOnboarding = async () => {
     try {
       if (Platform.OS === "web" && typeof window !== "undefined") {
@@ -2808,6 +3141,9 @@ export default function App() {
   );
 }
 
+// ─── 17. STYLESHEET ───────────────────────────────────────────────────────────
+// All component styles defined in a single StyleSheet for performance.
+// Naming convention: componentName + Element (e.g. footerNav, footerNavItem)
 const styles = StyleSheet.create({
   splashScreen: {
     flex: 1,
