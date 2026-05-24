@@ -14,5 +14,18 @@ android/app/*.jks
 android/app/*.keystore
 .env
 .claude/
-release/*.pem
 live-nepalmotor-com/
+
+# Release signing keys
+release/*.pem
+release/*.jks
+release/*.keystore
+
+# Build artifacts — use GitHub Releases or file storage for sharing
+*.apk
+*.aab
+*.zip
+*.so
+
+# Local working files
+presentation.html
