@@ -70,7 +70,7 @@ const dealerEndpoint = "https://www.nepalmotor.com/api/become-a-dealer";
 // POST /api/verify-otp  body: { phone, otp }    → { success, valid, message }
 const sendOtpEndpoint = "https://www.nepalmotor.com/api/send-otp";
 const verifyOtpEndpoint = "https://www.nepalmotor.com/api/verify-otp";
-const OTP_LENGTH = 6;          // Digits in the OTP code
+const OTP_LENGTH = 4;          // Digits in the OTP code
 const OTP_RESEND_COOLDOWN = 30; // Seconds before the user can resend
 
 // ─── 3. DROPDOWN OPTION LISTS ────────────────────────────────────────────────
@@ -1813,7 +1813,7 @@ function TestDrivePage({ onNavigate, onRequestOTP }) {
  * OTPModal — full-screen overlay for phone number verification.
  *
  * Shows after the user taps Submit on any form. An OTP is sent to their
- * phone via Sparrow SMS. They enter the 6-digit code here; on success the
+ * phone via Sparrow SMS. They enter the 4-digit code here; on success the
  * actual form submission is executed by the parent via onVerify().
  *
  * UX details:
@@ -1824,7 +1824,7 @@ function TestDrivePage({ onNavigate, onRequestOTP }) {
  *
  * @param {boolean}  visible        - Whether the modal is shown
  * @param {string}   phone          - Phone number the OTP was sent to
- * @param {string[]} digits         - Array of 6 digit strings (controlled)
+ * @param {string[]} digits         - Array of 4 digit strings (controlled)
  * @param {function} onChangeDigit  - (digit, index) → updates one digit slot
  * @param {function} onVerify       - Called when the user taps Verify & Submit
  * @param {function} onResend       - Called when the user taps Resend code
@@ -1898,11 +1898,11 @@ function OTPModal({ visible, phone, digits, onChangeDigit, onVerify, onResend, o
 
         {/* Instruction text */}
         <Text allowFontScaling={false} style={styles.otpSubtitle}>
-          A 6-digit verification code was sent to
+          A 4-digit verification code was sent to
         </Text>
         <Text allowFontScaling={false} style={styles.otpPhone}>+977 {maskedPhone}</Text>
 
-        {/* 6-digit input boxes */}
+        {/* 4-digit input boxes */}
         <View style={styles.otpBoxRow}>
           {digits.map((digit, i) => (
             <TextInput
@@ -1930,7 +1930,7 @@ function OTPModal({ visible, phone, digits, onChangeDigit, onVerify, onResend, o
           <Text allowFontScaling={false} style={styles.otpError}>{error}</Text>
         ) : null}
 
-        {/* Verify button — disabled until all 6 digits are filled */}
+        {/* Verify button — disabled until all 4 digits are filled */}
         <Pressable
           style={[
             styles.otpVerifyButton,
