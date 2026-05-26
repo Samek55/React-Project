@@ -13,9 +13,9 @@
     "strict": false
   },
   "include": [
-    "App.js",
-    "app.json",
-    "babel.config.js"
+    "**/*.ts",
+    "**/*.tsx",
+    "app.json"
   ],
   "exclude": [
     "android",
