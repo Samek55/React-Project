@@ -53,6 +53,7 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
   const [messageType, setMessageType] = useState("");
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [featurePickerOpen, setFeaturePickerOpen] = useState(false);
+  const [dropdownSignal, setDropdownSignal] = useState(0);
   const featurePickerRef = useRef<View>(null);
   const availableFeatures = features.filter((f) => !form.features.includes(f));
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -62,7 +63,13 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
   useEffect(() => () => { if (messageTimerRef.current) clearTimeout(messageTimerRef.current); }, []);
 
   const update = (key: keyof TestDriveForm, value: any) => setForm((c) => ({ ...c, [key]: value }));
-  const closeFeaturePicker = () => setFeaturePickerOpen(false);
+  // Collapses the feature picker AND increments dropdownSignal so any open
+  // SelectField dropdown also closes. Wired to SelectField.onOpen and every
+  // TextField.onFocus, so tapping any input collapses open dropdowns.
+  const closeFeaturePicker = () => {
+    setFeaturePickerOpen(false);
+    setDropdownSignal((s) => s + 1);
+  };
   const toggleFeature = (feature: string) => {
     setForm((c) => ({
       ...c,
@@ -95,7 +102,7 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
     await onRequestOTP(submittedForm.phone, async () => {
       setSubmitting(true);
       try {
-        await fetch("https://nepalmotor.com/api/test-drive", {
+        const resp = await fetch("https://nepalmotor.com/api/test-drive", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -115,6 +122,10 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
             notes: submittedForm.notes.trim(),
           }),
         });
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => ({}));
+          throw new Error(data?.message || `Submission failed (${resp.status})`);
+        }
         setMessage("Your test drive request has been submitted!");
         setMessageType("success");
         setForm(emptyTestDrive);
@@ -155,8 +166,8 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
         error={errors.phone} onFocus={closeFeaturePicker}
         onChangeText={(v) => update("phone", v.replace(/[^0-9]/g, ""))}
       />
-      <SelectField label="City" required value={form.city} options={cities} onOpen={closeFeaturePicker} onChange={(v) => update("city", v)} />
-      <SelectField label="Vehicle Type" required value={form.vehicleType} options={vehicleTypes} onOpen={closeFeaturePicker} onChange={(v) => update("vehicleType", v)} />
+      <SelectField label="City" required value={form.city} options={cities} onOpen={closeFeaturePicker} closeSignal={dropdownSignal} onChange={(v) => update("city", v)} />
+      <SelectField label="Vehicle Type" required value={form.vehicleType} options={vehicleTypes} onOpen={closeFeaturePicker} closeSignal={dropdownSignal} onChange={(v) => update("vehicleType", v)} />
       <TextField
         label="Vehicle Model" required value={form.model} error={errors.model} placeholder="Santro"
         onFocus={closeFeaturePicker}
@@ -167,9 +178,9 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
         }}
       />
       <TextField label="Vehicle Brand" required value={form.brand} error={errors.brand} placeholder="Hyundai" onFocus={closeFeaturePicker} onChangeText={(v) => update("brand", v)} />
-      <SelectField label="Vehicle Color" required value={form.color} error={errors.color} options={colors.map((c) => c === "Other" ? "Any" : c)} onOpen={closeFeaturePicker} onChange={(v) => update("color", v)} />
-      <SelectField label="Transmission / Gear" required value={form.transmission} error={errors.transmission} options={transmissions} onOpen={closeFeaturePicker} onChange={(v) => update("transmission", v)} />
-      <SelectField label="Fuel Type" required value={form.fuelType} error={errors.fuelType} options={fuelTypesWithEV} onOpen={closeFeaturePicker} onChange={(v) => update("fuelType", v)} />
+      <SelectField label="Vehicle Color" required value={form.color} error={errors.color} options={colors.map((c) => c === "Other" ? "Any" : c)} onOpen={closeFeaturePicker} closeSignal={dropdownSignal} onChange={(v) => update("color", v)} />
+      <SelectField label="Transmission / Gear" required value={form.transmission} error={errors.transmission} options={transmissions} onOpen={closeFeaturePicker} closeSignal={dropdownSignal} onChange={(v) => update("transmission", v)} />
+      <SelectField label="Fuel Type" required value={form.fuelType} error={errors.fuelType} options={fuelTypesWithEV} onOpen={closeFeaturePicker} closeSignal={dropdownSignal} onChange={(v) => update("fuelType", v)} />
 
       {featurePickerOpen ? (
         <Pressable style={styles.featurePickerOverlay} onPress={closeFeaturePicker} />
@@ -211,7 +222,7 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
         ) : null}
       </View>
 
-      <SelectField label="Are you looking for Finance?" required value={form.finance} error={errors.finance} options={financeOptions} onOpen={closeFeaturePicker} onChange={(v) => update("finance", v)} />
+      <SelectField label="Are you looking for Finance?" required value={form.finance} error={errors.finance} options={financeOptions} onOpen={closeFeaturePicker} closeSignal={dropdownSignal} onChange={(v) => update("finance", v)} />
       <TextField label="Notes" value={form.notes} multiline onFocus={closeFeaturePicker} onChangeText={(v) => update("notes", v)} />
 
       {message ? (

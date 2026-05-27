@@ -15,7 +15,7 @@ export const cities: string[] = [
 
 export const vehicleTypes: string[] = ["Hatchback", "Sedan", "SUV", "Crossover", "Pickup", "Van", "Other"];
 
-export const evBrands: string[] = ["Tata Nexon EV", "Tata Tigor EV", "Tata Punch EV", "BYD Atto 3", "BYD Dolphine", "BYD e6", "MG ZS EV", "MG4 EV", "MG S5 EV", "Neta V", "Neta U", "Neta X", "Hyundai Kona Electric", "Hyundai Ioniq 5", "Hyundai Creta EV", "Kia EV6", "Kia EV9", "Kia Niro EV", "I need suggestion", "Other"];
+export const evBrands: string[] = ["Tata Nexon EV", "Tata Tigor EV", "Tata Punch EV", "BYD Atto 3", "BYD Dolphin", "BYD e6", "MG ZS EV", "MG4 EV", "MG S5 EV", "Neta V", "Neta U", "Neta X", "Hyundai Kona Electric", "Hyundai Ioniq 5", "Hyundai Creta EV", "Kia EV6", "Kia EV9", "Kia Niro EV", "I need suggestion", "Other"];
 
 export const financeOptions: string[] = ["Yes", "No"];
 

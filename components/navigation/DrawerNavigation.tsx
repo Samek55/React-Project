@@ -49,7 +49,7 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
     { label: "Buy Used Car", icon: "key-outline", navKey: "buy" },
     { label: "Sell Used Car", icon: "cash-outline", svgIcon: "carSide", navKey: "sell" },
     { label: "Free Test Drive", icon: "car-sport-outline", navKey: "testdrive" },
-    { label: "Become a Dealer", icon: "business-outline", navKey: "dealer" },
+    { label: "Become a Dealer", icon: "business-outline", navKey: "branches" },
   ];
 
   const secondaryItems: DrawerItem[] = [
@@ -158,6 +158,7 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
             <Pressable
               accessibilityRole="button"
               style={({ hovered }: any) => [styles.drawerAdminButton, hovered && styles.drawerAdminButtonHover]}
+              onPress={() => { Linking.openURL("https://www.nepalmotor.com/admin"); onClose(); }}
             >
               <Text allowFontScaling={false} style={styles.drawerAdminText}>Admin Login</Text>
             </Pressable>

@@ -59,5 +59,6 @@ export const faqChipMap: Record<string, string> = {
   "Exchange": "Car Exchange Page FAQs",
   "General": "General FAQs",
   "Sell": "Sell Used Car FAQs",
-  "Buy": "Buy Used Car FAQs"
+  "Buy": "Buy Used Car FAQs",
+  "Branches": "Branches FAQs"
 };

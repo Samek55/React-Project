@@ -17,9 +17,9 @@
  *                    GlossaryPage
  *
  * Platform:  Android (primary) · Expo Web (development preview)
- * SDK:       Expo 51 · React Native 0.74 · React 18
+ * SDK:       Expo 53 · React Native 0.79 · React 19
  * Package:   com.pracas.nepalmotor
- * Version:   1.0.45
+ * Version:   1.0.55
  */
 
 import React, { useEffect, useRef, useState } from "react";
@@ -45,10 +45,7 @@ import {
   OTP_RESEND_COOLDOWN,
   onboardingStorageKey,
   sendOtpEndpoint,
-  verifyOtpEndpoint,
-  vehicleListingsEndpoint,
-  vehicleSubmissionEndpoint,
-  vehicleSubmissionEndpointFallback
+  verifyOtpEndpoint
 } from "./data/constants";
 import { colors, cities, vehicleTypes, evBrands, financeOptions, transmissions, accidents, fuelTypes, fuelTypesWithEV } from "./data/options";
 import { features, emptyForm } from "./data/formConfig";
@@ -205,6 +202,11 @@ export default function App() {
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      // OTP modal takes highest priority — back should cancel it, not background the app
+      if (otpVisible) {
+        handleOTPCancel();
+        return true;
+      }
       if (policyPageKeys.includes(activeFooterTab) && previousTab !== null) {
         setActiveFooterTab(previousTab);
         setPreviousTab(null);
@@ -216,7 +218,7 @@ export default function App() {
       return false;
     });
     return () => subscription.remove();
-  }, [activeFooterTab, previousTab]);
+  }, [activeFooterTab, previousTab, otpVisible]);
 
   // Updates a single field in the active form and clears any status message
   const update = (key: keyof FormState, value: any) => {
@@ -247,10 +249,17 @@ export default function App() {
     });
   };
 
+  // ── Feature picker + dropdown collapse ───────────────────────────────────
+  // dropdownSignal is passed as `closeSignal` to every SelectField. When it
+  // increments, all SelectFields close except the one that just opened (which
+  // guards itself via justOpenedRef in SelectField.tsx).
+  // closeFeaturePicker is already wired to every TextField's onFocus and the
+  // ScrollView's onScrollBeginDrag, so tapping ANY text input or scrolling
+  // automatically collapses any open SelectField dropdown too.
+  const [dropdownSignal, setDropdownSignal] = useState(0);
   const closeFeaturePicker = () => {
-    if (featurePickerOpen) {
-      setFeaturePickerOpen(false);
-    }
+    setFeaturePickerOpen(false);
+    setDropdownSignal((s) => s + 1);
   };
 
   const clearForm = () => {
@@ -432,13 +441,14 @@ export default function App() {
     }
   };
 
-  /** Cancels OTP flow — hides modal and clears state. */
+  /** Cancels OTP flow — hides modal and clears all OTP state. */
   const handleOTPCancel = () => {
     if (resendTimerRef.current) clearInterval(resendTimerRef.current);
     setOtpVisible(false);
     setOtpLoading("");
     setOtpError("");
     setOtpDigits(Array(OTP_LENGTH).fill(""));
+    setOtpResendSeconds(0); // reset so reopening the modal starts clean
     pendingSubmitRef.current = null;
   };
 
@@ -590,7 +600,7 @@ export default function App() {
       setSubmitting(true);
       try {
         if (submittedIsBuyForm) {
-          await fetch("https://nepalmotor.com/api/buy-used-cars", {
+          const buyResp = await fetch("https://nepalmotor.com/api/buy-used-cars", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -610,6 +620,10 @@ export default function App() {
               notes: submittedForm.notes.trim(),
             }),
           });
+          if (!buyResp.ok) {
+            const data = await buyResp.json().catch(() => ({}));
+            throw new Error(data?.message || `Submission failed (${buyResp.status})`);
+          }
         } else {
           const apiResponse = await postVehicleSubmission(submittedForm, submittedIsSellForm, { isBuyForm: false });
           console.log("API RESPONSE:", apiResponse);
@@ -643,7 +657,7 @@ export default function App() {
   };
 
   if (appPhase === "loading") {
-    return <SafeAreaProvider>{null}</SafeAreaProvider>;
+    return <SafeAreaProvider><SplashScreen /></SafeAreaProvider>;
   }
 
   if (appPhase === "onboarding") {
@@ -730,7 +744,7 @@ export default function App() {
           required
           value={form.city}
           options={cities}
-          onOpen={closeFeaturePicker}
+          onOpen={closeFeaturePicker} closeSignal={dropdownSignal}
           onChange={(value) => update("city", value)}
         />
         {!isBuyForm ? (
@@ -762,7 +776,7 @@ export default function App() {
           required
           value={form.vehicleType}
           options={vehicleTypes}
-          onOpen={closeFeaturePicker}
+          onOpen={closeFeaturePicker} closeSignal={dropdownSignal}
           onChange={(value) => update("vehicleType", value)}
         />
         <TextField
@@ -799,7 +813,7 @@ export default function App() {
           value={form.color}
           error={errors.color}
           options={colors}
-          onOpen={closeFeaturePicker}
+          onOpen={closeFeaturePicker} closeSignal={dropdownSignal}
           onChange={(value) => update("color", value)}
         />
         {!isBuyForm ? (
@@ -843,7 +857,7 @@ export default function App() {
           value={form.transmission}
           error={errors.transmission}
           options={transmissions}
-          onOpen={closeFeaturePicker}
+          onOpen={closeFeaturePicker} closeSignal={dropdownSignal}
           onChange={(value) => update("transmission", value)}
         />
         {isExchangeForm ? (
@@ -851,7 +865,7 @@ export default function App() {
             label="Accidents"
             value={form.accident}
             options={accidents}
-            onOpen={closeFeaturePicker}
+            onOpen={closeFeaturePicker} closeSignal={dropdownSignal}
             onChange={(value) => update("accident", value)}
           />
         ) : null}
@@ -861,7 +875,7 @@ export default function App() {
           value={form.fuelType}
           error={errors.fuelType}
           options={isSellForm || isBuyForm ? fuelTypesWithEV : fuelTypes}
-          onOpen={closeFeaturePicker}
+          onOpen={closeFeaturePicker} closeSignal={dropdownSignal}
           onChange={(value) => update("fuelType", value)}
         />
 
@@ -939,7 +953,7 @@ export default function App() {
             value={form.evBrand}
             error={errors.evBrand}
             options={evBrands}
-            onOpen={closeFeaturePicker}
+            onOpen={closeFeaturePicker} closeSignal={dropdownSignal}
             onChange={(value) => update("evBrand", value)}
           />
         ) : null}
@@ -963,7 +977,7 @@ export default function App() {
             value={form.finance}
             error={errors.finance}
             options={financeOptions}
-            onOpen={closeFeaturePicker}
+            onOpen={closeFeaturePicker} closeSignal={dropdownSignal}
             onChange={(value) => update("finance", value)}
           />
         ) : null}

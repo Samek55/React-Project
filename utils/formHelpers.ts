@@ -1,6 +1,5 @@
 import { Platform } from "react-native";
 import {
-  vehicleListingsEndpoint,
   vehicleSubmissionEndpoint,
   vehicleSubmissionEndpointFallback
 } from "../data/constants";
@@ -122,7 +121,6 @@ export const postVehicleSubmission = async (
   options: SubmissionOptions = {}
 ): Promise<any> => {
   const endpoints = [
-    vehicleListingsEndpoint,
     vehicleSubmissionEndpoint,
     vehicleSubmissionEndpointFallback
   ];

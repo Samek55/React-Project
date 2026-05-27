@@ -3,6 +3,8 @@ package com.pracas.nepalmotor
 import android.os.Build
 import android.os.Bundle
 
+import androidx.activity.enableEdgeToEdge
+
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -12,6 +14,9 @@ import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    // Enable edge-to-edge display for Android 15+ (targetSdk 35).
+    // Must be called before setTheme and super.onCreate.
+    enableEdgeToEdge()
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.

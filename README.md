@@ -8,7 +8,7 @@ The project supports Expo web previews during development and includes a native 
 
 - **App name:** `NEPAL Motor`
 - **Android package:** `com.pracas.nepalmotor`
-- **Expo app version:** `1.0.45`
+- **Expo app version:** `1.0.55`
 - **Primary platform:** Android
 - **Development preview:** Expo web
 - **Source entry:** `App.tsx`
@@ -25,14 +25,16 @@ The project supports Expo web previews during development and includes a native 
 - Inline validation for required fields, phone number, email format, vehicle year, and policy agreement
 - Upload support for vehicle documents, vehicle photos, and dealer showroom photos
 - Multiple file selection with upload limits
+- Single-open dropdown behavior across vehicle request forms
+- API response handling for buy-used-car and test-drive submissions
 - Expo web preview and native Android build support
 - Custom NEPAL Motor app icon and release assets
 
 ## Technology Stack
 
-- Expo SDK 51
-- React Native 0.74
-- React 18
+- Expo SDK 53
+- React Native 0.79
+- React 19
 - TypeScript
 - Expo Image Picker
 - Expo Status Bar
@@ -168,4 +170,6 @@ The Android launcher icon uses the NEPAL Motor safe icon assets. If the icon doe
 
 - Build outputs such as APK, AAB, ZIP, and native build folders are ignored by Git.
 - Keep signing keys and local environment files out of the repository.
+- Android release version is currently `1.0.55` / version code `55`.
+- Android builds use legacy native-library packaging for Google Play 16 KB page-size compatibility.
 - For production distribution, configure a proper release keystore instead of relying on debug signing.

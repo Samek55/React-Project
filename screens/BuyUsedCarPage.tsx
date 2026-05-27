@@ -31,7 +31,7 @@ export default function BuyUsedCarPage() {
 
   return (
     <View>
-      <Text style={styles.title}>Buy Used Car</Text>
+      <Text allowFontScaling={false} style={styles.title}>Buy Used Car</Text>
       <View style={styles.buyHero}>
         <View style={styles.buyHeroIcon}>
           <Ionicons name="key-outline" size={34} color="#ffffff" />

@@ -88,7 +88,11 @@ export default function DealerPage({ onNavigate, onRequestOTP }: DealerPageProps
         formData.append("phone", submittedForm.phone.trim());
         formData.append("requestType", "Become a Dealer");
         submittedForm.photo.forEach((f) => appendUpload(formData, "photos", f));
-        await fetch(dealerEndpoint, { method: "POST", body: formData });
+        const resp = await fetch(dealerEndpoint, { method: "POST", body: formData });
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => ({}));
+          throw new Error(data?.message || `Submission failed (${resp.status})`);
+        }
         setMessage("Your dealer application has been submitted!");
         setMessageType("success");
         setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
