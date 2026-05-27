@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -37,6 +37,11 @@ export default function DealerPage({ onNavigate, onRequestOTP }: DealerPageProps
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [termsAgreed, setTermsAgreed] = useState(false);
+  const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear the auto-dismiss timer on unmount to avoid state updates on an
+  // unmounted component.
+  useEffect(() => () => { if (messageTimerRef.current) clearTimeout(messageTimerRef.current); }, []);
 
   const update = (key: keyof DealerForm, value: any) => setForm((c) => ({ ...c, [key]: value }));
 
@@ -89,6 +94,9 @@ export default function DealerPage({ onNavigate, onRequestOTP }: DealerPageProps
         setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });
         setTermsAgreed(false);
         setErrors({});
+        // Auto-dismiss the success banner after 4 seconds
+        if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+        messageTimerRef.current = setTimeout(() => setMessage(""), 4000);
       } catch {
         setMessage("Submission failed. Please try again.");
         setMessageType("error");

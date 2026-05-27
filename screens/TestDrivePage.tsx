@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { cities, vehicleTypes, colors, transmissions, fuelTypesWithEV, financeOptions } from "../data/options";
@@ -55,6 +55,11 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
   const [featurePickerOpen, setFeaturePickerOpen] = useState(false);
   const featurePickerRef = useRef<View>(null);
   const availableFeatures = features.filter((f) => !form.features.includes(f));
+  const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear the auto-dismiss timer on unmount to avoid state updates on an
+  // unmounted component.
+  useEffect(() => () => { if (messageTimerRef.current) clearTimeout(messageTimerRef.current); }, []);
 
   const update = (key: keyof TestDriveForm, value: any) => setForm((c) => ({ ...c, [key]: value }));
   const closeFeaturePicker = () => setFeaturePickerOpen(false);
@@ -115,6 +120,9 @@ export default function TestDrivePage({ onNavigate, onRequestOTP }: TestDrivePag
         setForm(emptyTestDrive);
         setTermsAgreed(false);
         setErrors({});
+        // Auto-dismiss the success banner after 4 seconds
+        if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+        messageTimerRef.current = setTimeout(() => setMessage(""), 4000);
       } catch {
         setMessage("Submission failed. Please try again.");
         setMessageType("error");
