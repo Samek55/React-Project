@@ -80,6 +80,11 @@ export default function OTPModal({
     }
   };
 
+  // A "send error" is one that arrives before the user has typed anything.
+  // We must not colour the empty boxes red in that case — red borders should
+  // only appear when the user submitted all digits and the code was wrong.
+  const isSendError = error !== "" && !isComplete && digits.every((d) => d === "");
+
   return (
     <View style={styles.otpOverlay}>
       {/* Tapping the dark background cancels the modal */}
@@ -110,6 +115,12 @@ export default function OTPModal({
         </Text>
         <Text allowFontScaling={false} style={styles.otpPhone}>+977 {maskedPhone}</Text>
 
+        {/* Send-failure banner — shown above the boxes so the user knows to
+            tap "Resend code" rather than thinking they entered a wrong digit */}
+        {isSendError ? (
+          <Text allowFontScaling={false} style={styles.otpError}>{error}</Text>
+        ) : null}
+
         {/* 4-digit input boxes */}
         <View style={styles.otpBoxRow}>
           {digits.map((digit, i) => (
@@ -119,7 +130,9 @@ export default function OTPModal({
               style={[
                 styles.otpBox,
                 digit && styles.otpBoxFilled,
-                error && styles.otpBoxError
+                // Only colour boxes red when the user has filled all of them
+                // and the server rejected the code — not on a send failure.
+                error && !isSendError && styles.otpBoxError
               ]}
               value={digit}
               onChangeText={(text) => handleDigitChange(text, i)}
@@ -133,8 +146,8 @@ export default function OTPModal({
           ))}
         </View>
 
-        {/* Validation error */}
-        {error ? (
+        {/* Verification error — shown below the boxes when the code is wrong */}
+        {error && !isSendError ? (
           <Text allowFontScaling={false} style={styles.otpError}>{error}</Text>
         ) : null}
 

@@ -346,10 +346,14 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone })
       });
-      if (!resp.ok) throw new Error("Send OTP failed");
-      startResendCountdown();
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || data.success === false) {
+        setOtpError(data.message || "Failed to send OTP. Please try again.");
+      } else {
+        startResendCountdown();
+      }
     } catch {
-      setOtpError("Failed to send OTP. Please check your number and try again.");
+      setOtpError("Network error. Please check your connection and try again.");
     } finally {
       setOtpLoading("");
     }
@@ -415,10 +419,14 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: otpPhone })
       });
-      if (!resp.ok) throw new Error("Resend failed");
-      startResendCountdown();
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || data.success === false) {
+        setOtpError(data.message || "Failed to resend OTP. Please try again.");
+      } else {
+        startResendCountdown();
+      }
     } catch {
-      setOtpError("Failed to resend OTP. Please try again.");
+      setOtpError("Network error. Please check your connection and try again.");
     } finally {
       setOtpLoading("");
     }
