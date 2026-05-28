@@ -15,10 +15,16 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pracas.nepalmotor",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow NEPAL Motor to access your photos so you can upload vehicle images."
+      }
     },
     "android": {
       "package": "com.pracas.nepalmotor",
+      "versionCode": 46,
       "adaptiveIcon": {
         "foregroundImage": "./assets/nepal-motor-adaptive-foreground-safe.png",
         "backgroundColor": "#FFFFFF"

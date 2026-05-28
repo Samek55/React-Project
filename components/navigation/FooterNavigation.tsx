@@ -53,7 +53,7 @@ export default function FooterNavigation({ activeTab, onChange }: FooterNavigati
 
   return (
     <View style={styles.footerNavShell}>
-      <View style={[styles.footerNav, { paddingBottom: Math.max(insets.bottom, 6) }]}>
+      <View style={[styles.footerNav, { paddingBottom: Math.max(insets.bottom - 8, 8) }]}>
         {footerNavItems.map((item) => {
           const active = activeTab === item.key;
           const iconColor = active ? "#075985" : "#64748b";

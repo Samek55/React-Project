@@ -31,8 +31,8 @@ interface DrawerNavigationProps {
  */
 export default function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight = 88 }: DrawerNavigationProps) {
   const { height: screenHeight } = useWindowDimensions();
-  const drawerTop = headerHeight + 6;
-  const drawerHeight = screenHeight - drawerTop - 85;
+  const drawerTop = headerHeight;
+  const drawerHeight = screenHeight * 0.8;
 
   if (!visible) {
     return null;
@@ -76,7 +76,7 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
         onPress={onClose}
         style={styles.drawerScrim}
       />
-      <View style={[styles.drawerPanel, { height: drawerHeight, marginTop: drawerTop }]}>
+      <View style={[styles.drawerPanel, { marginTop: drawerTop, height: drawerHeight }]}>
         <View style={styles.drawerHeader}>
           <Image source={nepalFlagLogo} style={styles.drawerLogo as any} />
           <Text allowFontScaling={false} numberOfLines={1} style={styles.drawerTitle}>
@@ -111,8 +111,8 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 20)
-                    : <Ionicons name={item.icon as any} size={20} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 26)
+                    : <Ionicons name={item.icon as any} size={26} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -141,8 +141,8 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 20)
-                    : <Ionicons name={item.icon as any} size={20} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 26)
+                    : <Ionicons name={item.icon as any} size={26} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}

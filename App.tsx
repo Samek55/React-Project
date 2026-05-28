@@ -80,7 +80,6 @@ import FAQsPage from "./screens/FAQsPage";
 import AboutPage from "./screens/AboutPage";
 import SplashScreen from "./screens/SplashScreen";
 import OnboardingScreen from "./screens/OnboardingScreen";
-import BuyUsedCarPage from "./screens/BuyUsedCarPage";
 import PolicyPage from "./screens/PolicyPage";
 import DealerPage from "./screens/DealerPage";
 import TestDrivePage from "./screens/TestDrivePage";
@@ -134,7 +133,6 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [yearError, setYearError] = useState("");
   const featurePickerRef = useRef<any>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   // Per-form agreement state — switching tabs never wipes another form's checkbox
@@ -672,10 +670,18 @@ export default function App() {
       <Header
         onOpenDrawer={() => setDrawerOpen(true)}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        showBack={policyPageKeys.includes(activeFooterTab)}
+        onBack={() => {
+          setActiveFooterTab(previousTab || "exchange");
+          setPreviousTab(null);
+          requestAnimationFrame(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+          });
+        }}
       />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.container, { paddingTop: headerHeight + 4 }]}
+        contentContainerStyle={[styles.container, { paddingTop: headerHeight + 8 }]}
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={closeFeaturePicker}
       >

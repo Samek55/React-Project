@@ -1,0 +1,17 @@
+What's New
+• Introduced OTP phone verification for secure form submissions
+• Added back navigation button for Terms, Privacy, Refund, and Disclaimer pages
+• App now available on iOS with full feature parity
+• Upgraded to Expo SDK 54 for improved stability and device compatibility
+• Navigation drawer redesigned — larger icons, bigger text, better layout
+
+Bug Fixes & Improvements
+• Improved OTP error handling — clearer messages for wrong codes and send failures
+• OTP resend with live countdown timer so you know when to retry
+• Phone number is masked during verification to protect your privacy
+• Success messages now auto-dismiss after submission
+• Improved display and layout on Android 15 and latest iOS devices
+• Reduced gap between navigation bar and page content across all screens
+• Faster form submission with automatic retry on network issues
+• Minor UI refinements across all screens
+• General performance improvements and stability fixes

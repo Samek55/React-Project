@@ -222,22 +222,22 @@ const styles = StyleSheet.create({
   drawerHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 12,
-    paddingHorizontal: 14,
-    paddingBottom: 10,
-    gap: 10
+    paddingTop: 14,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 12
   },
   drawerLogo: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 1,
     borderColor: "#e2e8f0"
   },
   drawerTitle: {
     flex: 1,
     color: "#075985",
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: "900"
   },
   drawerClose: {
@@ -260,23 +260,23 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#d1d5db",
     marginHorizontal: 14,
-    marginVertical: 2
+    marginVertical: 4
   },
   drawerBody: {
     flex: 1,
     flexDirection: "column",
-    paddingVertical: 2
+    paddingVertical: 0
   },
   drawerSection: {
     paddingHorizontal: 8
   },
   drawerItem: {
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12
+    gap: 16
   },
   drawerItemHover: {
     backgroundColor: "#e2e8f0"
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   drawerItemText: {
     flex: 1,
     color: "#334155",
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: "600"
   },
   drawerItemTextActive: {
@@ -297,13 +297,13 @@ const styles = StyleSheet.create({
   drawerAdminWrap: {
     paddingHorizontal: 14,
     paddingBottom: 14,
-    paddingTop: 6
+    paddingTop: 8
   },
   drawerAdminButton: {
-    minHeight: 52,
+    minHeight: 58,
     alignSelf: "flex-start",
-    paddingHorizontal: 30,
-    borderRadius: 12,
+    paddingHorizontal: 36,
+    borderRadius: 14,
     borderWidth: 1.5,
     borderColor: "#334155",
     alignItems: "center",
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   drawerAdminText: {
     color: "#334155",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700"
   },
   buyHero: {
@@ -441,6 +441,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 2
+  },
+  headerBackButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8
+  },
+  headerBackText: {
+    color: "#0f172a",
+    fontSize: 16,
+    fontWeight: "600"
   },
   iconButton: {
     padding: 7,
@@ -883,7 +896,7 @@ const styles = StyleSheet.create({
     marginTop: 55
   },
   faqPage: {
-    paddingTop: 16
+    paddingTop: 8
   },
   faqPageTitle: {
     color: "#075985",
@@ -1008,7 +1021,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#e0f2fe"
   },
   aboutPage: {
-    marginTop: -16,
+    marginTop: 8,
     paddingBottom: 16
   },
   aboutHero: {
@@ -1280,7 +1293,7 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline"
   },
   glossaryPage: {
-    paddingTop: 8
+    paddingTop: 4
   },
   glossaryIntro: {
     textAlign: "center",
@@ -1366,7 +1379,7 @@ const styles = StyleSheet.create({
     lineHeight: 22
   },
   policyPage: {
-    paddingTop: 8,
+    paddingTop: 4,
     paddingBottom: 16
   },
   policyPageTitle: {
