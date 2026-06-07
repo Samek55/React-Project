@@ -1,10 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Image, View, StatusBar } from "react-native";
+import { Animated, View, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import styles from "../styles";
-
-const nepalFlagLogo = require("../assets/nepal-flag-logo.jpeg");
+import LogoImage from "../components/icons/LogoImage";
 
 /**
  * SplashScreen — animated loading screen shown while the app checks
@@ -28,7 +27,7 @@ export default function SplashScreen() {
       <ExpoStatusBar style="dark" />
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <View style={styles.splashContent}>
-        <Image source={nepalFlagLogo} style={styles.splashLogo as any} />
+        <LogoImage size={160} />
       </View>
       <View style={styles.splashLoadingTrack}>
         <Animated.View

@@ -1,11 +1,10 @@
 import React from "react";
-import { View, Text, Pressable, Image, Linking } from "react-native";
+import { View, Text, Pressable, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { renderNavSvgIcon } from "../components/icons/NavSvgIcons";
 import { phoneNumber } from "../data/constants";
 import styles from "../styles";
-
-const nepalFlagLogo = require("../assets/nepal-flag-logo.jpeg");
+import LogoImage from "../components/icons/LogoImage";
 
 /**
  * AboutPage — company overview with hero logo, stats, mission statement,
@@ -48,7 +47,7 @@ export default function AboutPage() {
 
       {/* Hero */}
       <View style={styles.aboutHero}>
-        <Image source={nepalFlagLogo} style={styles.aboutHeroLogo as any} />
+        <LogoImage size={72} />
         <Text allowFontScaling={false} style={styles.aboutHeroName}>NEPAL Motor</Text>
         <Text allowFontScaling={false} style={styles.aboutHeroTagline}>
           Nepal's trusted platform for used car exchange, buying, and selling

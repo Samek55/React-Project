@@ -1,11 +1,10 @@
 import React from "react";
-import { View, Text, Image, Pressable, StatusBar, Linking, LayoutChangeEvent } from "react-native";
+import { View, Text, Pressable, StatusBar, Linking, LayoutChangeEvent } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { phoneNumber } from "../../data/constants";
 import styles from "../../styles";
-
-const nepalFlagLogo = require("../../assets/nepal-flag-logo.jpeg");
+import LogoImage from "../icons/LogoImage";
 
 interface HeaderProps {
   onOpenDrawer: () => void;
@@ -47,7 +46,7 @@ export default function Header({ onOpenDrawer, onLayout, showBack = false, onBac
           </Pressable>
         ) : (
           <View style={styles.brand}>
-            <Image source={nepalFlagLogo} style={styles.logo as any} />
+            <LogoImage size={50} />
             <Text allowFontScaling={false} style={styles.brandText} numberOfLines={1}>
               NEPAL Motor
             </Text>

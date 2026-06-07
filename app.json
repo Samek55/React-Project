@@ -1,12 +1,12 @@
 {
   "expo": {
     "name": "NEPAL Motor",
-    "slug": "nepal-motor-exchange-form",
-    "version": "1.0.55",
+    "slug": "nepal-motor",
+    "version": "1.0.56",
     "orientation": "portrait",
-    "icon": "./assets/nepal-motor-icon-safe.png",
+    "icon": "./assets/nm-logo-icon.png",
     "splash": {
-      "image": "./assets/nepal-motor-icon-safe.png",
+      "image": "./assets/nm-logo-splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
@@ -26,13 +26,16 @@
       "package": "com.pracas.nepalmotor",
       "versionCode": 46,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/nepal-motor-adaptive-foreground-safe.png",
+        "foregroundImage": "./assets/nm-logo-adaptive-fg.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
-      "favicon": "./assets/nepal-motor-icon-safe.png"
+      "favicon": "./assets/nm-logo-icon.png"
     },
     "plugins": [
       "expo-font",
@@ -43,6 +46,12 @@
           "photosPermission": "Allow NEPAL Motor to access your photos so you can upload vehicle images."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "28600e8e-977f-42b2-8141-8abe2cde0e63"
+      }
+    },
+    "owner": "mr.ded"
   }
 }

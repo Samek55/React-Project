@@ -84,6 +84,7 @@ import PolicyPage from "./screens/PolicyPage";
 import DealerPage from "./screens/DealerPage";
 import TestDrivePage from "./screens/TestDrivePage";
 import GlossaryPage from "./screens/GlossaryPage";
+import AdminLoginScreen from "./screens/AdminLoginScreen";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type AppPhase = "loading" | "onboarding" | "main";
@@ -205,7 +206,7 @@ export default function App() {
         handleOTPCancel();
         return true;
       }
-      if (policyPageKeys.includes(activeFooterTab) && previousTab !== null) {
+      if ((policyPageKeys.includes(activeFooterTab) || activeFooterTab === "adminLogin") && previousTab !== null) {
         setActiveFooterTab(previousTab);
         setPreviousTab(null);
         requestAnimationFrame(() => {
@@ -287,7 +288,7 @@ export default function App() {
     setMessage("");
     setMessageType("");
     setSubmitting(false);
-    const isGoingToPolicy = policyPageKeys.includes(tab);
+    const isGoingToPolicy = policyPageKeys.includes(tab) || tab === "adminLogin";
     if (isGoingToPolicy) {
       setPreviousTab(activeFooterTab);
     } else {
@@ -670,7 +671,7 @@ export default function App() {
       <Header
         onOpenDrawer={() => setDrawerOpen(true)}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-        showBack={policyPageKeys.includes(activeFooterTab)}
+        showBack={policyPageKeys.includes(activeFooterTab) || activeFooterTab === "adminLogin"}
         onBack={() => {
           setActiveFooterTab(previousTab || "exchange");
           setPreviousTab(null);
@@ -689,6 +690,7 @@ export default function App() {
         {activeFooterTab === "faqs" && <FAQsPage />}
         {activeFooterTab === "about" && <AboutPage />}
         {activeFooterTab === "glossary" && <GlossaryPage />}
+        {activeFooterTab === "adminLogin" && <AdminLoginScreen />}
         {policyPageKeys.includes(activeFooterTab) && (
           <PolicyPage policyKey={activeFooterTab as PolicyKey} />
         )}
@@ -704,7 +706,7 @@ export default function App() {
         </View>
 
         {/* ── Main exchange / sell / buy form ──────────────────────────── */}
-        <View style={{ display: !["faqs","about","glossary","dealer","branches","testdrive",...policyPageKeys].includes(activeFooterTab) ? "flex" : "none" }}>
+        <View style={{ display: !["faqs","about","glossary","dealer","branches","testdrive","adminLogin",...policyPageKeys].includes(activeFooterTab) ? "flex" : "none" }}>
           <>
         <Pressable onPress={closeFeaturePicker}>
           <Text allowFontScaling={false} style={styles.title}>{isSellForm ? "Sell Used Car" : isBuyForm ? "Buy Used Car" : "Exchange to EV"}</Text>

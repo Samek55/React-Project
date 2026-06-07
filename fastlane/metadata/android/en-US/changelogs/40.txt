@@ -4,6 +4,7 @@ What's New
 • App now available on iOS with full feature parity
 • Upgraded to Expo SDK 54 for improved stability and device compatibility
 • Navigation drawer redesigned — larger icons, bigger text, better layout
+• Added in-app Admin Login page — tapping Admin Login in the drawer now opens a dedicated login screen instead of redirecting to the website (07 Jun 2026)
 
 Bug Fixes & Improvements
 • Improved OTP error handling — clearer messages for wrong codes and send failures
@@ -15,3 +16,13 @@ Bug Fixes & Improvements
 • Faster form submission with automatic retry on network issues
 • Minor UI refinements across all screens
 • General performance improvements and stability fixes
+
+Admin Login Page — 07 Jun 2026
+• Admin Login in the drawer now navigates in-app instead of opening the website
+• Full-screen login page with NEPAL Motor branding and ADMIN badge
+• Email format validation and minimum password length check before submission
+• Inline error banner for invalid credentials or network failures
+• Sign in button shows a loading spinner while the request is in flight
+• Back button in the header returns you to the previous screen
+• Android hardware back button supported on the Admin Login page
+• Success confirmation screen shown after a valid sign-in

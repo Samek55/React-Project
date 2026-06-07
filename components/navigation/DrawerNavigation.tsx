@@ -1,11 +1,10 @@
 import React from "react";
-import { View, Text, Pressable, Image, Linking, useWindowDimensions } from "react-native";
+import { View, Text, Pressable, Linking, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { renderNavSvgIcon } from "../icons/NavSvgIcons";
 import { phoneNumber } from "../../data/constants";
 import styles from "../../styles";
-
-const nepalFlagLogo = require("../../assets/nepal-flag-logo.jpeg");
+import LogoImage from "../icons/LogoImage";
 
 interface DrawerItem {
   label: string;
@@ -32,7 +31,7 @@ interface DrawerNavigationProps {
 export default function DrawerNavigation({ activeTab, visible, onClose, onSelect, headerHeight = 88 }: DrawerNavigationProps) {
   const { height: screenHeight } = useWindowDimensions();
   const drawerTop = headerHeight;
-  const drawerHeight = screenHeight * 0.8;
+  const drawerHeight = screenHeight * 0.83;
 
   if (!visible) {
     return null;
@@ -78,7 +77,7 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
       />
       <View style={[styles.drawerPanel, { marginTop: drawerTop, height: drawerHeight }]}>
         <View style={styles.drawerHeader}>
-          <Image source={nepalFlagLogo} style={styles.drawerLogo as any} />
+          <LogoImage size={50} />
           <Text allowFontScaling={false} numberOfLines={1} style={styles.drawerTitle}>
             NEPAL Motor
           </Text>
@@ -111,8 +110,8 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 26)
-                    : <Ionicons name={item.icon as any} size={26} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 24)
+                    : <Ionicons name={item.icon as any} size={24} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -141,8 +140,8 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
                   ]}
                 >
                   {item.svgIcon
-                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 26)
-                    : <Ionicons name={item.icon as any} size={26} color={active ? "#075985" : "#475569"} />}
+                    ? renderNavSvgIcon(item.svgIcon, active ? "#075985" : "#475569", 24)
+                    : <Ionicons name={item.icon as any} size={24} color={active ? "#075985" : "#475569"} />}
                   <Text
                     allowFontScaling={false}
                     style={[styles.drawerItemText, active && styles.drawerItemTextActive]}
@@ -158,7 +157,7 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
             <Pressable
               accessibilityRole="button"
               style={({ hovered }: any) => [styles.drawerAdminButton, hovered && styles.drawerAdminButtonHover]}
-              onPress={() => { Linking.openURL("https://www.nepalmotor.com/admin"); onClose(); }}
+              onPress={() => { onSelect("adminLogin"); onClose(); }}
             >
               <Text allowFontScaling={false} style={styles.drawerAdminText}>Admin Login</Text>
             </Pressable>

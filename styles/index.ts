@@ -272,11 +272,11 @@ const styles = StyleSheet.create({
   },
   drawerItem: {
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     flexDirection: "row",
     alignItems: "center",
-    gap: 16
+    gap: 12
   },
   drawerItemHover: {
     backgroundColor: "#e2e8f0"
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   drawerItemText: {
     flex: 1,
     color: "#334155",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600"
   },
   drawerItemTextActive: {
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   drawerAdminText: {
     color: "#334155",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700"
   },
   buyHero: {
@@ -1251,10 +1251,10 @@ const styles = StyleSheet.create({
   },
   footerNav: {
     width: "100%",
-    minHeight: 64,
+    minHeight: 74,
     paddingHorizontal: 7,
     paddingTop: 6,
-    paddingBottom: 6,
+    paddingBottom: 12,
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
