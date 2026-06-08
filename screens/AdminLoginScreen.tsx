@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import LogoImage from "../components/icons/LogoImage";
+import { setUserTag } from "../services/notifications";
 
 export default function AdminLoginScreen() {
   const [email, setEmail] = useState("");
@@ -44,6 +45,7 @@ export default function AdminLoginScreen() {
       });
       const data = await resp.json().catch(() => ({}));
       if (resp.ok) {
+        setUserTag("role", "admin");
         setSuccess(true);
       } else {
         setError(data?.message || "Invalid email or password. Please try again.");

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1055333444009",
+    "project_id": "nepalmotor-e7ebe",
+    "storage_bucket": "nepalmotor-e7ebe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1055333444009:android:9543624ec3c5c1f3b9bcb8",
+        "android_client_info": {
+          "package_name": "com.pracas.nepalmotor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4B2G94GpKkenFC0Sm0KUFIS5ywAcn_cg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

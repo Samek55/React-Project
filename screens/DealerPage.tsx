@@ -11,6 +11,7 @@ import SelectField from "../components/ui/SelectField";
 import UploadField from "../components/ui/UploadField";
 import AgreementRow from "../components/ui/AgreementRow";
 import styles from "../styles";
+import { setUserTag } from "../services/notifications";
 
 interface DealerForm {
   fullName: string;
@@ -93,6 +94,8 @@ export default function DealerPage({ onNavigate, onRequestOTP }: DealerPageProps
           const data = await resp.json().catch(() => ({}));
           throw new Error(data?.message || `Submission failed (${resp.status})`);
         }
+        setUserTag("role", "dealer");
+        setUserTag("area", submittedForm.city.toLowerCase());
         setMessage("Your dealer application has been submitted!");
         setMessageType("success");
         setForm({ fullName: "", companyName: "", city: "Kathmandu", phone: "", photo: [] });

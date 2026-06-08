@@ -1,21 +1,23 @@
 What's New
-• Introduced OTP phone verification for secure form submissions
-• Added back navigation button for Terms, Privacy, Refund, and Disclaimer pages
-• App now available on iOS with full feature parity
-• Upgraded to Expo SDK 54 for improved stability and device compatibility
-• Navigation drawer redesigned — larger icons, bigger text, better layout
+• Introduced OTP phone verification for secure form submissions (07 Jun 2026)
+• Added back navigation button for Terms, Privacy, Refund, and Disclaimer pages (07 Jun 2026)
+• App now available on iOS with full feature parity (07 Jun 2026)
+• Upgraded to Expo SDK 54 for improved stability and device compatibility (07 Jun 2026)
+• Navigation drawer redesigned — smaller icons (24px), refined text size, better spacing (07 Jun 2026)
 • Added in-app Admin Login page — tapping Admin Login in the drawer now opens a dedicated login screen instead of redirecting to the website (07 Jun 2026)
+• Updated app logo — replaced Nepal flag with new NEPAL Motor M-in-circle teal logo across all screens, header, drawer, splash, and app icon (07 Jun 2026)
+• Footer navigation bar height increased for easier tapping on all screen sizes (07 Jun 2026)
 
 Bug Fixes & Improvements
-• Improved OTP error handling — clearer messages for wrong codes and send failures
-• OTP resend with live countdown timer so you know when to retry
-• Phone number is masked during verification to protect your privacy
-• Success messages now auto-dismiss after submission
-• Improved display and layout on Android 15 and latest iOS devices
-• Reduced gap between navigation bar and page content across all screens
-• Faster form submission with automatic retry on network issues
-• Minor UI refinements across all screens
-• General performance improvements and stability fixes
+• Improved OTP error handling — clearer messages for wrong codes and send failures (07 Jun 2026)
+• OTP resend with live countdown timer so you know when to retry (07 Jun 2026)
+• Phone number is masked during verification to protect your privacy (07 Jun 2026)
+• Success messages now auto-dismiss after submission (07 Jun 2026)
+• Improved display and layout on Android 15 and latest iOS devices (07 Jun 2026)
+• Reduced gap between navigation bar and page content across all screens (07 Jun 2026)
+• Faster form submission with automatic retry on network issues (07 Jun 2026)
+• Minor UI refinements across all screens (07 Jun 2026)
+• General performance improvements and stability fixes (07 Jun 2026)
 
 Admin Login Page — 07 Jun 2026
 • Admin Login in the drawer now navigates in-app instead of opening the website

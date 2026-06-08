@@ -24,6 +24,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import {
+  AppState,
+  AppStateStatus,
   BackHandler,
   Keyboard,
   Platform,
@@ -38,6 +40,8 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
+import { OneSignal, NotificationWillDisplayEvent } from "./services/notifications";
+import NotificationBanner from "./components/NotificationBanner";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 import {
@@ -153,6 +157,8 @@ export default function App() {
   const [otpResendSeconds, setOtpResendSeconds] = useState(0);
   // Holds the actual form-submission function to run after OTP is verified
   const pendingSubmitRef = useRef<(() => Promise<void>) | null>(null);
+  const [inAppNotif, setInAppNotif] = useState<{ title: string; body: string } | null>(null);
+  const notifDismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Timer ref so the countdown interval can be cleared on unmount / resend
   const resendTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -166,6 +172,28 @@ export default function App() {
   const termsAgreed = termsAgreedMap[formKey] ?? false;
   const setTermsAgreed = (val: boolean | ((prev: boolean) => boolean)) =>
     setTermsAgreedMap(m => ({ ...m, [formKey]: typeof val === "function" ? val(m[formKey] ?? false) : val }));
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    OneSignal.initialize("37dbdf6b-f85b-43f8-9d13-8a320031def9");
+    OneSignal.Notifications.clearAll();
+    const appStateSub = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active") OneSignal.Notifications.clearAll();
+    });
+    const onForeground = (event: NotificationWillDisplayEvent) => {
+      event.preventDefault(); // suppress system tray notification while app is open
+      const { title = "", body = "" } = event.notification;
+      setInAppNotif({ title, body });
+      if (notifDismissTimer.current) clearTimeout(notifDismissTimer.current);
+      notifDismissTimer.current = setTimeout(() => setInAppNotif(null), 5000);
+    };
+    OneSignal.Notifications.addEventListener("foregroundWillDisplay", onForeground);
+    return () => {
+      OneSignal.Notifications.removeEventListener("foregroundWillDisplay", onForeground);
+      if (notifDismissTimer.current) clearTimeout(notifDismissTimer.current);
+      appStateSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const loadOnboardingState = async () => {
@@ -1054,6 +1082,15 @@ export default function App() {
         onSelect={changeFooterTab}
         headerHeight={headerHeight}
       />
+
+      {/* In-app notification banner — slides down from top when app is in foreground */}
+      {inAppNotif && (
+        <NotificationBanner
+          title={inAppNotif.title}
+          body={inAppNotif.body}
+          onDismiss={() => setInAppNotif(null)}
+        />
+      )}
 
       {/* OTP verification modal — rendered above the drawer so it is always on top */}
       <OTPModal

@@ -1,0 +1,8 @@
+What's New
+• Push notification support — receive real-time alerts for dealer applications, booking requests, and announcements
+• Dealers now receive booking notifications specific to their area
+• Admins receive instant alerts when a new dealer application is submitted
+• App store listing updated with new screenshots and feature graphic
+
+Bug Fixes & Improvements
+• Minor UI refinements and stability improvements
