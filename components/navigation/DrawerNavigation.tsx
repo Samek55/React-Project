@@ -157,7 +157,7 @@ export default function DrawerNavigation({ activeTab, visible, onClose, onSelect
             <Pressable
               accessibilityRole="button"
               style={({ hovered }: any) => [styles.drawerAdminButton, hovered && styles.drawerAdminButtonHover]}
-              onPress={() => { onSelect("adminLogin"); onClose(); }}
+              onPress={() => { onClose(); }}
             >
               <Text allowFontScaling={false} style={styles.drawerAdminText}>Admin Login</Text>
             </Pressable>

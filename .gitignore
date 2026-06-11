@@ -17,6 +17,7 @@ android/app/*.keystore
 live-nepalmotor-com/
 
 # Release signing keys
+*.jks
 release/*.pem
 release/*.jks
 release/*.keystore
