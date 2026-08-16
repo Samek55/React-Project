@@ -57,6 +57,7 @@ import { features, emptyForm } from "./data/formConfig";
 // ─── Utils ───────────────────────────────────────────────────────────────────
 import { alphabetOnly, alphabetPattern } from "./utils/stringHelpers";
 import { postVehicleSubmission, submissionErrorMessage } from "./utils/formHelpers";
+import { deliverOtpSms } from "./services/sparrowSms";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 import { FormState, PolicyKey } from "./types";
@@ -363,6 +364,31 @@ export default function App() {
   };
 
   /**
+   * Asks the backend to generate an OTP for `phone` (it doesn't send it — see
+   * lib/send-otp.ts, Sparrow rejects Vercel's outbound IP), then delivers the
+   * returned text to Sparrow directly, from the phone's own network. Returns
+   * an error message on failure, or null on success.
+   */
+  const sendOtpToPhone = async (phone: string): Promise<string | null> => {
+    const resp = await fetch(sendOtpEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone })
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok || data.success === false) {
+      return data.message || "Failed to send OTP. Please try again.";
+    }
+    if (!data.phone || !data.text) {
+      return "Failed to send OTP. Please try again.";
+    }
+
+    const delivery = await deliverOtpSms(data.phone, data.text);
+    if (!delivery.ok) return delivery.error || "Failed to send OTP. Please try again.";
+    return null;
+  };
+
+  /**
    * Called by any form's submit handler after validation passes.
    * Sends an OTP to the phone number and shows the verification modal.
    * The actual form submission is stored in pendingSubmitRef and only
@@ -377,14 +403,9 @@ export default function App() {
     setOtpVisible(true);
 
     try {
-      const resp = await fetch(sendOtpEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone })
-      });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok || data.success === false) {
-        setOtpError(data.message || "Failed to send OTP. Please try again.");
+      const error = await sendOtpToPhone(phone);
+      if (error) {
+        setOtpError(error);
       } else {
         startResendCountdown();
       }
@@ -450,14 +471,9 @@ export default function App() {
     setOtpLoading("sending");
 
     try {
-      const resp = await fetch(sendOtpEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: otpPhone })
-      });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok || data.success === false) {
-        setOtpError(data.message || "Failed to resend OTP. Please try again.");
+      const error = await sendOtpToPhone(otpPhone);
+      if (error) {
+        setOtpError(error);
       } else {
         startResendCountdown();
       }
